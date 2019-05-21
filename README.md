@@ -1,1 +1,1 @@
-# longread-UMI
+# longread-UMI-pipeline
