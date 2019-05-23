@@ -28,14 +28,14 @@ export FASTQSTATS=/usr/bin/fastq-stats
 export BCFTOOLS=/space/users/smk/Software/bcftools_1.9/bin/bcftools
 
 # Scripts paths
-export UMI_BINNING=./scripts/umi_binning.sh
-export CONSENSUS_SPADES=./scripts/consensus_spades.sh
-export CONSENSUS_SRACON=./scripts/consensus_seed-racon.sh
-export POLISH_MEDAKA=./scripts/polish_medaka.sh
-export POLISH_RACON=./scripts/polish_racon.sh
-export TRIM_AMPLICON=./scripts/trim_amplicon.sh
-export VALIDATE=./scripts/validation.sh
-export VARIANTS=./scripts/variants.sh
+export UMI_BINNING=$PIPELINE_PATH/scripts/umi_binning.sh
+export CONSENSUS_SPADES=$PIPELINE_PATH/scripts/consensus_spades.sh
+export CONSENSUS_SRACON=$PIPELINE_PATH/scripts/consensus_seed-racon.sh
+export POLISH_MEDAKA=$PIPELINE_PATH/scripts/polish_medaka.sh
+export POLISH_RACON=$PIPELINE_PATH/scripts/polish_racon.sh
+export TRIM_AMPLICON=$PIPELINE_PATH/scripts/trim_amplicon.sh
+export VALIDATE=$PIPELINE_PATH/scripts/validation.sh
+export VARIANTS=$PIPELINE_PATH/scripts/variants.sh
 
 # Version dump
 ncec_version_dump (){
