@@ -13,7 +13,7 @@ A collection of scripts for processing longread UMI data.
 
 ### Make bash scripts executable
 1. Go to longread-UMI-pipeline directory, open a terminal and run commands:
-2. find . -name "*.sh" -exec chmod +x {} \;
+2. find . -name "*.sh" -exec chmod +x {} \\;
 
 ### Create symlink to run longread-UMI-pipeline from terminal
 1. Open terminal and run command:
