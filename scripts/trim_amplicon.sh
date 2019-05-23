@@ -1,7 +1,7 @@
 #!/bin/bash
 # DESCRIPTION
 #    Script for trimming sequences based on gene primers.
-#    This script is a part of the NCEC pipeline.
+#    This script is a part of the longread-UMI-pipeline.
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
@@ -15,10 +15,6 @@ IN_REGEX=$2
 OUT_DIR=$3
 TYPE=$4
 THREADS=$5
-
-### Source commands and subscripts -------------------------------------
-. scripts/ncec_dependencies.sh
-
 
 #Format input
 IN_DIR_F=$(echo $IN_DIR | sed -e 's/[,;\t]/ /g')
@@ -50,10 +46,14 @@ cutadapt_wrapper(){
   $CUTADAPT --untrimmed-output $OUT_DIR/$IN_NAME.tmp\
     -m $MIN_LENGTH -M $MAX_LENGTH -g $ADP1...$ADP2 \
     $IN > $OUT_DIR/${IN_NAME}.fa 2> $OUT_DIR/${IN_NAME}_log.txt
-  $SEQTK seq -r $OUT_DIR/$IN_NAME.tmp | $CUTADAPT \
-    --untrimmed-output $OUT_DIR/$IN_NAME.discarded -m $MIN_LENGTH -M $MAX_LENGTH \
-    -g $ADP1...$ADP2 - >> $OUT_DIR/${IN_NAME}.fa \
-    2>> $OUT_DIR/${IN_NAME}_log.txt
+  $SEQTK seq -r $OUT_DIR/$IN_NAME.tmp |\
+    $CUTADAPT \
+    -m $MIN_LENGTH -M $MAX_LENGTH \
+    -g $ADP1...$ADP2 - >> $OUT_DIR/${IN_NAME}.fa
+
+    # For troubleshooting
+    #2>> $OUT_DIR/${IN_NAME}_log.txt
+    #--untrimmed-output $OUT_DIR/$IN_NAME.discarded 
 
   rm $OUT_DIR/$IN_NAME.tmp
 }

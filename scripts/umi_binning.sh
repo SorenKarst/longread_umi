@@ -2,7 +2,7 @@
 
 # DESCRIPTION
 #    Script for binning Nanopore reads based on UMIs. Part of the 
-#    NCEC pipeline.
+#    longread-UMI-pipeline.
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
@@ -12,7 +12,6 @@
 #
 # TO DO
 #    Add terminal messages.
-#    Need thorough testing after major update of folder structure.
 #    Optimize trimming and filtering for speed.
 #    Add bin size limit to 200 x
 #    Add mapping against adaptors to remove UMI artifacts

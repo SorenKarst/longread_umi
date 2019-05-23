@@ -1,7 +1,7 @@
 #!/bin/bash
 # DESCRIPTION
 #    Phasing and variant calling of consensus sequences to obtain
-#    lowest possible error rate
+#    lowest possible error rate. Part of the longread-UMI-pipeline.
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
@@ -101,6 +101,7 @@ var_bin() {
   cat $IN |\
   $GAWK -v out="$CN" 'NR==FNR{
     seq[$1] = $2
+    if (!($2 in cl)){vn[$2]=++j}
     cl[$2]++
     next
   }
@@ -111,9 +112,10 @@ var_bin() {
     if (sn in seq){
       # Write read to varians bin if bin is big enough
       if (cl[seq[sn]] >= 3){
-        print ">" sn > out"_"seq[sn]"_bin.fa"
+        print ">" sn > out"_var"vn[seq[sn]]"_bin.fa"
         getline
-        print > out"_"seq[sn]"_bin.fa"
+        print > out"_var"vn[seq[sn]]"_bin.fa"
+        print "var"vn[seq[sn]], seq[sn] > out"variant_names.txt"
       }
       # Write read to none bin if bin is too small
       else if (cl[seq[i]] < 3){
@@ -200,9 +202,9 @@ phased_consensus(){
           if (n == 1){
             split($0,size,";")
             gsub("size=", ";", size[2])
-            print ">" name size[2] > out "/" name "_phased.fa"
+            print ">" name size[2] > out "/" name "_variant.fa"
             getline
-            print > out "/" name "_phased.fa"
+            print > out "/" name "_variant.fa"
           }
         } END {
           if (n > 1){msg = "warning"} else {msg="ok"}
@@ -436,7 +438,7 @@ cat $OUT_DIR/${CONSENSUS_NAME}_clusters.fa | $SEQTK seq -l0 - |\
   $GNUPARALLEL --progress -j$CLUSTER_JOBS --recstart ">" -N 1 --pipe \
   "cat | phasing $VARIANT_OUT $OUT_DIR/clusters \
    $CONSENSUS_FILE $CLUSTER_THREADS"
-cat $VARIANT_OUT/*/*variants.fa > $OUT_DIR/variants_all.fa
+cat $VARIANT_OUT/*/*variant.fa > $OUT_DIR/variants_all.fa
 
 ### Testing
 exit 0
@@ -451,7 +453,7 @@ for i in "${NR[@]}"; do
     $SUBSAMPLES_OUT \
     $i \
     $THREADS
-  cat $SUBSAMPLES_OUT/*variants.fa > $OUT_DIR/variants_n${i}.fa
+  cat $SUBSAMPLES_OUT/*variant.fa > $OUT_DIR/variants_n${i}.fa
 done
 
 # Soft mask homopolymers 

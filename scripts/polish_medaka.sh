@@ -1,7 +1,7 @@
 #!/bin/bash
 # DESCRIPTION
 #    Consensus sequence polishing using medaka.
-#    This script is a part of the NCEC pipeline.
+#    This script is a part of the longread-UMI-pipeline.
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
