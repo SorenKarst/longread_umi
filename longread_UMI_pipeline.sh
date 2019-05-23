@@ -11,16 +11,52 @@
 # To-do:
 # - Fix logging
 
+### Description ----------------------------------------------------------------
+
+USAGE="$(basename "$0") [-h] [-d file -s value -c value -t value] 
+-- longread-UMI-pipeline v.0.1.0: Read filtering/trimming,
+   metagenome assembly, read coverage estimation, taxonomic classification and 
+   detection of SSU rRNA.
+
+where:
+    -h  Show this help text.
+    -d  Single file containing raw Nanopore data in fastq format.
+    -s  Process <value> number of bins.
+    -c  Minimum read coverage for using UMI consensus sequences for 
+        variant calling.
+    -t  Number of threads to use. Ps. Medaka bug means medaka uses all available..
+"
+
+### Terminal Arguments ---------------------------------------------------------
+
+# Import user arguments
+while getopts ':hzd:s:c:t:' OPTION; do
+  case $OPTION in
+    h) echo "$USAGE"; exit 1;;
+    d) INPUT_READS=$OPTARG;;
+    s) UMI_SUBSET_N=$OPTARG;;
+    c) UMI_COVERAGE_MIN=$OPTARG;;
+    t) THREADS=$OPTARG;;
+    :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
+    \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
+  esac
+done
+
+# Check missing arguments
+MISSING="is missing but required. Exiting."
+if [ -z ${INPUT_READS+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${UMI_SUBSET_N+x} ]; then echo "-s $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${UMI_COVERAGE_MIN+x} ]; then echo "-c $MISSING"; echo "$USAGE"; exit 1; fi;
+if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
+
 ### Source commands and subscripts -------------------------------------
-. scripts/dependencies.sh # Path to dependencies script
-THREADS=60 # Number of threads to use. Ps. Medaka bug means medaka uses all available..
-UMI_SUBSET_N=1000000 # Number of UMI bins to use for post processing i.e. for testing subset to 100
-UMI_COVERAGE_MIN=30 # UMI bin coverage cut off for variant phasing.
+export PIPELINE_PATH=$(dirname "$0")
+. $PIPELINE_PATH/scripts/dependencies.sh # Path to dependencies script
 
 ### Pipeline -----------------------------------------------------------
 # Logging
-LOG_NAME="ncec_log_$(date +"%Y-%m-%d-%T").txt"
-echo "ncec log" >> $LOG_NAME
+LOG_NAME="longread-UMI-pipeline_log_$(date +"%Y-%m-%d-%T").txt"
+echo "longread-UMI-pipeline log" >> $LOG_NAME
 echo "Script start: $(date)" >> $LOG_NAME
 ncec_version_dump $LOG_NAME
 exec &> >(tee -a "$LOG_NAME")
@@ -29,27 +65,16 @@ echo ""
 echo "### Settings:"
 echo "Threads: $THREADS"
 echo "UMI subsampling: $UMI_SUBSET_N"
-echo "References: $REF"
-echo "References unique: $REFU"
 echo "Bin size cutoff: $UMI_COVERAGE_MIN"
 echo ""
 
-# Fetch data
-# cat ./path/to/fastq/files/*fastq > ./reads.fq
-cat ../data/ncec-7-guppy3.0.3/*.fastq > reads.fq
-
 # Read filtering and UMI binning
 $UMI_BINNING \
-  # Raw nanopore data in fastq format
-  reads.fq \
-  # Output folder
-  umi_binning \
-  # Number of threads
-  $THREADS \
-  # Min read length
-  3500 \
-  # Max read length
-  6000
+  $INPUT_READS `# Raw nanopore data in fastq format`\
+  umi_binning  `# Output folder`\
+  $THREADS     `# Number of threads`\
+  3500         `# Min read length`\
+  6000         `# Max read length`
 
 # Sample UMI bins for testing
 find umi_binning/read_binning/bins \
@@ -58,54 +83,35 @@ find umi_binning/read_binning/bins \
 
 # Consensus
 $CONSENSUS_SRACON \
-  # Path to UMI bins
-  umi_binning/read_binning/bins \
-  # Output folder
-  sracon \
-  # Number of threads
-  $THREADS \
-  # List of bins to process
-  sample$UMI_SUBSET_N.txt
+  umi_binning/read_binning/bins `# Path to UMI bins`\
+  sracon                        `# Output folder`\
+  $THREADS                      `# Number of threads`\
+  sample$UMI_SUBSET_N.txt       `# List of bins to process`
 
 # Polishing
 $POLISH_MEDAKA \
-  # Path to consensus data
-  sracon/consensus_*.fa \
-  # Path to UMI bins
-  umi_binning/read_binning/bins \
-  # Output folder
-  sracon_medaka \
-  # Number of threads
-  $THREADS \
-  # List of bins to process
-  sample$UMI_SUBSET_N.txt
+  sracon/consensus_*.fa         `# Path to consensus data`\
+  umi_binning/read_binning/bins `# Path to UMI bins`\
+  sracon_medaka                 `# Output folder`\
+  $THREADS                      `# Number of threads`\
+  sample$UMI_SUBSET_N.txt       `# List of bins to process`
 
 $POLISH_MEDAKA \
-  # Path to consensus data
-  sracon_medaka/consensus_*.fa \
-  # Path to UMI bins
-  umi_binning/read_binning/bins \
-  # Output folder
-  sracon_medaka_medaka \
-  # Number of threads
-  $THREADS \
-  # List of bins to process
-  sample$UMI_SUBSET_N.txt
+  sracon_medaka/consensus_*.fa  `# Path to consensus data`\
+  umi_binning/read_binning/bins `# Path to UMI bins`\
+  sracon_medaka_medaka          `# Output folder`\
+  $THREADS                      `# Number of threads`\
+  sample$UMI_SUBSET_N.txt       `# List of bins to process`
 
 # Trim UMI consensus data
 $TRIM_AMPLICON \
-  # Path to consensus data
-  sracon_medaka_medaka\
-  # Consensus file pattern
-  consensus*fa \
-  # Output folder
-  . \
-  # Primers used
-  rrna_8f2490r \
-  $THREADS
+  sracon_medaka_medaka `# Path to consensus data`\
+  consensus*fa         `# Consensus file pattern`\
+  .                    `# Output folder`\
+  rrna_8f2490r         `# Primers used`\
+  $THREADS             `# Number of threads`
 
-# Generate phasing data
-mkdir phasing
+# Generate variants
 
 ## Subset to UMI consensus sequences with min read coverage
 awk -v bsco="$UMI_COVERAGE_MIN" '
@@ -123,14 +129,17 @@ awk -v bsco="$UMI_COVERAGE_MIN" '
 
 ## Variant calling of from UMI consensus sequences
 $VARIANTS \
-  # Path to consensus data
-  consensus_sracon_medaka_medaka_${UMI_COVERAGE_MIN}.fa \
-  # Output folder
-  variants \
-  # Number of threads
-  $THREADS
+  consensus_sracon_medaka_medaka_${UMI_COVERAGE_MIN}.fa `# Path to consensus data`\
+  variants `# Output folder`\
+  $THREADS `# Number of threads`
 
 ## Copy phase
 cp variants/variants*fa .
 
 
+## Testing
+exit 0
+THREADS=60
+INPUT_READS=reads.fq
+UMI_SUBSET_N=1000000
+UMI_COVERAGE_MIN=30
