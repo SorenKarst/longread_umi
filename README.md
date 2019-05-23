@@ -30,9 +30,11 @@ A collection of scripts for processing longread UMI data.
    Or run ./test_longread_umi_pipeline.sh.
 
 ### Run pipeline on Zymo mock data
-1. Download Zymo mock fastq data from ENA and place it in a working directory.
+1. Create a working directory, open a terminal and download the Zymo mock fastq data from ENA:
+   `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963.fastq.gz`
 2. Open a terminal in the directory and run `longread-UMI-pipeline -d <name-of-fastq-file> -s 1000000 -c 30 -t <Number-of-threads>`. 
 
 ### Generate data from paper
-1. Download Zymo mock fastq data from ENA and place it in a working directory.
+1. Create a working directory, open a terminal and download the Zymo mock fastq data from ENA:
+   `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963.fastq.gz`
 2. Open a terminal in the directory and run `/path/to/longread-UMI-pipeline/longread_UMI_mockanalysis.sh <Number-of-threads>`. 
