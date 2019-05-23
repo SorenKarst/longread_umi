@@ -3,6 +3,10 @@ A collection of scripts for processing longread UMI data.
 
 ## Installation
 
+### Requirements
+1. Tested on Ubuntu 14.04 (Yeah, we know...)
+2. Dependencies: See scripts/dependencies.sh
+
 ### Clone from github
 1. Go to desired installation directory, open a terminal and run commands:
 2. git clone https://github.com/SorenKarst/longread-UMI-pipeline
