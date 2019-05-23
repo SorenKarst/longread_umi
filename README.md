@@ -23,7 +23,7 @@ A collection of scripts for processing longread UMI data.
 
 ### Change paths to dependencies
 1. Go to /path/to/longread-UMI-pipeline/scripts and open dependencies.sh in a texteditor.
-2. Change all paths under "Paths to dependencies" to reflect installations on your system.
+2. Change all paths under "Program paths" to reflect installations on your system.
 3. If unsure of the paths try to type `which <function>` in the terminal. I.e. `which racon`.
 4. Install any missing dependencies.
 
@@ -32,7 +32,7 @@ A collection of scripts for processing longread UMI data.
 ### Running longread-UMI-pipeline on test data
 1. Go to /path/to/longread-UMI-pipeline/test_data
 2. Open a terminal in the directory and run `longread-UMI-pipeline -d test_reads.fq -s 10 -c 30 -t 1`
-   Or run ./test_longread_umi_pipeline.sh.
+   Or run `./test_longread_umi_pipeline.sh`.
 
 ### Run pipeline on Zymo mock data
 1. Create a working directory, open a terminal, download the Zymo mock fastq data and decompress:
