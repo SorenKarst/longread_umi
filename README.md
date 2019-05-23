@@ -8,23 +8,24 @@ A collection of scripts for processing longread UMI data.
 2. Dependencies: See scripts/dependencies.sh
 
 ### Clone from github
-1. Go to desired installation directory, open a terminal and run commands:
+1. Go to desired installation directory, open a terminal and run:
 2. git clone https://github.com/SorenKarst/longread-UMI-pipeline
 
 ### Make bash scripts executable
-1. Go to longread-UMI-pipeline directory, open a terminal and run commands:
-2. find . -name "*.sh" -exec chmod +x {} \\;
+1. Go to longread-UMI-pipeline directory, open a terminal and run:
+   `find . -name "*.sh" -exec chmod +x {} \;`
 
 ### Create symlink to run longread-UMI-pipeline from terminal
 1. Open terminal and run command:
-   ln -s /path/to/longread-UMI-pipeline/longread_UMI_pipeline.sh ~/bin/longread-UMI-pipeline
-2. Test symlink by opening a terminal window anywhere
-3. Type longread-UMI-pipeline -h
+   `ln -s /path/to/longread-UMI-pipeline/longread_UMI_pipeline.sh ~/bin/longread-UMI-pipeline`
+2. Test symlink by opening a terminal window anywhere and run:
+   `longread-UMI-pipeline -h`
 
 ### Change paths to dependencies
 1. Go to /path/to/longread-UMI-pipeline/scripts and open dependencies.sh in a texteditor.
-2. Change all paths under "Paths to dependencies" to reflect installations on you system.
+2. Change all paths under "Paths to dependencies" to reflect installations on your system.
 3. If unsure of the paths try to type `which <function>` in the terminal. I.e. `which racon`.
+4. Install any missing dependencies.
 
 ## Running longread-UMI-pipeline
 
