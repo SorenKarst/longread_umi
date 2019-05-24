@@ -15,9 +15,11 @@ export USEARCH=/space/sharedbin/bin/usearch11 #https://drive5.com/usearch/downlo
 export RACON=/space/users/smk/bin/racon #https://github.com/isovic/racon
 export MINIMAP2=/space/users/smk/Software/minimap2-2.16/minimap2 #https://github.com/lh3/minimap2
 export GAWK=/usr/bin/gawk 
-export MEDAKA_ENV_START='module load Python/3.6.4-foss-2018a;. /space/users/smk/Software/medaka-0.7.0/bin/activate' # https://github.com/nanoporetech/medaka. "module load ...;" is specific for our system. Just delete.
-export MEDAKA_ENV_STOP='deactivate;module purge' #"module purge" is specific for our system. Just delete.
-export MEDAKA_MODEL=r941_min_high
+export MEDAKA_ENV_START='module load Python/3.6.4-foss-2018a;. /space/users/smk/Software/medaka-0.7.0/bin/activate' # https://github.com/nanoporetech/medaka.
+# Our implementation of Medaka requires installation in virtual environment as recommended by the developers.
+# "module load ...;" is specific for our system and should be deleted.
+export MEDAKA_ENV_STOP='deactivate;module purge' #"module purge" is specific for our system and should be deleted.
+export MEDAKA_MODEL=r941_min_high # Specifies which medaka model to use. 
 export CUTADAPT=/space/users/smk/bin/cutadapt #https://cutadapt.readthedocs.io/en/stable/installation.html
 export PORECHOP_UMI=/space/users/smk/bin/porechop_umi #https://github.com/rrwick/Porechop. We have multiple installations of porechop and renamed one to porechop_umi for convenience.
 export FILTLONG=/space/users/smk/Software/Filtlong-0.2.0/bin/filtlong #https://github.com/rrwick/Filtlong
