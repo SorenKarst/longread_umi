@@ -9,7 +9,7 @@ A collection of scripts for processing longread UMI data.
 
 ### Clone from github
 1. Go to desired installation directory, open a terminal and run:
-2. git clone https://github.com/SorenKarst/longread-UMI-pipeline
+2. `git clone https://github.com/SorenKarst/longread-UMI-pipeline`
 
 ### Make bash scripts executable
 1. Go to longread-UMI-pipeline directory, open a terminal and run:
