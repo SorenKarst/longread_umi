@@ -19,7 +19,9 @@ A collection of scripts for processing longread UMI data.
 1. Open a terminal anywhere and run: `/path/to/longread-UMI-pipeline -h`
 
 ### (Optional) Create symlink to run longread-UMI-pipeline from terminal
-1. Check if ~/bin exists and is accessible in path `echo $PATH`
+1. Check if ~/bin exists. If not create it by opening a terminal and running: 
+   `mkdir -p ~/bin`
+2. Check if ~/bin is in path `echo $PATH`. If not abort here and just use full path to run the script.
 1. Create symlink in bin by openening a terminal and run:
    `ln -s /path/to/longread-UMI-pipeline/longread_UMI_pipeline.sh ~/bin/longread-UMI-pipeline`
 2. Test symlink by opening a terminal anywhere and run:
