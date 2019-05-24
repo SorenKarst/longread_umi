@@ -14,9 +14,8 @@
 ### Description ----------------------------------------------------------------
 
 USAGE="$(basename "$0") [-h] [-d file -s value -c value -t value] 
--- longread-UMI-pipeline v.0.1.0: Read filtering/trimming,
-   metagenome assembly, read coverage estimation, taxonomic classification and 
-   detection of SSU rRNA.
+-- longread-UMI-pipeline v.0.1.0: Generates UMI consensus sequences from
+   raw Nanopore fastq reads with UMIs in both terminals.
 
 where:
     -h  Show this help text.
