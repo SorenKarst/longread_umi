@@ -49,7 +49,7 @@ if [ -z ${UMI_COVERAGE_MIN+x} ]; then echo "-c $MISSING"; echo "$USAGE"; exit 1;
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 
 ### Source commands and subscripts -------------------------------------
-export PIPELINE_PATH=$(dirname "$0")
+export PIPELINE_PATH="$(dirname "$(readlink -f "$0")")"
 . $PIPELINE_PATH/scripts/dependencies.sh # Path to dependencies script
 
 ### Pipeline -----------------------------------------------------------
