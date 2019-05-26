@@ -55,7 +55,7 @@ for DATA_FILE in validation/*.fa; do
   DATA_NAME=${DATA_FILE%.*};
   DATA_NAME=${DATA_NAME##*/};
   $MINIMAP2 -ax map-ont $REF $DATA_FILE -t $THREADS --cs |\
-    $SAMTOOLS view -F 260 - |\
+    $SAMTOOLS view -F 2308 - |\
     cut -f1-9,12,21 > validation/$DATA_NAME.sam
 done
 
@@ -64,7 +64,7 @@ $MINIMAP2 \
   $REF_VENDOR \
   consensus_sracon_medaka_medaka.fa \
   -t $THREADS --cs |\
-  $SAMTOOLS view -F 260 - |\
+  $SAMTOOLS view -F 2308 - |\
   cut -f1-9,12,21 \
   > validation/consensus_sracon_medaka_medaka_vendor.sam
 

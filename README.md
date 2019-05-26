@@ -19,12 +19,12 @@ A collection of scripts for processing longread UMI data.
 1. Open a terminal anywhere and run: `/path/to/longread-UMI-pipeline -h`
 
 ### (Optional) Create symlink to run longread-UMI-pipeline from terminal
-1. Check if ~/bin exists. If not create it by opening a terminal and running: 
+1. Check if ~/bin exists. If not create it by opening a terminal and running:  
    `mkdir -p ~/bin`
 2. Check if ~/bin is in path `echo $PATH`. If not abort here and just use full path to run the script.
-1. Create symlink in bin by openening a terminal and run:
+3. Create symlink in bin by openening a terminal and run:  
    `ln -s /path/to/longread-UMI-pipeline/longread_UMI_pipeline.sh ~/bin/longread-UMI-pipeline`
-2. Test symlink by opening a terminal anywhere and run:
+4. Test symlink by opening a terminal anywhere and run:
    `longread-UMI-pipeline -h`
 
 ### Change paths to dependencies
@@ -43,17 +43,21 @@ A collection of scripts for processing longread UMI data.
 
 ### Running longread-UMI-pipeline on test data
 1. Go to /path/to/longread-UMI-pipeline/test_data
-2. Open a terminal in the directory and run `longread-UMI-pipeline -d test_reads.fq -s 10 -c 30 -t 1`
+2. Open a terminal in the directory and run `longread-UMI-pipeline -d test_reads.fq -s 10 -c 30 -t 1`  
    Or run `./test_longread_umi_pipeline.sh`.
 
 ### Run pipeline on Zymo mock data
-1. Create a working directory, open a terminal, download the Zymo mock fastq data and decompress:
-   ENA: From terminal `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963.fastq.gz`
-   Figshare: From browser https://doi.org/10.6084/m9.figshare.8175014 (Concatenate file a and b after decompressing)
-2. Open a terminal in the directory and run `longread-UMI-pipeline -d <name-of-fastq-file> -s 1000000 -c 30 -t <Number-of-threads>`. 
+1. Create a working directory, open a terminal, download the Zymo mock fastq data and decompress:  
+   ENA: `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963.fastq.gz; gunzip -c ERR3336963.fastq.gz > reads.fq`  
+   Figshare:  
+   `wget https://ndownloader.figshare.com/files/15240455; gunzip -c 15240455 > reads.fq`  
+   `wget https://ndownloader.figshare.com/files/15240461; gunzip -c 15240461 >> reads.fq`
+2. Open a terminal in the directory and run `longread-UMI-pipeline -d reads.fq -s 1000000 -c 30 -t <Number-of-threads>`. 
 
 ### Generate data from paper
-1. Create a working directory, open a terminal, download the Zymo mock fastq data and decompress:
-   ENA: From terminal `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963.fastq.gz`
-   Figshare: From browser https://doi.org/10.6084/m9.figshare.8175014 (Concatenate file a and b after decompressing)
-2. Open a terminal in the directory and run `/path/to/longread-UMI-pipeline/longread_UMI_mockanalysis.sh <Number-of-threads>`. 
+1. Create a working directory, open a terminal, download the Zymo mock fastq data and decompress:  
+   ENA: `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963.fastq.gz; gunzip -c ERR3336963.fastq.gz > reads.fq`  
+   Figshare:  
+   `wget https://ndownloader.figshare.com/files/15240455; gunzip -c 15240455 > reads.fq`  
+   `wget https://ndownloader.figshare.com/files/15240461; gunzip -c 15240461 >> reads.fq`
+2. Open a terminal in the directory and run `/path/to/longread-UMI-pipeline/longread_UMI_mockanalysis.sh <Number-of-threads> reads.fq`. 
