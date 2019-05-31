@@ -43,7 +43,9 @@ class Adapter(object):
         Gets the barcode name for the output files. We want a concise name, so it looks at all
         options and chooses the shortest.
         """
-        possible_names = [self.name, self.start_sequence[0]]
+        possible_names = [self.name]
+        if self.start_sequence:
+            possible_names.append(self.start_sequence[0])
         if self.end_sequence:
             possible_names.append(self.end_sequence[0])
         barcode_name = sorted(possible_names, key=lambda x: len(x))[0]
@@ -75,9 +77,15 @@ class Adapter(object):
 ADAPTERS = [Adapter('SQK-NSK007',
                     start_sequence=('SQK-NSK007_Y_Top', 'AATGTACTTCGTTCAGTTACGTATTGCT'),
                     end_sequence=('SQK-NSK007_Y_Bottom', 'GCAATACGTAACTGAACGAAGT')),
-            Adapter('NCEC_ADP',
-                    start_sequence=('ncec_adp', 'GTCTTCTGCTTGCAAGCAGAAGAC'),
-                    end_sequence=('ncec_adp_rv', 'GTCTTCTGCTTGCAAGCAGAAGAC'))]
+            Adapter('NCEC_ADP_FWRV',
+                    start_sequence=('ncec_adpfwrv', 'GTCTTCTGCTTGAATGATACGGCG'),
+                    end_sequence=('ncec_adpfwrv_rv', 'CGCCGTATCATTCAAGCAGAAGAC')),
+            Adapter('NCEC_ADP_FWFW',
+                    start_sequence=('ncec_adpfwfw', 'GTCTTCTGCTTGCAAGCAGAAGAC'),
+                    end_sequence=('ncec_adpfwfw_rv', 'GTCTTCTGCTTGCAAGCAGAAGAC')),
+            Adapter('NCEC_ADP_RVRV',
+                    start_sequence=('ncec_adprvrv', 'CGCCGTATCATTAATGATACGGCG'),
+                    end_sequence=('ncec_adprvrv_rv', 'CGCCGTATCATTAATGATACGGCG'))]
 
 
 def make_full_native_barcode_adapter(barcode_num):
@@ -85,20 +93,31 @@ def make_full_native_barcode_adapter(barcode_num):
     start_barcode_seq = barcode.start_sequence[1]
     end_barcode_seq = barcode.end_sequence[1]
 
-    start_full_seq = 'CTCCACCCAGACTCATCCAT' + start_barcode_seq + 'ATAGAGGCTTTCTGTTGGTGCTGATATTGC'
-    end_full_seq = 'GCAATATCAGCACCAACAGAAAGCCTCTAT' + end_barcode_seq + 'ATGGATGAGTCTGGGTGGAG'
+    start_full_seq = 'AATGTACTTCGTTCAGTTACGTATTGCTAAGGTTAA' + start_barcode_seq + 'CAGCACCT'
+    end_full_seq = 'AGGTGCTG' + end_barcode_seq + 'TTAACCTTAGCAATACGTAACTGAACGAAGT'
 
     return Adapter('Native barcoding ' + str(barcode_num) + ' (full sequence)',
                    start_sequence=('NB' + '%02d' % barcode_num + '_start', start_full_seq),
                    end_sequence=('NB' + '%02d' % barcode_num + '_end', end_full_seq))
 
 
-
-def make_full_rapid_barcode_adapter(barcode_num):
+def make_old_full_rapid_barcode_adapter(barcode_num):  # applies to SQK-RBK001
     barcode = [x for x in ADAPTERS if x.name == 'Barcode ' + str(barcode_num) + ' (forward)'][0]
     start_barcode_seq = barcode.start_sequence[1]
 
-    start_full_seq = 'AATGTACTTCGTTCAGTTACGTATTGCT' + start_barcode_seq + 'GTTTTCGCATTTATCGTGAAACGCTTTCGCGTTTTTCGTGCGCCGCTTCA'
+    start_full_seq = 'AATGTACTTCGTTCAGTTACG' + 'TATTGCT' + start_barcode_seq + \
+                     'GTTTTCGCATTTATCGTGAAACGCTTTCGCGTTTTTCGTGCGCCGCTTCA'
 
-    return Adapter('Rapid barcoding ' + str(barcode_num) + ' (full sequence)',
+    return Adapter('Rapid barcoding ' + str(barcode_num) + ' (full sequence, old)',
+                   start_sequence=('RB' + '%02d' % barcode_num + '_full', start_full_seq))
+
+
+def make_new_full_rapid_barcode_adapter(barcode_num):  # applies to SQK-RBK004
+    barcode = [x for x in ADAPTERS if x.name == 'Barcode ' + str(barcode_num) + ' (forward)'][0]
+    start_barcode_seq = barcode.start_sequence[1]
+
+    start_full_seq = 'AATGTACTTCGTTCAGTTACG' + 'GCTTGGGTGTTTAACC' + start_barcode_seq + \
+                     'GTTTTCGCATTTATCGTGAAACGCTTTCGCGTTTTTCGTGCGCCGCTTCA'
+
+    return Adapter('Rapid barcoding ' + str(barcode_num) + ' (full sequence, new)',
                    start_sequence=('RB' + '%02d' % barcode_num + '_full', start_full_seq))
