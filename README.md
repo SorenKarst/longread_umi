@@ -52,5 +52,5 @@ A collection of scripts for processing longread UMI data.
    Figshare:  
    `wget https://ndownloader.figshare.com/files/15240455; gunzip -c 15240455 > reads.fq`  
    `wget https://ndownloader.figshare.com/files/15240461; gunzip -c 15240461 >> reads.fq`
-2. Open a terminal in the directory and run `longread-UMI-pipeline -d reads.fq -s 1000000 -c 30 -t <Number-of-threads>`. 
-3. Open a terminal in the directory and run `longread_UMI_mockanalysis.sh <Number-of-threads>`. 
+2. Open a terminal in the directory and run `longread-UMI-pipeline -d reads.fq -s 1000000 -c 30 -t <Number-of-threads>`
+3. Open a terminal in the directory and run `longread_UMI_mockanalysis <Number-of-threads>` 
