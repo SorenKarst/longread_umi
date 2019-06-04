@@ -53,11 +53,4 @@ A collection of scripts for processing longread UMI data.
    `wget https://ndownloader.figshare.com/files/15240455; gunzip -c 15240455 > reads.fq`  
    `wget https://ndownloader.figshare.com/files/15240461; gunzip -c 15240461 >> reads.fq`
 2. Open a terminal in the directory and run `longread-UMI-pipeline -d reads.fq -s 1000000 -c 30 -t <Number-of-threads>`. 
-
-### Generate data from paper
-1. Create a working directory, open a terminal, download the Zymo mock fastq data and decompress:  
-   ENA: `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963.fastq.gz; gunzip -c ERR3336963.fastq.gz > reads.fq`  
-   Figshare:  
-   `wget https://ndownloader.figshare.com/files/15240455; gunzip -c 15240455 > reads.fq`  
-   `wget https://ndownloader.figshare.com/files/15240461; gunzip -c 15240461 >> reads.fq`
-2. Open a terminal in the directory and run `/path/to/longread-UMI-pipeline/longread_UMI_mockanalysis.sh <Number-of-threads> reads.fq`. 
+3. Open a terminal in the directory and run `longread_UMI_mockanalysis.sh <Number-of-threads>`. 

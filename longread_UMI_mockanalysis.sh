@@ -13,19 +13,11 @@
 export PIPELINE_PATH="$(dirname "$(readlink -f "$0")")"
 . $PIPELINE_PATH/scripts/dependencies.sh # Path to dependencies script
 THREADS=${1:-60}
-READS=${2:-reads.fq}
 REF=scripts/zymo-ref-uniq_2019-03-15.fa
 REF_VENDOR=scripts/zymo-ref-uniq_vendor.fa
 
 
 ### Data processing -----------------------------------------------------
-
-# Run longread-UMI-pipeline
-./longread_UMI_pipeline.sh \
-  -d $READS \
-  -s 1000000 \
-  -c 30 \
-  -t $THREADS
 
 # Validation
 mkdir validation
