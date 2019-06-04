@@ -33,6 +33,8 @@ export CONSENSUS_SRACON=$PIPELINE_PATH/scripts/consensus_seed-racon.sh
 export POLISH_MEDAKA=$PIPELINE_PATH/scripts/polish_medaka.sh
 export TRIM_AMPLICON=$PIPELINE_PATH/scripts/trim_amplicon.sh
 export VARIANTS=$PIPELINE_PATH/scripts/variants.sh
+export REF=$PIPELINE_PATH/scripts/zymo-ref-uniq_2019-03-15.fa
+export REF_VENDOR=$PIPELINE_PATH/scripts/zymo-ref-uniq_vendor.fa
 
 # Version dump
 ncec_version_dump (){

@@ -13,9 +13,6 @@
 export PIPELINE_PATH="$(dirname "$(readlink -f "$0")")"
 . $PIPELINE_PATH/scripts/dependencies.sh # Path to dependencies script
 THREADS=${1:-60}
-REF=scripts/zymo-ref-uniq_2019-03-15.fa
-REF_VENDOR=scripts/zymo-ref-uniq_vendor.fa
-
 
 ### Data processing -----------------------------------------------------
 
