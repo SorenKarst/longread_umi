@@ -50,6 +50,15 @@ done
 
 $MINIMAP2 \
   -ax map-ont \
+  validation/variants_all.fa \
+  consensus_sracon_medaka_medaka.fa \
+  -t $THREADS --cs |\
+  $SAMTOOLS view -F 2308 - |\
+  cut -f1-9,12,21 \
+  > validation/consensus_sracon_medaka_medaka_variants.sam
+
+$MINIMAP2 \
+  -ax map-ont \
   $REF_VENDOR \
   consensus_sracon_medaka_medaka.fa \
   -t $THREADS --cs |\
