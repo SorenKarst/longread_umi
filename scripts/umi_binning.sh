@@ -22,10 +22,13 @@ OUT_DIR=$2
 THREADS=$3
 MIN_LENGTH=$4
 MAX_LENGTH=$5
-FW1=${6:-CAAGCAGAAGACGGCATACGAGAT} #RC: ATCTCGTATGCCGTCTTCTGCTTG
-FW2=${7:-AGRGTTYGATYMTGGCTCAG} #RC: CTGAGCCAKRATCRAACYCT
-RV1=${8:-AATGATACGGCGACCACCGAGATC} #RC: GATCTCGGTGGTCGCCGTATCATT
-RV2=${9:-CGACATCGAGGTGCCAAAC} #RC: GTTTGGCACCTCGATGTCG
+TERMINAL1_CHECK_RANGE=${6:-70}
+TERMINAL2_CHECK_RANGE=${7:-80}
+FW1=${8:-CAAGCAGAAGACGGCATACGAGAT} #RC: ATCTCGTATGCCGTCTTCTGCTTG
+FW2=${9:-AGRGTTYGATYMTGGCTCAG} #RC: CTGAGCCAKRATCRAACYCT
+RV1=${10:-AATGATACGGCGACCACCGAGATC} #RC: GATCTCGGTGGTCGCCGTATCATT
+RV2=${11:-CGACATCGAGGTGCCAAAC} #RC: GTTTGGCACCTCGATGTCG
+
 
 ### Primer formating
 revcom() {
@@ -192,20 +195,22 @@ mkdir $OUT_DIR/read_binning/bins
 BINNING_DIR=$OUT_DIR/read_binning
 
 # Extract UMI region
-$GAWK -v BD="$BINNING_DIR" 'NR%4==1{
-       print ">" substr($1,2) > BD"/reads_tf_umi1.fa";
-     }
-     NR%4==2{
-       print substr($0, 1, 55) > BD"/reads_tf_umi1.fa";
-     }
+$GAWK -v BD="$BINNING_DIR" -v TL="$TERMINAL1_CHECK_RANGE" '
+  NR%4==1{
+    print ">" substr($1,2) > BD"/reads_tf_umi1.fa";
+  }
+  NR%4==2{
+    print substr($0, 1, TL) > BD"/reads_tf_umi1.fa";
+  }
 ' $UMI_DIR/reads_tf_start.fq
 
-$GAWK -v BD="$BINNING_DIR" 'NR%4==1{
-       print ">" substr($1,2) > BD"/reads_tf_umi2.fa";  
-     }
-     NR%4==2{
-       print substr($0, length($0) - 64, 65)  > BD"/reads_tf_umi2.fa";  
-     }
+$GAWK -v BD="$BINNING_DIR" -v TL="$TERMINAL2_CHECK_RANGE" '
+  NR%4==1{
+     print ">" substr($1,2) > BD"/reads_tf_umi2.fa";  
+   }
+   NR%4==2{
+     print substr($0, length($0) - TL + 1, TL)  > BD"/reads_tf_umi2.fa";  
+   }
 ' $UMI_DIR/reads_tf_end.fq
 
 

@@ -13,7 +13,7 @@
 
 ### Description ----------------------------------------------------------------
 
-USAGE="$(basename "$0") [-h] [-d file -s value -c value -t value] 
+USAGE="$(basename "$0") [-h] [-d file -s value -c value -f value -r value -t value] 
 -- longread-UMI-pipeline v.0.1.0: Generates UMI consensus sequences from
    raw Nanopore fastq reads with UMIs in both terminals.
 
@@ -23,18 +23,22 @@ where:
     -s  Process <value> number of bins.
     -c  Minimum read coverage for using UMI consensus sequences for 
         variant calling.
+    -f  Check start of read up to f bp for UMIs. Default: 70.
+    -r  Check end of read up to f bp for UMIs. Default: 80.
     -t  Number of threads to use. Ps. Medaka bug means medaka uses all available..
 "
 
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:s:c:t:' OPTION; do
+while getopts ':hzd:s:c:f:r:t:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) INPUT_READS=$OPTARG;;
     s) UMI_SUBSET_N=$OPTARG;;
     c) UMI_COVERAGE_MIN=$OPTARG;;
+    f) START_READ_CHECK=$OPTARG;;
+    r) END_READ_CHECK=$OPTARG;;
     t) THREADS=$OPTARG;;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
     \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
@@ -46,6 +50,8 @@ MISSING="is missing but required. Exiting."
 if [ -z ${INPUT_READS+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
 if [ -z ${UMI_SUBSET_N+x} ]; then echo "-s $MISSING"; echo "$USAGE"; exit 1; fi; 
 if [ -z ${UMI_COVERAGE_MIN+x} ]; then echo "-c $MISSING"; echo "$USAGE"; exit 1; fi;
+if [ -z ${START_READ_CHECK+x} ]; then START_READ_CHECK=70; fi; 
+if [ -z ${END_READ_CHECK+x} ]; then END_READ_CHECK=80; fi;
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 
 ### Source commands and subscripts -------------------------------------
@@ -73,7 +79,9 @@ $UMI_BINNING \
   umi_binning  `# Output folder`\
   $THREADS     `# Number of threads`\
   3500         `# Min read length`\
-  6000         `# Max read length`
+  6000         `# Max read length` \
+  $START_READ_CHECK `# Start of read to check` \
+  $END_READ_CHECK `# End of read to check`
 
 # Sample UMI bins for testing
 find umi_binning/read_binning/bins \
