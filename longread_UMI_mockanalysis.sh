@@ -69,5 +69,17 @@ $USEARCH -uchime2_ref consensus_sracon_medaka_medaka.fa \
   -mode sensitive
 
 ### Read stats
-echo "raw,"$(( $(wc -l < ./reads.fq)/4 )) >> validation/data_stats.txt
-echo "trim,"$(( $(wc -l < ./umi_binning/trim/reads_tf.fq)/4 )) >> validation/data_stats.txt
+fastq_stats(){
+  awk -v sample="$2" '
+    NR%4==2{
+      rc++
+      bp+=length
+    } END {
+      print sample","rc","bp","bp/rc
+    }
+  ' $1
+}
+
+echo "data_type,read_count,bp_total,bp_average" > validation/data_stats.txt
+fastq_stats ./reads.fq raw >> validation/data_stats.txt
+fastq_stats ./umi_binning/trim/reads_tf.fq trim >> validation/data_stats.txt
