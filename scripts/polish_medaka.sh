@@ -17,14 +17,12 @@ BINNING_DIR=$2 #Raw read bins file path name
 OUT_DIR=$3 #output folder name
 THREADS=$4 #Number of threads
 SAMPLE=$5 # List of bins to process
-RV=${6:-no} # Reverse complement reference?
 
 ### Medaka polishing assembly -------------------------------------------------
 
 # Format names
 CONSENSUS_NAME=${CONSENSUS_FILE##*/}
 CONSENSUS_NAME=${CONSENSUS_NAME%.*}
-[[ $RV == "yes" ]] && RV_PREFIX="rc"
 
 # Start medaka environment if relevant
 eval "$MEDAKA_ENV_START"
@@ -36,61 +34,112 @@ if [ -d "$OUT_DIR" ]; then
 fi
 mkdir $OUT_DIR
 
-# Custom function
-medaka_polish() {
+# Individual mapping of UMI bins to consensus
 
+mkdir $OUT_DIR/mapping 
+
+medaka_align() {
   # Input
   local IN=$(cat)
   local BINNING_DIR=$1
   local OUT_DIR=$2
-  local MEDAKA_MODEL=$3
-  local RV=$4
 
   # Name format
   local UMI_NAME=$(echo "$IN" | grep -o "umi.*bins")
-  local UMI_BIN=$(find $BINNING_DIR/ -name ${UMI_NAME}.fa*)
-  local RC=$(( $(wc -l < $UMI_BIN)/4 )) 
+  local UMI_BIN=$BINNING_DIR/*/${UMI_NAME}.fa*
+  local RC=$(( $(wc -l < $UMI_BIN)/4 ))  
 
-  # Prepare output folder
-  local UMI_OUT=$OUT_DIR/$UMI_NAME
-  mkdir $UMI_OUT
+  # Setup working directory
+  mkdir $OUT_DIR/$UMI_NAME
   echo "$IN" |\
-    awk -v umi_name="$UMI_NAME" '
-      /^>/{print ">" umi_name}
-      !/^>/
-    ' > $UMI_OUT/$UMI_NAME.fa
-  if [ $RV == "yes" ]; then
-    RVSEQ=$($SEQTK seq -r $UMI_OUT/$UMI_NAME.fa)
-    echo "$RVSEQ" > $UMI_OUT/$UMI_NAME.fa
-  fi
-
-  # Perform polishing
-  medaka_consensus -i $UMI_BIN \
-   -d $UMI_OUT/$UMI_NAME.fa \
-   -o $UMI_OUT \
-   -m $MEDAKA_MODEL \
-   -t 1
-
-  if [ -f $UMI_OUT/consensus.fasta ]; then
     awk -v rc="$RC" '
-      /^>/{print $0 ";size=" rc}
+      /^>/{print $0 ":size=" rc}
       !/^>/
-    ' $UMI_OUT/consensus.fasta > $UMI_OUT/${UMI_NAME}_md.fa
-    rm $UMI_OUT/consensus.fasta
-  fi
+    ' > $OUT_DIR/$UMI_NAME/$UMI_NAME.fa
+
+  # Map UMI reads to consensus
+  mini_align \
+    -i $UMI_BIN \
+    -r $OUT_DIR/$UMI_NAME/$UMI_NAME.fa \
+    -P \
+    -m \
+    -p $OUT_DIR/$UMI_NAME/${UMI_NAME} \
+    -t 1
 }
 
-export -f medaka_polish
+export -f medaka_align
 
-# Perform medaka polishing in parallel
-cat $CONSENSUS_FILE | $SEQTK seq -l0 - |\
+cat $CONSENSUS_FILE |\
+  $SEQTK seq -l0 - |\
   ( [[ "${SAMPLE}" ]] && grep -A1 -Ff $SAMPLE | sed '/^--$/d' || cat ) |\
-  $GNUPARALLEL --progress -j$THREADS --recstart ">" -N 1 --pipe \
-  "cat | medaka_polish $BINNING_DIR $OUT_DIR $MEDAKA_MODEL $RV"
+  $GNUPARALLEL \
+    --progress  \
+    -j $(( THREADS * 10 )) \
+    --recstart ">" \
+    -N 1 \
+    --pipe \
+    "medaka_align \
+       $BINNING_DIR \
+       $OUT_DIR/mapping
+    "
 
-find $OUT_DIR -name '*_md.fa' -exec cat {} \; \
-  > $OUT_DIR/${CONSENSUS_NAME}_medaka${RV_PREFIX}.fa
+# Calculate consensus probabilities
+mkdir $OUT_DIR/consensus
+
+consensus_wrapper() {
+  # Input
+  local JOB_NR=$1
+  local OUT_DIR=$2
+  local MODEL=$3
+  local CON_THREADS=$4
+
+  # Merge bams
+  $SAMTOOLS merge \
+    -b <(cat) \
+    $OUT_DIR/${JOB_NR}.bam
+
+  # Index bam
+  $SAMTOOLS index \
+    $OUT_DIR/${JOB_NR}.bam
+
+  # Medaka consensus
+  medaka consensus \
+    $OUT_DIR/${JOB_NR}.bam \
+    $OUT_DIR/${JOB_NR}_consensus.hdf \
+    --threads 1 \
+    --model $MODEL
+}
+
+export -f consensus_wrapper
+
+find $OUT_DIR/mapping/*/ \
+  -type f \
+  -name "umi*bins.bam" |\
+$GNUPARALLEL \
+  --progress \
+  -j $THREADS \
+  -N1 \
+  --roundrobin \
+  --pipe \
+  "consensus_wrapper \
+     {#} \
+     $OUT_DIR/consensus \
+     $MEDAKA_MODEL
+  "
+
+# Stitch consensus sequences
+medaka stitch \
+  $OUT_DIR/consensus/*_consensus.hdf \
+  $OUT_DIR/${CONSENSUS_NAME}_medaka.fa 
 
 # Deactivate medaka environment if relevant
 eval "$MEDAKA_ENV_STOP"
 
+# Testing
+exit 0
+/space/users/smk/Software/longread-UMI-pipeline/scripts/polish_medaka.sh \
+  sracon/consensus_sracon.fa \
+  umi_binning/read_binning/bins \
+  test_new \
+  24 \
+  sample500.txt
