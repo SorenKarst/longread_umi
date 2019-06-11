@@ -24,7 +24,7 @@ where:
     -c  Minimum read coverage for using UMI consensus sequences for 
         variant calling.
     -f  Check start of read up to f bp for UMIs. Default: 70.
-    -r  Check end of read up to f bp for UMIs. Default: 80.
+    -r  Check end of read up to r bp for UMIs. Default: 80.
     -t  Number of threads to use. Ps. Medaka bug means medaka uses all available..
 "
 
