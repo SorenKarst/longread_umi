@@ -61,7 +61,6 @@ medaka_align() {
   mini_align \
     -i $UMI_BIN \
     -r $OUT_DIR/$UMI_NAME/$UMI_NAME.fa \
-    -P \
     -m \
     -p $OUT_DIR/$UMI_NAME/${UMI_NAME} \
     -t 1
