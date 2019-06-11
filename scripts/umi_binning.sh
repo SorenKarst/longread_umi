@@ -134,6 +134,7 @@ $USEARCH -cluster_fast $UMI_DIR/umi12u.fa -id 0.85 \
   -centroids $UMI_DIR/umi12c.fa -uc $UMI_DIR/umi12c.txt \
   -sizein -sizeout -strand both 
 
+
 # Remove potential chimeras
 paste <(cat $UMI_DIR/umi12c.fa | paste - - ) \
   <($GAWK '!/^>/{print}' $UMI_DIR/umi12c.fa | rev | tr ATCG TAGC) |\
@@ -227,6 +228,11 @@ cat $UMI_DIR/umi_ref.fa <($SEQTK seq -r $UMI_DIR/umi_ref.fa |\
      }'
 
 # Map UMIs to UMI references
+## Important settings:
+## -N : diasble iterative search. All possible hits are found.
+## -F 20 : Removes unmapped and reverse read matches. Keeps UMIs
+##         in correct orientations.
+
 $BWA index $BINNING_DIR/reads_tf_umi1.fa
 $BWA index $BINNING_DIR/reads_tf_umi2.fa
 
@@ -264,8 +270,8 @@ $GAWK -v BD="$BINNING_DIR" '
     for (i in shits){
       # Split hit in subdata (read, pos, cigar, err)  
       split(shits[i], tmp, ",");
-      # Add hit if non-empty and not seen before
-      if (tmp[1] != "" && !(tmp[1] in err1[$1])){
+      # Add hit if non-empty, not seen before and not target reverse strand
+      if (tmp[1] != "" && !(tmp[1] in err1[$1]) && tmp[2] ~ "+"){
         err1[$1][tmp[1]] = tmp[4];
       }
     }
@@ -292,8 +298,8 @@ $GAWK -v BD="$BINNING_DIR" '
     for (i in shits){
       # Split hit in subdata (read, pos, cigar, err)
       split(shits[i], tmp, ",");
-      # Add hit if non-empty and not seen before
-      if (tmp[1] != "" && !(tmp[1] in err2[$1])){
+      # Add hit if non-empty, not seen before and not target reverse strand
+      if (tmp[1] != "" && !(tmp[1] in err2[$1]) && tmp[2] ~ "+"){
         err2[$1][tmp[1]] = tmp[4];
       }
     }
