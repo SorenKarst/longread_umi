@@ -39,7 +39,7 @@ export REF_VENDOR=$PIPELINE_PATH/scripts/zymo-ref-uniq_vendor.fa
 ncec_version_dump (){
   OUT=${1:-./longread-UMI-pipeline_version_dump.txt}
 
-  echo "Time: $(date +%Y-%m-%d-%T)"
+  echo "Time: $(date +%Y-%m-%d-%T)"  >> $OUT
   echo "Software Version:" >> $OUT
   echo "seqtk - $($SEQTK 2>&1 >/dev/null | grep 'Version')" >> $OUT 
   echo "Parallel - $($GNUPARALLEL --version | head -n 1)" >> $OUT 
