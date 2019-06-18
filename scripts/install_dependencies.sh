@@ -193,7 +193,7 @@ TAIL='^# Scripts paths'
 
 sed -i \
   -e "/$LEAD/,/$TAIL/{ /$LEAD/{p; r ./longread-UMI-pipeline_paths.txt
-        }; /$TAIL/p; d }"  $SOFTWARE_DIR/longread-UMI-pipeline/scripts/dependencies.sh \
+        }; /$TAIL/p; d }"  $SOFTWARE_DIR/longread-UMI-pipeline/scripts/dependencies.sh
 
 
 ### Test longread-UMI-pipeline
