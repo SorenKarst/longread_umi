@@ -79,4 +79,9 @@ find $IN -name 'umi*bins.fastq'  |\
   $GNUPARALLEL --progress -j $THREADS "seed_racon {} $OUT"
 
 #Collect seed-racon consensus sequences
-find $OUT/*/ -name "*_sr*.fa" -exec cat {} \; > $OUT/consensus_${OUT}.fa
+find $OUT/ \
+  -mindepth 2 \
+  -maxdepth 2 \
+  -name "*_sr*.fa" \
+  -exec cat {} \; \
+  > $OUT/consensus_${OUT}.fa

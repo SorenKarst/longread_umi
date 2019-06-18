@@ -111,7 +111,9 @@ consensus_wrapper() {
 
 export -f consensus_wrapper
 
-find $OUT_DIR/mapping/*/ \
+find $OUT_DIR/mapping/ \
+  -mindepth 2 \
+  -maxdepth 2 \
   -type f \
   -name "umi*bins.bam" |\
 $GNUPARALLEL \
