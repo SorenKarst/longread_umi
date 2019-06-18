@@ -48,7 +48,7 @@ seed_racon () {
     -fastaout $OUT/${UMINO}_sr.fa -relabel seed
 
   # Racon polishing
-  for i in `seq 1 5`; do
+  for i in `seq 1 4`; do
     $MINIMAP2 \
       -t 1 \
       -x ava-ont \
