@@ -52,7 +52,7 @@ A collection of scripts for processing longread UMI data.
 
 ### Run pipeline on Zymo mock data
 1. Create a working directory, open a terminal, download the Zymo mock fastq data and decompress:  
-   `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963.fastq.gz; gunzip -c ERR3336963.fastq.gz > reads.fq`  
+   `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963_1.fastq.gz; gunzip -c ERR3336963_1.fastq.gz > reads.fq`  
 2. Open a terminal in the directory and run:  
   `longread-UMI-pipeline -d reads.fq -s 1000000 -c 30 -t <Number-of-threads>`
 3. Open a terminal in the directory and run:  
