@@ -13,7 +13,6 @@
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
 #               Ryans Ziels (ziels@mail.ubc.ca)
-#    version	0.1.0
 #    license	GNU General Public License
 
 ### Create file with paths
