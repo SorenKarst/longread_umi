@@ -62,7 +62,6 @@ export PIPELINE_PATH="$(dirname "$(readlink -f "$0")")"
 # Logging
 LOG_NAME="longread-UMI-pipeline_log_$(date +"%Y-%m-%d-%T").txt"
 echo "longread-UMI-pipeline log" >> $LOG_NAME
-echo "Script start: $(date)" >> $LOG_NAME
 ncec_version_dump $LOG_NAME
 exec &> >(tee -a "$LOG_NAME")
 exec 2>&1
