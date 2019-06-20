@@ -5,7 +5,6 @@
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
 #               Ryans Ziels (ziels@mail.ubc.ca)
-#    version	0.1.0
 #    license	GNU General Public License
 #
 # To-do:
@@ -14,7 +13,7 @@
 ### Description ----------------------------------------------------------------
 
 USAGE="$(basename "$0") [-h] [-d file -s value -c value -f value -r value -t value] 
--- longread-UMI-pipeline v.0.1.0: Generates UMI consensus sequences from
+-- longread-UMI-pipeline: Generates UMI consensus sequences from
    raw Nanopore fastq reads with UMIs in both terminals.
 
 where:
