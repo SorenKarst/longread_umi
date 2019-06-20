@@ -66,11 +66,12 @@ if [ ! -f "$TRIM_DIR/reads_tf.fq" ]; then
       --threads $FT_THREADS \
       --min_split_read_size $MIN_LENGTH \
       --adapter_threshold  80 \
+	  --min_trim_size 20 \
       --extra_end_trim 0 \
       --extra_middle_trim_good_side 0 \
       --extra_middle_trim_bad_side 0 \
       --middle_threshold 80 \
-      --check_reads 1000; \
+      --check_reads 5000; \
     $FILTLONG --min_length $MIN_LENGTH --min_mean_q 70 $TRIM_DIR/{#}_trim.tmp |\
       $CUTADAPT -j $FT_THREADS -m $MIN_LENGTH -M $MAX_LENGTH - \
         -o $TRIM_DIR/{#}_filt.tmp;"
