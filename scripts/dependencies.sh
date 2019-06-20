@@ -8,22 +8,22 @@
 #    license	GNU General Public License
 
 # Program paths
-export SEQTK=/space/sharedbin/bin/seqtk # https://github.com/lh3/seqtk
-export GNUPARALLEL=/space/users/smk/bin/parallel #(wget pi.dk/3 -qO - ||  curl pi.dk/3/) | bash
-export USEARCH=/space/sharedbin/bin/usearch11 #https://drive5.com/usearch/download.html
-export RACON=/space/users/smk/bin/racon #https://github.com/isovic/racon
-export MINIMAP2=/space/users/smk/Software/minimap2-2.16/minimap2 #https://github.com/lh3/minimap2
-export GAWK=/usr/bin/gawk 
-export MEDAKA_ENV_START='. /space/users/smk/Software/medaka-0.7.0/bin/activate' # https://github.com/nanoporetech/medaka.
-# Our implementation of Medaka requires installation in virtual environment as recommended by the developers.
-export MEDAKA_ENV_STOP='deactivate;'
-export MEDAKA_MODEL=r941_min_high # Specifies which medaka model to use. 
-export CUTADAPT=/space/users/smk/bin/cutadapt #https://cutadapt.readthedocs.io/en/stable/installation.html
-export PORECHOP_UMI=/space/users/smk/bin/porechop_umi #https://github.com/rrwick/Porechop. We have multiple installations of porechop and renamed one to porechop_umi for convenience.
-export FILTLONG=/space/users/smk/Software/Filtlong-0.2.0/bin/filtlong #https://github.com/rrwick/Filtlong
-export BWA=/space/users/smk/Software/bwa-0.7.17/bwa #https://github.com/lh3/bwa
-export SAMTOOLS=/space/users/smk/Software/samtools_1.9/bin/samtools #http://www.htslib.org/download/
-export BCFTOOLS=/space/users/smk/Software/bcftools_1.9/bin/bcftools #http://www.htslib.org/download/
+
+export SEQTK=/space/users/smk/software/seqtk/seqtk
+export GNUPARALLEL=/user/bio.aau.dk/smk/bin/parallel
+export RACON=/space/users/smk/software/racon/build/bin/racon
+export MINIMAP2=/user/bio.aau.dk/smk/bin/minimap2
+export GAWK=/usr/bin/gawk
+export SAMTOOLS=/user/bio.aau.dk/smk/bin/samtools
+export BCFTOOLS=/user/bio.aau.dk/smk/bin/bcftools
+export MEDAKA_ENV_START='. /space/users/smk/software/medaka/bin/activate'
+export MEDAKA_ENV_STOP='deactivate'
+export MEDAKA_MODEL=r941_min_high
+export CUTADAPT=/user/bio.aau.dk/smk/.local/bin/cutadapt
+export PORECHOP_UMI=/space/users/smk/software/Porechop/porechop-runner.py
+export FILTLONG=/space/users/smk/software/Filtlong/bin/filtlong
+export BWA=/space/users/smk/software/bwa/bwa
+export USEARCH=/space/users/smk/software/usearch/usearch11.0.667_i86linux32
 
 # Scripts paths
 export UMI_BINNING=$PIPELINE_PATH/scripts/umi_binning.sh
@@ -33,6 +33,7 @@ export TRIM_AMPLICON=$PIPELINE_PATH/scripts/trim_amplicon.sh
 export VARIANTS=$PIPELINE_PATH/scripts/variants.sh
 export REF=$PIPELINE_PATH/scripts/zymo-ref-uniq_2019-03-15.fa
 export REF_VENDOR=$PIPELINE_PATH/scripts/zymo-ref-uniq_vendor.fa
+export NANOPORE_BARCODES=$PIPELINE_PATH/scripts/nanopore_barcodes.csv
 
 # Version dump
 ncec_version_dump (){
