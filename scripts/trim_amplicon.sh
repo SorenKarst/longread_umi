@@ -15,6 +15,9 @@ OUT_DIR=$3
 TYPE=$4
 THREADS=$5
 
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
+
 #Format input
 IN_DIR_F=$(echo $IN_DIR | sed -e 's/[,;\t]/ /g')
 IN_REGEX_F=$(echo "$IN_REGEX" |\

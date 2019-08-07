@@ -1,6 +1,6 @@
 #!/bin/bash
 # DESCRIPTION
-#    longread-UMI-pipeline script. 
+#    longread_umi nanopore_pipeline script. 
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
@@ -12,8 +12,8 @@
 
 ### Description ----------------------------------------------------------------
 
-USAGE="$(basename "$0") [-h] [-d file -s value -c value -f value -r value -t value] 
--- longread-UMI-pipeline: Generates UMI consensus sequences from
+USAGE="$(basename "$0" .sh) [-h] [-d file -s value -c value -f value -r value -t value] 
+-- longread_umi nanopore_pipeline: Generates UMI consensus sequences from
    raw Nanopore fastq reads with UMIs in both terminals.
 
 where:
@@ -54,14 +54,13 @@ if [ -z ${END_READ_CHECK+x} ]; then END_READ_CHECK=80; fi;
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 
 ### Source commands and subscripts -------------------------------------
-export PIPELINE_PATH="$(dirname "$(readlink -f "$0")")"
-. $PIPELINE_PATH/scripts/dependencies.sh # Path to dependencies script
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
 
 ### Pipeline -----------------------------------------------------------
 # Logging
-LOG_NAME="longread-UMI-pipeline_log_$(date +"%Y-%m-%d-%T").txt"
-echo "longread-UMI-pipeline log" >> $LOG_NAME
-ncec_version_dump $LOG_NAME
+LOG_NAME="longread_umi_nanopore_pipeline_log_$(date +"%Y-%m-%d-%T").txt"
+echo "longread_umi nanopore_pipeline log" >> $LOG_NAME
+longread_umi_version_dump $LOG_NAME
 exec &> >(tee -a "$LOG_NAME")
 exec 2>&1
 echo ""
@@ -72,7 +71,7 @@ echo "Bin size cutoff: $UMI_COVERAGE_MIN"
 echo ""
 
 # Read filtering and UMI binning
-$UMI_BINNING \
+longread_umi umi_binning  \
   $INPUT_READS `# Raw nanopore data in fastq format`\
   umi_binning  `# Output folder`\
   $THREADS     `# Number of threads`\
@@ -87,30 +86,30 @@ find umi_binning/read_binning/bins \
    head -n $UMI_SUBSET_N> sample$UMI_SUBSET_N.txt
 
 # Consensus
-$CONSENSUS_SRACON \
+longread_umi consensus_racon \
   umi_binning/read_binning/bins `# Path to UMI bins`\
-  sracon                        `# Output folder`\
+  racon                         `# Output folder`\
   $THREADS                      `# Number of threads`\
   sample$UMI_SUBSET_N.txt       `# List of bins to process`
 
 # Polishing
-$POLISH_MEDAKA \
-  sracon/consensus_*.fa         `# Path to consensus data`\
+longread_umi polish_medaka \
+  racon/consensus_*.fa          `# Path to consensus data`\
   umi_binning/read_binning/bins `# Path to UMI bins`\
-  sracon_medaka                 `# Output folder`\
+  racon_medaka                  `# Output folder`\
   $THREADS                      `# Number of threads`\
   sample$UMI_SUBSET_N.txt       `# List of bins to process`
 
-$POLISH_MEDAKA \
-  sracon_medaka/consensus_*.fa  `# Path to consensus data`\
+longread_umi polish_medaka \
+  racon_medaka/consensus_*.fa   `# Path to consensus data`\
   umi_binning/read_binning/bins `# Path to UMI bins`\
-  sracon_medaka_medaka          `# Output folder`\
+  racon_medaka_medaka           `# Output folder`\
   $THREADS                      `# Number of threads`\
   sample$UMI_SUBSET_N.txt       `# List of bins to process`
 
 # Trim UMI consensus data
-$TRIM_AMPLICON \
-  sracon_medaka_medaka `# Path to consensus data`\
+longread_umi trim_amplicon \
+  racon_medaka_medaka  `# Path to consensus data`\
   consensus*fa         `# Consensus file pattern`\
   .                    `# Output folder`\
   rrna_8f2490r         `# Primers used`\
@@ -119,7 +118,7 @@ $TRIM_AMPLICON \
 # Generate variants
 
 ## Subset to UMI consensus sequences with min read coverage
-awk -v bsco="$UMI_COVERAGE_MIN" '
+$GAWK -v bsco="$UMI_COVERAGE_MIN" '
   /^>/{
     s=$0
     gsub(".*size=", "", s)
@@ -129,12 +128,12 @@ awk -v bsco="$UMI_COVERAGE_MIN" '
       print
     }
   }
-' consensus_sracon_medaka_medaka.fa \
-> consensus_sracon_medaka_medaka_${UMI_COVERAGE_MIN}.fa
+' consensus_racon_medaka_medaka.fa \
+> consensus_racon_medaka_medaka_${UMI_COVERAGE_MIN}.fa
 
 ## Variant calling of from UMI consensus sequences
-$VARIANTS \
-  consensus_sracon_medaka_medaka_${UMI_COVERAGE_MIN}.fa `# Path to consensus data`\
+longread_umi variants \
+  consensus_racon_medaka_medaka_${UMI_COVERAGE_MIN}.fa `# Path to consensus data`\
   variants `# Output folder`\
   $THREADS `# Number of threads`
 

@@ -1,20 +1,19 @@
 #!/bin/bash
 # DESCRIPTION
-#    longread-UMI: pipelines and tools for longread UMI processing.
+#    longread_umi: pipelines and tools for longread UMI processing.
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
 #               Ryans Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 #
-# To-do:
 
 
 ### Description ----------------------------------------------------------------
 
 USAGE="$(basename "$0") [-h] [ name ...]
 
--- longread_UMI: pipelines and tools for longread UMI processing.
+-- longread_umi: pipelines and tools for longread UMI processing.
 
 where:
     -h   Show this help text.
@@ -22,12 +21,11 @@ where:
     ...  Commands for tool.
 
 Pipelines:
-* longread_UMI_pipeline:       Generate UMI consensus sequences from raw longread data with
+* nanopore_pipeline:           Generate UMI consensus sequences from raw nanopore data with
                                terminal UMIs.
-* longread_UMI_mockanalysis:   Compare UMI consensus sequences generated from the
-                               ZymoBIOMICS MIcrobial community standard (D6305).
+* qc_pipeline:                 Compare UMI consensus sequences with refence sequences.
 
-Commands:
+Tools:
 * check_primer:                Check primer positions in raw longread data. Important
                                input for UMI binning script.
 * demultiplex_nb:              Post UMI consensus demultiplexing of using Nanopore 
@@ -58,9 +56,9 @@ if [ -z "${TOOL_ARG}" ]; then
 fi
 
 # Paths
-PIPELINE_PATH=`readlink ${BASH_SOURCE[0]}`
-export PIPELINE_PATH=${SCRIPT_PATH%/*}
+export LONGREAD_UMI_PATH="$(dirname "$(readlink -f "$0")")"
 
-### Call tool ------------------------------------------------------------------
 
-$PIPELINE_PATH/scripts/$TOOL $TOOL_ARG
+### Call tool or command ---------------------------------------------------------------
+
+$LONGREAD_UMI_PATH/scripts/${TOOL}.sh $TOOL_ARG

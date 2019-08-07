@@ -12,10 +12,6 @@
 #    license	GNU General Public License
 #
 
-### Source commands and subscripts -------------------------------------
-export PIPELINE_PATH="$(dirname "$(readlink -f "$0")")"
-. $PIPELINE_PATH/dependencies.sh # Path to dependencies script
-
 ### Terminal input ------------------------------------------------------------
 READ_IN=${1:-reads.fq}
 OUT_DIR=${2:-primer_position}
@@ -23,6 +19,9 @@ THREADS=${3:-60}
 FW2=${4:-AGRGTTYGATYMTGGCTCAG} #RC: CTGAGCCAKRATCRAACYCT
 RV2=${5:-CGACATCGAGGTGCCAAAC} #RC: GTTTGGCACCTCGATGTCG
 TERMINAL_LENGTH=${6:-500}
+
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
 
 ### Determine primer mapping positions
 

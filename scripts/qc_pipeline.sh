@@ -9,9 +9,10 @@
 #    license	GNU General Public License
 
 ### Source commands and subscripts -------------------------------------
-export PIPELINE_PATH="$(dirname "$(readlink -f "$0")")"
-. $PIPELINE_PATH/scripts/dependencies.sh # Path to dependencies script
 THREADS=${1:-60}
+
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
 
 ### Data processing -----------------------------------------------------
 

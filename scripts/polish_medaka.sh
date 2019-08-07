@@ -17,6 +17,9 @@ OUT_DIR=$3 #output folder name
 THREADS=$4 #Number of threads
 SAMPLE=$5 # List of bins to process
 
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
+
 ### Medaka polishing assembly -------------------------------------------------
 
 # Format names
@@ -143,3 +146,9 @@ exit 0
   test_new \
   24 \
   sample500.txt
+
+CONSENSUS_FILE=racon/consensus_racon.fa
+BINNING_DIR=umi_binning/read_binning/bins
+OUT_DIR=racon_medaka
+THREADS=1
+SAMPLE=10

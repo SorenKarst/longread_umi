@@ -17,6 +17,9 @@ CONSENSUS_FILE=$1 #Consensus file path name
 OUT_DIR=$2 #output folder name
 THREADS=$3 #Number of threads
 
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
+
 ### Custom functions ----------------------------------------------------------
 bam_read_split() {
   ### Description

@@ -17,6 +17,9 @@ OUT=$2 #output folder name
 THREADS=$3 #number of threads
 SAMPLE=$4 # List of bins to process
 
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
+
 ### Usearch centroid and racon polishing --------------------------------------
 
 # Prepare output folders

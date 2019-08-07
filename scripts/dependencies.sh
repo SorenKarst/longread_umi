@@ -9,38 +9,34 @@
 
 # Program paths
 
-export SEQTK=/space/users/smk/software/seqtk/seqtk
-export GNUPARALLEL=/user/bio.aau.dk/smk/bin/parallel
-export RACON=/space/users/smk/software/racon/build/bin/racon
-export MINIMAP2=/user/bio.aau.dk/smk/bin/minimap2
+export SEQTK=/space/sharedbin/bin/seqtk
+export GNUPARALLEL=/space/users/smk/bin/parallel
+export RACON=/space/users/smk/bin/racon
+export MINIMAP2=/space/users/smk/bin/minimap2-2.5
 export GAWK=/usr/bin/gawk
-export SAMTOOLS=/user/bio.aau.dk/smk/bin/samtools
-export BCFTOOLS=/user/bio.aau.dk/smk/bin/bcftools
-export MEDAKA_ENV_START='. /space/users/smk/software/medaka/bin/activate'
-export MEDAKA_ENV_STOP='deactivate'
+export SAMTOOLS=/space/users/smk/Software/samtools_1.9/bin/samtools
+export BCFTOOLS=/space/users/smk/Software/bcftools_1.9/bin/bcftools
+export MEDAKA_ENV_START='module load Python; . /space/users/smk/Software/medaka/bin/activate'
+export MEDAKA_ENV_STOP='deactivate; module purge'
 export MEDAKA_MODEL=r941_min_high
-export CUTADAPT=/user/bio.aau.dk/smk/.local/bin/cutadapt
-export PORECHOP_UMI=/space/users/smk/software/Porechop/porechop-runner.py
-export FILTLONG=/space/users/smk/software/Filtlong/bin/filtlong
-export BWA=/space/users/smk/software/bwa/bwa
-export USEARCH=/space/users/smk/software/usearch/usearch11.0.667_i86linux32
+export CUTADAPT=/space/users/smk/.local/bin/cutadapt
+export PORECHOP_UMI=/space/users/smk/bin/porechop_umi
+export FILTLONG=/space/sharedbin/bin/filtlong
+export BWA=/usr/bin/bwa
+export USEARCH=/space/sharedbin/bin/usearch11
 
-# Scripts paths
-export UMI_BINNING=$PIPELINE_PATH/scripts/umi_binning.sh
-export CONSENSUS_SRACON=$PIPELINE_PATH/scripts/consensus_seed-racon.sh
-export POLISH_MEDAKA=$PIPELINE_PATH/scripts/polish_medaka.sh
-export TRIM_AMPLICON=$PIPELINE_PATH/scripts/trim_amplicon.sh
-export VARIANTS=$PIPELINE_PATH/scripts/variants.sh
-export REF=$PIPELINE_PATH/scripts/zymo-ref-uniq_2019-03-15.fa
-export REF_VENDOR=$PIPELINE_PATH/scripts/zymo-ref-uniq_vendor.fa
-export NANOPORE_BARCODES=$PIPELINE_PATH/scripts/nanopore_barcodes.csv
+# longread_umi paths
+export REF=$LONGREAD_UMI_PATH/scripts/zymo-ref-uniq_2019-03-15.fa
+export REF_VENDOR=$LONGREAD_UMI_PATH/scripts/zymo-ref-uniq_vendor.fa
+export NANOPORE_BARCODES=$LONGREAD_UMI_PATH/scripts/nanopore_barcodes.csv
 
 # Version dump
-ncec_version_dump (){
-  OUT=${1:-./longread-UMI-pipeline_version_dump.txt}
+longread_umi_version_dump (){
+  local OUT=${1:-./longread_umi_version_dump.txt}
 
   echo "Script start: $(date +%Y-%m-%d-%T)"  >> $OUT
   echo "Software Version:" >> $OUT
+  echo "longread_umi - $(git --git-dir ${LONGREAD_UMI_PATH}/.git describe --tag)" >> $OUT
   echo "seqtk - $($SEQTK 2>&1 >/dev/null | grep 'Version')" >> $OUT 
   echo "Parallel - $($GNUPARALLEL --version | head -n 1)" >> $OUT 
   echo "Usearch - $($USEARCH --version)" >> $OUT 

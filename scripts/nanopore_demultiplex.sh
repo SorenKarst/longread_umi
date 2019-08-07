@@ -23,6 +23,9 @@ UMI_BIN_RESULTS=${4:-umi_binning/read_binning/umi_bin_map.txt}
 OUT_DIR=${5:-demultiplexing}
 BARCODE_FILE=${6:-$NANOPORE_BARCODES}
 
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
+
 # Demultiplexing of UMI consensus sequences sequenced with Nanopore barcodes
 mkdir $OUT_DIR
 
