@@ -40,13 +40,11 @@ rm ./get-pip.py
 python3 -m pip install virtualenv --user
 
 # Cmake
-module load git
 git clone https://github.com/scivision/cmake-utils.git;
 cd cmake-utils
 python3 cmake_setup.py \
   --install_path $SOFTWARE_DIR/cmake
 cd ..
-module purge
 rm -rf ./cmake-utils
 
 ### Install longread-UMI-pipeline
@@ -54,8 +52,7 @@ git clone https://github.com/SorenKarst/longread-UMI-pipeline
 cd ./longread-UMI-pipeline
 find . -name "*.sh" -exec chmod +x {} \;
 cd ..
-ln -s $SOFTWARE_DIR/longread-UMI-pipeline/longread_UMI_pipeline.sh ~/bin/longread-UMI-pipeline
-ln -s $SOFTWARE_DIR/longread-UMI-pipeline/longread_UMI_mockanalysis.sh ~/bin/longread-UMI-mockanalysis
+ln -s $SOFTWARE_DIR/longread-UMI-pipeline/longread_umi.sh ~/bin/longread_umi
 
 ### Install dependencies automaticly
 
@@ -197,5 +194,6 @@ sed -i \
 
 ### Test longread-UMI-pipeline
 cd longread-UMI-pipeline/test_data
-longread-UMI-pipeline -d test_reads.fq -s 10 -c 30 -t 1
+longread_umi nanopore_pipeline -d test_reads.fq -s 10 -c 30 -t 1
+longread_umi qc_pipeline -d test_reads.fq -c consensus_racon_medaka_medaka.fa -r zymo_curated -t 1
 
