@@ -137,7 +137,7 @@ longread_umi variants \
   variants `# Output folder`\
   $THREADS `# Number of threads`
 
-## Copy phase
+## Copy variants
 cp variants/variants*fa .
 
 
