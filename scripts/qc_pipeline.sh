@@ -10,10 +10,12 @@
 
 ### Description ----------------------------------------------------------------
 
-USAGE="$(basename "$0" .sh) [-h] [-d files -c files -r files -u dir -o dir -t value] 
+USAGE="$(basename "$0" .sh) [-h] [-d files -c files -r files -s file -u dir -o dir -t value] 
 -- longread_umi qc_pipeline: Mapping of read data and UMI consensus sequences to
    reference sequences to allow for error profiling in R. Detects chimeras using
-   uchime2_ref. Calculates data statistics.
+   uchime2_ref. Detects contamination by comparing mapping results to known references
+   and the SILVA database - only works if all the correct references are known.
+   Calculates data statistics.
 
 where:
     -h  Show this help text.
@@ -30,9 +32,14 @@ where:
         only used for mapping first consensus file.
         'zymo_curated' links to scripts/zymo-ref-uniq_2019-03-15.fa
         'zymo_vendor' links to scripts/zymo-ref-uniq_vendor.fa
+    -s  SILVA reference database used for detecting contamination.
     -u  UMI binning folder. Default 'umi_binning'.
     -o  Output folder. Default 'qc'.
     -t  Number of threads to use.
+
+Download SILVA database:
+wget https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
+gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 
 Test command:
 longread_umi qc_pipeline \
@@ -44,12 +51,13 @@ longread_umi qc_pipeline \
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:c:r:u:o:t:' OPTION; do
+while getopts ':hzd:c:r:s:u:o:t:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) READ_LIST=$OPTARG;;
     c) CON_LIST=$OPTARG;;
     r) REF_LIST=$OPTARG;;
+    s) SILVA=$OPTARG;;
     u) UMI_DIR=$OPTARG;;
     o) OUT=$OPTARG;;
     t) THREADS=$OPTARG;;
@@ -97,11 +105,11 @@ CON_=$(echo "$CON_LIST " | cut -d' ' -f2-)
 CON1_NAME=${CON1%.*}
 CON1_NAME=${CON1_NAME##*/}
 
-### Prepare binning statistics
+# Prepare binning statistics
 cp $UMI_DIR/read_binning/umi_bin_map.txt $OUT/
 cp $UMI_DIR/umi_ref/umi_ref.txt $OUT/
 
-### Process read data
+# Process read data
 echo "data_type,read_count,bp_total,bp_average" > $OUT/data_stats.txt
 
 for READ_FILE in $READ_LIST; do
@@ -140,10 +148,10 @@ $MINIMAP2 \
   $GAWK '$13 ~ /tp:A:P/{split($6,tax,"_"); print $1, tax[1]"_"tax[2]}'\
   > $OUT/read_classification.txt
 
-### Prepare consensus data
+# Prepare consensus data
 cp -t $OUT $CON_LIST
 
-### Mapping
+# Mapping
 for DATA_FILE in $OUT/*.fa; do
   DATA_NAME=${DATA_FILE%.*};
   DATA_NAME=${DATA_NAME##*/};
@@ -168,10 +176,10 @@ for REF in $REF_; do
     > $OUT/${CON1_NAME}_${REF_NAME}.sam
 done
 
-### Copy refs
+# Copy refs
 cp -t $OUT $REF_LIST
 
-### Detect chimeras
+# Detect chimeras
 $USEARCH \
   -uchime2_ref $CON1 \
   -uchimeout $OUT/${CON1_NAME}_chimera.txt \
@@ -179,9 +187,25 @@ $USEARCH \
   -strand plus \
   -mode sensitive
 
+# Detect contamination
+if [ ! -z ${SILVA+x} ]; then
+  SILVA_NAME=${SILVA%.*};
+  SILVA_NAME=${SILVA_NAME##*/};
+
+  # Map to SILVA database
+  $MINIMAP2 -ax map-ont \
+    $SILVA \
+    $CON1 \
+    -t $THREADS --cs |\
+    $SAMTOOLS view -F 2308 - |\
+    cut -f1-9,12,21 \
+    > $OUT/${CON1_NAME}_${SILVA_NAME}.sam
+fi
+
 # Testing
 exit 0
 longread_umi qc_pipeline \
   -d "test_reads.fq;umi_binning/trim/reads_tf.fq" \
   -c "consensus_racon_medaka_medaka.fa;variants_all.fa" \
-  -r "zymo_curated;zymo_vendor;variants_all.fa"
+  -r "zymo_curated;zymo_vendor;variants_all.fa" \
+  -s SILVA_132_SSURef_Nr99_tax_silva.fasta

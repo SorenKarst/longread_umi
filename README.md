@@ -53,13 +53,19 @@ A collection of scripts for processing longread UMI data.
 5. Run `longread_umi qc_pipeline -d test_reads.fq -c consensus_racon_medaka_medaka.fa -r zymo_curated -t 1`
 
 ### Run pipeline on Zymo mock Nanopore data and perform qc
-1. Create a working directory, open a terminal, download the Zymo mock Nanopore fastq data and decompress:  
-   `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963_1.fastq.gz; gunzip -c ERR3336963_1.fastq.gz > reads.fq`  
-2. Open a terminal in the directory and run:  
+1. Create a working directory and open a terminal
+2. Download the Zymo mock Nanopore fastq data and decompress:  
+   `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963_1.fastq.gz`  
+   `gunzip -c ERR3336963_1.fastq.gz > reads.fq`
+3. Download the SILVA database and decompress:  
+   `wget https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz`  
+   `gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz`  
+4. Open a terminal in the directory and run:  
   `longread_umi nanopore_pipeline -d reads.fq -s 1000000 -c 30 -t <Number-of-threads>`
-3. Open a terminal in the directory and run:  
+5. Open a terminal in the directory and run:  
   `longread_umi qc_pipeline`  
      `-d "umi_binning/trim/reads_tf.fq;reads.fq"`  
      `-c "consensus_racon_medaka_medaka.fa;variants_all.fa"`  
      `-r "zymo_curated;zymo_vendor;variants_all.fa"`  
-     ` -t <Number-of-threads>`  
+     `-s SILVA_132_SSURef_Nr99_tax_silva.fasta`  
+     `-t <Number-of-threads>`  
