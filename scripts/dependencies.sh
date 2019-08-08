@@ -26,7 +26,7 @@ export BWA=/usr/bin/bwa
 export USEARCH=/space/sharedbin/bin/usearch11
 
 # longread_umi paths
-export REF=$LONGREAD_UMI_PATH/scripts/zymo-ref-uniq_2019-03-15.fa
+export REF_CURATED=$LONGREAD_UMI_PATH/scripts/zymo-ref-uniq_2019-03-15.fa
 export REF_VENDOR=$LONGREAD_UMI_PATH/scripts/zymo-ref-uniq_vendor.fa
 export NANOPORE_BARCODES=$LONGREAD_UMI_PATH/scripts/nanopore_barcodes.csv
 
