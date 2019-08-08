@@ -58,8 +58,8 @@ A collection of scripts for processing longread UMI data.
 2. Open a terminal in the directory and run:  
   `longread_umi nanopore_pipeline -d reads.fq -s 1000000 -c 30 -t <Number-of-threads>`
 3. Open a terminal in the directory and run:  
-  `longread_umi qc_pipeline`
-     `-d "umi_binning/trim/reads_tf.fq;reads.fq"`
-     `-c "consensus_racon_medaka_medaka.fa;variants_all.fa"`
-     `-r "zymo_curated;zymo_vendor;variants_all.fa"`
-     ` -t <Number-of-threads>`
+  `longread_umi qc_pipeline`  
+     `-d "umi_binning/trim/reads_tf.fq;reads.fq"`  
+     `-c "consensus_racon_medaka_medaka.fa;variants_all.fa"`  
+     `-r "zymo_curated;zymo_vendor;variants_all.fa"`  
+     ` -t <Number-of-threads>`  
