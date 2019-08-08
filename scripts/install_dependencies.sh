@@ -15,6 +15,9 @@
 #               Ryans Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 
+### Terminal input
+BRANCH=${1:-master}
+
 ### Create file with paths
 
 echo '' > ./longread-UMI-pipeline_paths.txt
@@ -40,15 +43,15 @@ rm ./get-pip.py
 python3 -m pip install virtualenv --user
 
 # Cmake
-git clone https://github.com/scivision/cmake-utils.git;
+git clone https://github.com/scivision/cmake-utils.git -b v1.4.0.0;
 cd cmake-utils
-python3 cmake_setup.py \
+python3 cmake_setup.py 3.15.2 \
   --install_path $SOFTWARE_DIR/cmake
 cd ..
 rm -rf ./cmake-utils
 
 ### Install longread-UMI-pipeline
-git clone https://github.com/SorenKarst/longread-UMI-pipeline
+git clone https://github.com/SorenKarst/longread-UMI-pipeline -b $BRANCH
 cd ./longread-UMI-pipeline
 find . -name "*.sh" -exec chmod +x {} \;
 cd ..
