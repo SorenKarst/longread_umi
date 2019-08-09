@@ -18,18 +18,29 @@
 ### Terminal input
 BRANCH=${1:-master}
 
+# Store software dir path
+SOFTWARE_DIR=$PWD
+
+### Check for installation depenencies
+if command -v miniconda3 >/dev/null 2>&1 ; then
+    echo "miniconda3 found"
+    echo "version: $(conda -V)"
+else
+    echo "conda3 not found. Install and re-run install script:
+	# Miniconda
+	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+	sh Miniconda3-latest-Linux-x86_64.sh -b -p $PWD
+	conda config --add channels defaults
+	conda config --add channels bioconda
+	conda config --add channels conda-forge
+	conda config --set auto_activate_base false"
+	exit 0
+fi
+
+
 ### Create file with paths
 
 echo '' > ./longread-UMI-pipeline_paths.txt
-
-### Install helper tools
-# Check presence by:
-# which pip3
-# which cmake
-# If not present install:
-
-# Store software dir path
-SOFTWARE_DIR=$PWD
 
 # Make ~/bin if it doesn't exist
 mkdir -p ~/bin
@@ -40,7 +51,7 @@ python3 get-pip.py --user
 rm ./get-pip.py
 
 # Python virtual environment
-python3 -m pip install virtualenv --user
+# python3 -m pip install virtualenv --user
 
 # Cmake
 git clone https://github.com/scivision/cmake-utils.git -b v1.4.0.0;
@@ -129,8 +140,8 @@ tar -xjf ./htslib-1.9.tar.bz2
 cd htslib-1.9 
 ./configure \
   --prefix=$SOFTWARE_DIR/htslib_1.9 \
-  --disable-bz2 \
-  --disable-lzma
+  --disable-lzma \
+  --disable-bz2 
 make
 make install
 cd ..
@@ -188,7 +199,7 @@ echo "export USEARCH=$(find $SOFTWARE_DIR/usearch/ -type f -name "usearch*")" >>
 
 echo "" >> ./longread-UMI-pipeline_paths.txt
 LEAD='^# Program paths$'
-TAIL='^# Scripts paths'
+TAIL='^# longread_umi paths'
 
 sed -i \
   -e "/$LEAD/,/$TAIL/{ /$LEAD/{p; r ./longread-UMI-pipeline_paths.txt
