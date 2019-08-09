@@ -22,19 +22,20 @@ BRANCH=${1:-master}
 SOFTWARE_DIR=$PWD
 
 ### Check for installation depenencies
-if command -v miniconda3 >/dev/null 2>&1 ; then
-    echo "miniconda3 found"
+if command -v conda >/dev/null 2>&1 ; then
+    echo "conda found"
     echo "version: $(conda -V)"
 else
-    echo "miniconda3 not found. Install and re-run install script:
-	# Miniconda install example
+    echo "conda not found. Install conda and re-run install script:
+	# Miniconda3 install example
 	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-	sh Miniconda3-latest-Linux-x86_64.sh -b -p $PWD/miniconda3
+	sh Miniconda3-latest-Linux-x86_64.sh -p $PWD/miniconda3
 	source ~/.bashrc
 	conda config --add channels defaults
 	conda config --add channels bioconda
 	conda config --add channels conda-forge
-	conda config --set auto_activate_base false"
+	conda config --set auto_activate_base false
+	source ~/.bashrc"
 	exit 0
 fi
 
@@ -152,7 +153,7 @@ ln -s $SOFTWARE_DIR/htslib_1.9/bin/bgzip ~/bin/bgzip
 
 # Medaka
 conda create -c bioconda -n medaka medaka
-echo "export MEDAKA_ENV_START='. conda activate medaka'" >> ./longread-UMI-pipeline_paths.txt
+echo "export MEDAKA_ENV_START='source activate medaka'" >> ./longread-UMI-pipeline_paths.txt
 echo "export MEDAKA_ENV_STOP='conda deactivate'" >> ./longread-UMI-pipeline_paths.txt
 echo "export MEDAKA_MODEL=r941_min_high" >> ./longread-UMI-pipeline_paths.txt
 
