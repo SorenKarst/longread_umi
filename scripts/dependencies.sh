@@ -21,7 +21,7 @@ export MEDAKA_ENV_STOP='deactivate; module purge'
 export MEDAKA_MODEL=r941_min_high
 export CUTADAPT=/space/users/smk/.local/bin/cutadapt
 export PORECHOP_UMI=/space/users/smk/bin/porechop_umi
-export FILTLONG=/space/sharedbin/bin/filtlong
+export FILTLONG=/space/users/smk/Software/Filtlong-0.2.0/bin/filtlong
 export BWA=/usr/bin/bwa
 export USEARCH=/space/sharedbin/bin/usearch11
 
