@@ -77,13 +77,16 @@ export -f seed_racon
 
 # Perform assembly in parallel
 find $IN -name 'umi*bins.fastq'  |\
-  ( [[ "${SAMPLE}" ]] && grep -Ff $SAMPLE || cat ) |\
+  ( [[ -f "${SAMPLE}" ]] && grep -Ff $SAMPLE || cat ) |\
   $GNUPARALLEL --progress -j $THREADS "seed_racon {} $OUT"
 
 #Collect seed-racon consensus sequences
+OUT_NAME=${OUT##*/}
+OUT_NAME=${OUT_NAME%.*}
+
 find $OUT/ \
   -mindepth 2 \
   -maxdepth 2 \
   -name "*_sr*.fa" \
   -exec cat {} \; \
-  > $OUT/consensus_${OUT}.fa
+  > $OUT/consensus_${OUT_NAME}.fa
