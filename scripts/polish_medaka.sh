@@ -72,7 +72,7 @@ export -f medaka_align
 
 cat $CONSENSUS_FILE |\
   $SEQTK seq -l0 - |\
-  ( [[ "${SAMPLE}" ]] && grep -A1 -Ff $SAMPLE | sed '/^--$/d' || cat ) |\
+  ( [[ -f "${SAMPLE}" ]] && grep -A1 -Ff $SAMPLE | sed '/^--$/d' || cat ) |\
   $GNUPARALLEL \
     --progress  \
     -j $(( THREADS * 10 )) \
