@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # DESCRIPTION
-#    Script for binning Nanopore reads based on UMIs. Part of the 
-#    longread-UMI-pipeline.
+#    Script for binning long reads based on UMIs. Part of 
+#    longread_umi.
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
@@ -15,18 +15,64 @@
 #    Add bin size limit to 200 x
 #    Add mapping against adaptors to remove UMI artifacts
 
-### Terminal input ------------------------------------------------------------
-READ_IN=$1
-OUT_DIR=$2
-THREADS=$3
-MIN_LENGTH=$4
-MAX_LENGTH=$5
-TERMINAL1_CHECK_RANGE=${6:-70}
-TERMINAL2_CHECK_RANGE=${7:-80}
-FW1=${8:-CAAGCAGAAGACGGCATACGAGAT} #RC: ATCTCGTATGCCGTCTTCTGCTTG
-FW2=${9:-AGRGTTYGATYMTGGCTCAG} #RC: CTGAGCCAKRATCRAACYCT
-RV1=${10:-AATGATACGGCGACCACCGAGATC} #RC: GATCTCGGTGGTCGCCGTATCATT
-RV2=${11:-CGACATCGAGGTGCCAAAC} #RC: GTTTGGCACCTCGATGTCG
+USAGE="$(basename "$0" .sh) [-h] [-d file -o dir -m value -M value 
+-s value -e value -f string -F string -r string -R string -p -t value] 
+-- longread_umi umi_binning: Longread UMI detection and read binning.
+   Tool requires UMIs in both ends of the read flanked by defined
+   adaptor regions.
+
+where:
+    -h  Show this help text.
+    -d  Reads in fastq format.
+    -o  Output directory.
+    -m  Minimum read length.
+    -M  Maximum read length.
+    -s  Check start of read up to s bp for UMIs.
+    -e  Check end of read up to f bp for UMIs.
+    -f  Forward adaptor sequence. 
+    -F  Forward primer sequence.
+    -r  Reverse adaptor sequence.
+    -R  Reverse primer sequence.
+    -p  Flag to disable Nanopore trimming and filtering. Use with PacBio reads.
+    -t  Number of threads to use.
+"
+
+### Terminal Arguments ---------------------------------------------------------
+
+# Import user arguments
+while getopts ':hzd:o:m:M:s:e:f:F:r:R:pt:' OPTION; do
+  case $OPTION in
+    h) echo "$USAGE"; exit 1;;
+    d) READ_IN=$OPTARG;;
+    o) OUT_DIR=$OPTARG;;
+    m) MIN_LENGTH=$OPTARG;;
+    M) MAX_LENGTH=$OPTARG;;
+    s) START_READ_CHECK=$OPTARG;;
+    e) END_READ_CHECK=$OPTARG;;
+    f) FW1=$OPTARG;;
+    F) FW2=$OPTARG;;
+    r) RV1=$OPTARG;;
+    R) RV2=$OPTARG;;
+    p) TRIM_FLAG=YES;;
+    t) THREADS=$OPTARG;;
+    :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
+    \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
+  esac
+done
+
+# Check missing arguments
+MISSING="is missing but required. Exiting."
+if [ -z ${READ_IN+x} ]; then echo "-d $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${OUT_DIR+x} ]; then echo "-o $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${MIN_LENGTH+x} ]; then echo "-m $MISSING"; echo ""; echo "$USAGE"; exit 1; fi; 
+if [ -z ${MAX_LENGTH+x} ]; then echo "-M $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${START_READ_CHECK+x} ]; then echo "-s $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${END_READ_CHECK+x} ]; then echo "-e $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${FW1+x} ]; then echo "-f $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${FW2+x} ]; then echo "-F $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${RV1+x} ]; then echo "-r $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${RV2+x} ]; then echo "-R $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -34,9 +80,9 @@ RV2=${11:-CGACATCGAGGTGCCAAAC} #RC: GTTTGGCACCTCGATGTCG
 ### Primer formating
 revcom() {
   echo $1 |\
-  awk '{print ">dummy\n" $0}' |\
+  $GAWK '{print ">dummy\n" $0}' |\
   $SEQTK seq -r - |\
-  awk '!/^>/'  
+  $GAWK '!/^>/'  
 }
 FW1R=$(revcom "$FW1")
 FW2R=$(revcom "$FW2")
@@ -46,11 +92,10 @@ RV2R=$(revcom "$RV2")
 ### Read trimming and filtering -----------------------------------------------
 mkdir $OUT_DIR
 TRIM_DIR=$OUT_DIR/trim
+mkdir $TRIM_DIR
 
-# Check if data is trimmed
-if [ ! -f "$TRIM_DIR/reads_tf.fq" ]; then
-  # Create trim dir
-  mkdir $TRIM_DIR
+# Trim data
+if [ -z ${TRIM_FLAG+x} ]; then
 
   # Perform porechop and filtlong in parallel
   FT_THREADS=$(( $THREADS/10 ))
@@ -80,7 +125,10 @@ if [ ! -f "$TRIM_DIR/reads_tf.fq" ]; then
 
   # Concatenate temp files
   cat $TRIM_DIR/*_filt.tmp > $TRIM_DIR/reads_tf.fq
-  rm $TRIM_DIR/*.tmp
+  #rm $TRIM_DIR/*.tmp
+else
+# Create symlink if already trimmed.
+  ln -s $PWD/$READ_IN $PWD/$TRIM_DIR/reads_tf.fq  
 fi
 
 ### Extract UMI references sequences ------------------------------------------- 
@@ -198,7 +246,7 @@ mkdir $OUT_DIR/read_binning/bins
 BINNING_DIR=$OUT_DIR/read_binning
 
 # Extract UMI region
-$GAWK -v BD="$BINNING_DIR" -v TL="$TERMINAL1_CHECK_RANGE" '
+$GAWK -v BD="$BINNING_DIR" -v TL="$START_READ_CHECK" '
   NR%4==1{
     print ">" substr($1,2) > BD"/reads_tf_umi1.fa";
   }
@@ -207,7 +255,7 @@ $GAWK -v BD="$BINNING_DIR" -v TL="$TERMINAL1_CHECK_RANGE" '
   }
 ' $UMI_DIR/reads_tf_start.fq
 
-$GAWK -v BD="$BINNING_DIR" -v TL="$TERMINAL2_CHECK_RANGE" '
+$GAWK -v BD="$BINNING_DIR" -v TL="$END_READ_CHECK" '
   NR%4==1{
      print ">" substr($1,2) > BD"/reads_tf_umi2.fa";  
    }
@@ -419,4 +467,16 @@ find $BINNING_DIR/bins/*/*/ -name "*bins.fastq" -printf "%f\n" |\
 
 rm -r $BINNING_DIR/bins/job*
 
-
+## Testing
+exit 0
+READ_IN=$1
+OUT_DIR=$2
+THREADS=$3
+MIN_LENGTH=$4
+MAX_LENGTH=$5
+START_READ_CHECK=${6:-70}
+END_READ_CHECK=${7:-80}
+FW1=${8:-CAAGCAGAAGACGGCATACGAGAT} #RC: ATCTCGTATGCCGTCTTCTGCTTG
+FW2=${9:-AGRGTTYGATYMTGGCTCAG} #RC: CTGAGCCAKRATCRAACYCT
+RV1=${10:-AATGATACGGCGACCACCGAGATC} #RC: GATCTCGGTGGTCGCCGTATCATT
+RV2=${11:-CGACATCGAGGTGCCAAAC} #RC: GTTTGGCACCTCGATGTCG
