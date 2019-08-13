@@ -49,7 +49,21 @@ A collection of scripts for processing longread UMI data.
   `longread_umi nanopore_pipeline -h` or `/path/to/longread_umi.sh nanopore_pipeline -h`
 3. Test longread_umi nanopore_pipeline and qc_pipeline on test data:  
    Go to /path/to/longread-UMI-pipeline/test_data and open a terminal in the directory.
-4. Run `longread_umi nanopore_pipeline -d test_reads.fq -s 10 -c 30 -t 1`
+4. Run `longread_umi nanopore_pipeline -d test_reads.fq -o . -c 30 -t 1 -w rrna_operon`  
+   or  
+   `longread_umi nanopore_pipeline \`  
+   `  -d test_reads.fq \`  
+   `  -c 30 \`  
+   `  -o . \`  
+   `  -s 70 \`  
+   `  -e 80 \`  
+   `  -m 3500 \`  
+   `  -M 6000 \`  
+   `  -f CAAGCAGAAGACGGCATACGAGAT \`  
+   `  -F AGRGTTYGATYMTGGCTCAG \`  
+   `  -r AATGATACGGCGACCACCGAGATC \`  
+   `  -R CGACATCGAGGTGCCAAAC \`  
+   `  -t 1 `
 5. Run `longread_umi qc_pipeline -d test_reads.fq -c consensus_racon_medaka_medaka.fa -r zymo_curated -t 1`
 
 ### Run pipeline on Zymo mock Nanopore data and perform qc
@@ -63,9 +77,9 @@ A collection of scripts for processing longread UMI data.
 4. Open a terminal in the directory and run:  
   `longread_umi nanopore_pipeline -d reads.fq -s 1000000 -c 30 -t <Number-of-threads>`
 5. Open a terminal in the directory and run:  
-  `longread_umi qc_pipeline`  
-     `-d "umi_binning/trim/reads_tf.fq;reads.fq"`  
-     `-c "consensus_racon_medaka_medaka.fa;variants_all.fa"`  
-     `-r "zymo_curated;zymo_vendor;variants_all.fa"`  
-     `-s SILVA_132_SSURef_Nr99_tax_silva.fasta`  
-     `-t <Number-of-threads>`  
+  `longread_umi qc_pipeline \`  
+   `  -d "umi_binning/trim/reads_tf.fq;reads.fq" \`  
+   `  -c "consensus_racon_medaka_medaka.fa;variants_all.fa" \`  
+   `  -r "zymo_curated;zymo_vendor;variants_all.fa" \`  
+   `  -s SILVA_132_SSURef_Nr99_tax_silva.fasta \`  
+   `  -t <Number-of-threads>`  
