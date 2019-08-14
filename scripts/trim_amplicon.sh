@@ -28,6 +28,15 @@ IN_REGEX_F=$(echo $IN_REGEX |\
   sed -e 's/^/-name /g' \
       -e 's/[,;\t]/ -o -name /g')
 
+### Primer formating
+revcom() {
+  echo $1 |\
+  $GAWK '{print ">dummy\n" $0}' |\
+  $SEQTK seq -r - |\
+  $GAWK '!/^>/'  
+}
+RV2R=$(revcom "$RV2")
+
 
 # Custom functions
 cutadapt_wrapper(){
@@ -35,7 +44,7 @@ cutadapt_wrapper(){
   local IN=$1
   local OUT_DIR=$2
   local FW2=$3
-  local RV2=$4
+  local RV2R=$4
   local MIN_LENGTH=$5
   local MAX_LENGTH=$6
   local LOG_DIR=$7
@@ -46,17 +55,20 @@ cutadapt_wrapper(){
   local IN_NAME=${IN_NAME%.*}
   
   # Run cutadapt
+  ### Trims all sequences with correct orientation
   $CUTADAPT \
     --untrimmed-output $OUT_DIR/${IN_NAME}.tmp \
     -m $MIN_LENGTH \
     -M $MAX_LENGTH \
-    -g $FW2...$RV2 \
+    -g $FW2...$RV2R \
     $IN > $OUT_DIR/${IN_NAME}.fa 2> $LOG_DIR/${IN_NAME}_amplicon_trim_log.txt
+  ### Reverse/complement untrimmed and trim again
   $SEQTK seq -r $OUT_DIR/$IN_NAME.tmp |\
     $CUTADAPT \
+      --discard-untrimmed \
       -m $MIN_LENGTH \
       -M $MAX_LENGTH \
-      -g $FW2...$RV2 - >> $OUT_DIR/${IN_NAME}.fa 2>> $LOG_DIR/${IN_NAME}_amplicon_trim_log.txt
+      -g $FW2...$RV2R - >> $OUT_DIR/${IN_NAME}.fa 2>> $LOG_DIR/${IN_NAME}_amplicon_trim_log.txt
   rm $OUT_DIR/$IN_NAME.tmp
 }
 
@@ -72,7 +84,7 @@ eval $FIND_CMD |\
       {} \
       $OUT_DIR \
       $FW2 \
-      $RV2 \
+      $RV2R \
       $MIN_LENGTH \
       $MAX_LENGTH \
       $LOG_DIR \
