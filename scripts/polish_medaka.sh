@@ -17,7 +17,7 @@ BINNING_DIR=$3 #Raw read bins file path name
 OUT_DIR=$4 #output folder name
 THREADS=$5 #Number of threads
 SAMPLE=$6 # List of bins to process
-TURBO=${7:-NO} # Use all cores 
+MEDAKA_JOBS=${7:-1} # Number medaka jobs to start
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -28,14 +28,8 @@ TURBO=${7:-NO} # Use all cores
 CONSENSUS_NAME=${CONSENSUS_FILE##*/}
 CONSENSUS_NAME=${CONSENSUS_NAME%.*}
 
-# Turbo mode
-if [ "$TURBO" == "YES" ]; then
-  CON_THREADS=$THREADS
-  CON_NICE=10
-elif [ "$TURBO" == "NO" ]; then
-  CON_THREADS=1
-  CON_NICE=0
-fi
+# Medaka jobs
+MEDAKA_THREADS=$(( THREADS/MEDAKA_JOBS ))
 
 # Start medaka environment if relevant
 eval "$MEDAKA_ENV_START"
@@ -128,8 +122,7 @@ find $OUT_DIR/mapping/ \
   -name "umi*bins.bam" |\
 $GNUPARALLEL \
   --progress \
-  --nice $CON_NICE \
-  -j $THREADS \
+  -j $MEDAKA_JOBS \
   -N1 \
   --roundrobin \
   --pipe \
@@ -137,7 +130,7 @@ $GNUPARALLEL \
      {#} \
      $OUT_DIR/consensus \
      $MEDAKA_MODEL \
-     $CON_THREADS \
+     $MEDAKA_THREADS \
 	 $CHUNK_SIZE
   "
 
