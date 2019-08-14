@@ -2,7 +2,7 @@
 # DESCRIPTION
 #    Script for finding consensus from UMI binned Nanopore reads. 
 #    Raw read centroid found with usearch and used as seed for
-#    4 x times racon polishing.
+#    <ROUNDS> x times racon polishing.
 #
 #    This script is a part of the longread-UMI-pipeline.
 #
@@ -14,8 +14,9 @@
 ### Terminal input ------------------------------------------------------------
 IN=$1 #input folder name with bins (IN=read_binning/bins/)
 OUT=$2 #output folder name
-THREADS=$3 #number of threads
-SAMPLE=$4 # List of bins to process
+ROUNDS=$3 #number of racon polishing rounds.
+THREADS=$4 #number of threads
+SAMPLE=$5 # List of bins to process
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -34,6 +35,7 @@ seed_racon () {
   # Input
   local RB=$1
   local OUT=$2
+  local ROUNDS=$3
 
   # Name format
   local UMINO=${RB##*/}
@@ -43,6 +45,9 @@ seed_racon () {
   # Create dirs    
   mkdir $OUT
 
+  # Count binsize
+  local BINSIZE=$($GAWK 'NR%4==1 {N++} END {print N}' $RB)
+
   # Find seed read
   $USEARCH -cluster_fast $RB -id 0.75 -strand both\
     -sizeout -centroids $OUT/${UMINO}_centroids.fa
@@ -50,7 +55,7 @@ seed_racon () {
     -fastaout $OUT/${UMINO}_sr.fa -relabel seed
 
   # Racon polishing
-  for i in `seq 1 4`; do
+  for i in `seq 1 $ROUNDS`; do
     $MINIMAP2 \
       -t 1 \
       -x ava-ont \
@@ -69,8 +74,8 @@ seed_racon () {
     mv $OUT/${UMINO}_tmp.fa $OUT/${UMINO}_sr.fa
   done
   
-  # Rename
-  sed -i "s/^>.*/>$UMINO/" $OUT/${UMINO}_sr.fa                    
+  # Rename and add binsize
+  sed -i "s/^>.*/>$UMINO;ubs=$BINSIZE/" $OUT/${UMINO}_sr.fa                    
 } 
 
 export -f seed_racon
@@ -78,7 +83,7 @@ export -f seed_racon
 # Perform assembly in parallel
 find $IN -name 'umi*bins.fastq'  |\
   ( [[ -f "${SAMPLE}" ]] && grep -Ff $SAMPLE || cat ) |\
-  $GNUPARALLEL --progress -j $THREADS "seed_racon {} $OUT"
+  $GNUPARALLEL --progress -j $THREADS "seed_racon {} $OUT $ROUNDS"
 
 #Collect seed-racon consensus sequences
 OUT_NAME=${OUT##*/}

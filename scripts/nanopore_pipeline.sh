@@ -148,6 +148,7 @@ CON_DIR=$OUT_DIR/racon
 longread_umi consensus_racon \
   $UMI_DIR/read_binning/bins    `# Path to UMI bins`\
   $CON_DIR                      `# Output folder`\
+  4                             `# Number of racon polishing times`\
   $THREADS                      `# Number of threads`\
   sample$UMI_SUBSET_N.txt       `# List of bins to process`
 
@@ -180,18 +181,16 @@ longread_umi trim_amplicon \
   $THREADS             `# Number of threads` \
   $LOG_DIR
 
-
 # Generate variants
 
 ## Subset to UMI consensus sequences with min read coverage
 POLISH_DIR2_NAME=${POLISH_DIR2##*/}
 POLISH_DIR2_NAME=${POLISH_DIR2_NAME%.*}
   
-$GAWK -v bsco="$UMI_COVERAGE_MIN" '
+$GAWK -v UBS="$UMI_COVERAGE_MIN" '
   /^>/{
-    s=$0
-    gsub(".*size=", "", s)
-    if (s+0 >= bsco+0){
+    match($0,/;ubs=([0-9]+)/, s)
+    if (s[1]+0 >= UBS+0){
       print
       getline
       print
