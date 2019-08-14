@@ -203,7 +203,7 @@ phased_consensus(){
           ++n;
           if (n == 1){
             split($0,size,";")
-            gsub("size=", ";", size[2])
+            gsub("size=", ";depth=", size[2])
             print ">" name size[2] > out "/" name "_variant.fa"
             getline
             print > out "/" name "_variant.fa"
@@ -494,7 +494,7 @@ cat $OUT_DIR/centroids.fa | $SEQTK seq -l0 - |\
   $GNUPARALLEL --progress -j$CLUSTER_JOBS --recstart ">" -N 1 --pipe \
   "cat | phasing $VARIANT_OUT $OUT_DIR/clusters \
    $CONSENSUS_FILE $CLUSTER_THREADS"
-cat $VARIANT_OUT/*/*variant.fa > $OUT_DIR/variants_all.fa
+cat $VARIANT_OUT/*/*variant.fa > $OUT_DIR/variants.fa
 
 ### Testing
 exit 0
