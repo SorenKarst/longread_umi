@@ -49,15 +49,10 @@ medaka_align() {
   # Name format
   local UMI_NAME=$(echo "$IN" | grep -o "umi.*bins")
   local UMI_BIN=$BINNING_DIR/*/${UMI_NAME}.fa*
-  local RC=$(( $(wc -l < $UMI_BIN)/4 ))  
 
   # Setup working directory
   mkdir $OUT_DIR/$UMI_NAME
-  echo "$IN" |\
-    awk -v rc="$RC" '
-      /^>/{print $0 ":size=" rc}
-      !/^>/
-    ' > $OUT_DIR/$UMI_NAME/$UMI_NAME.fa
+  echo "$IN" > $OUT_DIR/$UMI_NAME/$UMI_NAME.fa
 
   # Map UMI reads to consensus
   mini_align \
@@ -133,7 +128,10 @@ $GNUPARALLEL \
 # Stitch consensus sequences
 medaka stitch \
   $OUT_DIR/consensus/*_consensus.hdf \
-  $OUT_DIR/${CONSENSUS_NAME}_medaka.fa 
+  $OUT_DIR/${CONSENSUS_NAME}_medaka.fa
+
+# Clean consensus header
+sed -i "s/:.*//" $OUT_DIR/${CONSENSUS_NAME}_medaka.fa   
 
 # Deactivate medaka environment if relevant
 eval "$MEDAKA_ENV_STOP"
