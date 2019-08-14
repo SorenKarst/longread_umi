@@ -162,6 +162,7 @@ longread_umi consensus_racon \
 POLISH_DIR1=$OUT_DIR/racon_medaka
 longread_umi polish_medaka \
   $CON_DIR/consensus_*.fa       `# Path to consensus data`\
+  $MAX_LENGTH                   `# Sensible chunk size`\
   $UMI_DIR/read_binning/bins    `# Path to UMI bins`\
   $POLISH_DIR1                  `# Output folder`\
   $THREADS                      `# Number of threads`\
@@ -171,6 +172,7 @@ longread_umi polish_medaka \
 POLISH_DIR2=$OUT_DIR/racon_medaka_medaka
 longread_umi polish_medaka \
   $POLISH_DIR1/consensus_*.fa   `# Path to consensus data`\
+  $MAX_LENGTH                   `# Sensible chunk size`\
   $UMI_DIR/read_binning/bins    `# Path to UMI bins`\
   $POLISH_DIR2                  `# Output folder`\
   $THREADS                      `# Number of threads`\

@@ -12,11 +12,12 @@
 
 ### Terminal input ------------------------------------------------------------
 CONSENSUS_FILE=$1 #Consensus file path name
-BINNING_DIR=$2 #Raw read bins file path name
-OUT_DIR=$3 #output folder name
-THREADS=$4 #Number of threads
-SAMPLE=$5 # List of bins to process
-TURBO=${6:-NO} # Use all cores 
+CHUNK_SIZE=$2 # Sensible chunk size for amplicon type
+BINNING_DIR=$3 #Raw read bins file path name
+OUT_DIR=$4 #output folder name
+THREADS=$5 #Number of threads
+SAMPLE=$6 # List of bins to process
+TURBO=${7:-NO} # Use all cores 
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -98,6 +99,7 @@ consensus_wrapper() {
   local OUT_DIR=$2
   local MODEL=$3
   local CON_THREADS=$4
+  local CHUNK_SIZE=$5
 
   # Merge bams
   $SAMTOOLS merge \
@@ -113,7 +115,8 @@ consensus_wrapper() {
     $OUT_DIR/${JOB_NR}.bam \
     $OUT_DIR/${JOB_NR}_consensus.hdf \
     --threads $CON_THREADS \
-    --model $MODEL
+    --model $MODEL \
+	--chunk_len $CHUNK_SIZE
 }
 
 export -f consensus_wrapper
@@ -134,7 +137,8 @@ $GNUPARALLEL \
      {#} \
      $OUT_DIR/consensus \
      $MEDAKA_MODEL \
-     $CON_THREADS
+     $CON_THREADS \
+	 $CHUNK_SIZE
   "
 
 # Stitch consensus sequences
