@@ -125,7 +125,7 @@ if [ -z ${TRIM_FLAG+x} ]; then
 
   # Concatenate temp files
   cat $TRIM_DIR/*_filt.tmp > $TRIM_DIR/reads_tf.fq
-  #rm $TRIM_DIR/*.tmp
+  rm $TRIM_DIR/*.tmp
 else
 # Create symlink if already trimmed.
   ln -s $PWD/$READ_IN $PWD/$TRIM_DIR/reads_tf.fq  
