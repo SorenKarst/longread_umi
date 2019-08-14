@@ -16,6 +16,7 @@ BINNING_DIR=$2 #Raw read bins file path name
 OUT_DIR=$3 #output folder name
 THREADS=$4 #Number of threads
 SAMPLE=$5 # List of bins to process
+TURBO=${6:-NO} # Use all cores 
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -25,6 +26,15 @@ SAMPLE=$5 # List of bins to process
 # Format names
 CONSENSUS_NAME=${CONSENSUS_FILE##*/}
 CONSENSUS_NAME=${CONSENSUS_NAME%.*}
+
+# Turbo mode
+if [ "$TURBO" == "YES" ]; then
+  CON_THREADS=$THREADS
+  CON_NICE=10
+elif [ "$TURBO" == "NO" ]; then
+  CON_THREADS=1
+  CON_NICE=0
+fi
 
 # Start medaka environment if relevant
 eval "$MEDAKA_ENV_START"
@@ -70,7 +80,7 @@ cat $CONSENSUS_FILE |\
   ( [[ -f "${SAMPLE}" ]] && grep -A1 -Ff $SAMPLE | sed '/^--$/d' || cat ) |\
   $GNUPARALLEL \
     --progress  \
-    -j $(( THREADS * 10 )) \
+    -j $(( THREADS * 5 )) \
     --recstart ">" \
     -N 1 \
     --pipe \
@@ -102,7 +112,7 @@ consensus_wrapper() {
   medaka consensus \
     $OUT_DIR/${JOB_NR}.bam \
     $OUT_DIR/${JOB_NR}_consensus.hdf \
-    --threads 1 \
+    --threads $CON_THREADS \
     --model $MODEL
 }
 
@@ -115,6 +125,7 @@ find $OUT_DIR/mapping/ \
   -name "umi*bins.bam" |\
 $GNUPARALLEL \
   --progress \
+  --nice $CON_NICE \
   -j $THREADS \
   -N1 \
   --roundrobin \
@@ -122,7 +133,8 @@ $GNUPARALLEL \
   "consensus_wrapper \
      {#} \
      $OUT_DIR/consensus \
-     $MEDAKA_MODEL
+     $MEDAKA_MODEL \
+     $CON_THREADS
   "
 
 # Stitch consensus sequences

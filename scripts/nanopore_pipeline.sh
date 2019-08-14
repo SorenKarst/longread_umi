@@ -13,7 +13,7 @@
 ### Description ----------------------------------------------------------------
 
 USAGE="$(basename "$0" .sh) [-h] [-d file -n value -c value -o dir -s value -e value 
--m value -M value -f string -F string -r string -R string -t value] 
+-m value -M value -f string -F string -r string -R string -t value -T ] 
 -- longread_umi nanopore_pipeline: Generates UMI consensus sequences from
    raw Nanopore fastq reads with UMIs in both terminals.
 
@@ -37,12 +37,15 @@ where:
         rrna_operon [70, 80, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
         AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC]
     -t  Number of threads to use.
+    -T  Use all available cores for Medaka consensus jobs. One job is started
+        pr. threads (-t). With -T all cores are available to all jobs.
+        Can drasticly speed up consensus calling but use with care.
 "
 
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:c:o:s:e:m:M:f:F:r:R:n:w:t:' OPTION; do
+while getopts ':hzd:c:o:s:e:m:M:f:F:r:R:n:w:t:T' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) INPUT_READS=$OPTARG;;
@@ -59,6 +62,7 @@ while getopts ':hzd:c:o:s:e:m:M:f:F:r:R:n:w:t:' OPTION; do
     n) UMI_SUBSET_N=$OPTARG;;
     w) WORKFLOW=$OPTARG;;
     t) THREADS=$OPTARG;;
+    T) TURBO="YES";;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
     \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
   esac
@@ -88,6 +92,7 @@ if [ -z ${FW2+x} ]; then echo "-F $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${RV1+x} ]; then echo "-r $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${RV2+x} ]; then echo "-R $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
+if [ -z ${TURBO+x} ]; then echo "-T is missing. Turbo is disabled."; TURBO=NO; fi;
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -118,6 +123,7 @@ echo "Reverse adaptor primer: $RV2"
 echo "UMI subsampling: $UMI_SUBSET_N"
 echo "Preset workflow: $WORKFLOW"
 echo "Threads: $THREADS"
+echo "Turbo: $TURBO"
 echo ""
 
 # Read filtering and UMI binning
@@ -159,7 +165,8 @@ longread_umi polish_medaka \
   $UMI_DIR/read_binning/bins    `# Path to UMI bins`\
   $POLISH_DIR1                  `# Output folder`\
   $THREADS                      `# Number of threads`\
-  sample$UMI_SUBSET_N.txt       `# List of bins to process`
+  sample$UMI_SUBSET_N.txt       `# List of bins to process` \
+  $TURBO                        `# Uses ALL threads with medaka`
 
 POLISH_DIR2=$OUT_DIR/racon_medaka_medaka
 longread_umi polish_medaka \
@@ -167,7 +174,8 @@ longread_umi polish_medaka \
   $UMI_DIR/read_binning/bins    `# Path to UMI bins`\
   $POLISH_DIR2                  `# Output folder`\
   $THREADS                      `# Number of threads`\
-  sample$UMI_SUBSET_N.txt       `# List of bins to process`
+  sample$UMI_SUBSET_N.txt       `# List of bins to process` \
+  $TURBO                        `# Uses ALL threads with medaka`
 
 # Trim UMI consensus data
 longread_umi trim_amplicon \
@@ -206,8 +214,7 @@ longread_umi variants \
   $THREADS `# Number of threads`
 
 ## Copy variants
-cp $OUT_DIR/variants/variants*fa $OUT_DIR
-
+cp $OUT_DIR/variants/variants.fa $OUT_DIR
 
 ## Testing
 exit 0
