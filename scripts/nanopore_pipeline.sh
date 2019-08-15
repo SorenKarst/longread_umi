@@ -95,10 +95,11 @@ if [ -z ${MEDAKA_JOBS+x} ]; then echo "-T is missing. Medaka jobs set to 1."; ME
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
+mkdir $OUT_DIR
 
 ### Pipeline -----------------------------------------------------------
 # Logging
-LOG_DIR=logs
+LOG_DIR=$OUT_DIR/logs
 mkdir $LOG_DIR
 
 LOG_NAME="$LOG_DIR/longread_umi_nanopore_pipeline_log_$(date +"%Y-%m-%d-%T").txt"
@@ -130,7 +131,7 @@ UMI_DIR=$OUT_DIR/umi_binning
 
 longread_umi umi_binning  \
   -d $INPUT_READS      `# Raw nanopore data in fastq format`\
-  -o umi_binning       `# Output folder`\
+  -o $UMI_DIR          `# Output folder`\
   -m $MIN_LENGTH       `# Min read length`\
   -M $MAX_LENGTH       `# Max read length` \
   -s $START_READ_CHECK `# Start of read to check` \
@@ -143,9 +144,9 @@ longread_umi umi_binning  \
 
 # Sample UMI bins for testing
 if [ ! -z ${UMI_SUBSET_N+x} ]; then
-  find umi_binning/read_binning/bins \
+  find  $UMI_DIR/read_binning/bins \
     -name 'umi*bins.fastq' | sed -e 's|^.*/||' -e 's|\..*||' |\
-    head -n $UMI_SUBSET_N > sample$UMI_SUBSET_N.txt
+    head -n $UMI_SUBSET_N > $OUT_DIR/sample$UMI_SUBSET_N.txt
 fi
 
 # Consensus
@@ -155,7 +156,7 @@ longread_umi consensus_racon \
   $CON_DIR                      `# Output folder`\
   4                             `# Number of racon polishing times`\
   $THREADS                      `# Number of threads`\
-  sample$UMI_SUBSET_N.txt       `# List of bins to process`
+  $OUT_DIR/sample$UMI_SUBSET_N.txt       `# List of bins to process`
 
 # Polishing
 POLISH_DIR1=$OUT_DIR/racon_medaka
@@ -165,7 +166,7 @@ longread_umi polish_medaka \
   $UMI_DIR/read_binning/bins    `# Path to UMI bins`\
   $POLISH_DIR1                  `# Output folder`\
   $THREADS                      `# Number of threads`\
-  sample$UMI_SUBSET_N.txt       `# List of bins to process` \
+  $OUT_DIR/sample$UMI_SUBSET_N.txt       `# List of bins to process` \
   $MEDAKA_JOBS                        `# Uses ALL threads with medaka`
 
 POLISH_DIR2=$OUT_DIR/racon_medaka_medaka
@@ -175,13 +176,13 @@ longread_umi polish_medaka \
   $UMI_DIR/read_binning/bins    `# Path to UMI bins`\
   $POLISH_DIR2                  `# Output folder`\
   $THREADS                      `# Number of threads`\
-  sample$UMI_SUBSET_N.txt       `# List of bins to process` \
+  $OUT_DIR/sample$UMI_SUBSET_N.txt       `# List of bins to process` \
   $MEDAKA_JOBS                        `# Uses ALL threads with medaka`
 
 # Trim UMI consensus data
 longread_umi trim_amplicon \
   $POLISH_DIR2         `# Path to consensus data`\
-  '"consensus*fa"'    `# Consensus file pattern. Regex must be flanked by '"..."'`\
+  '"consensus*fa"'     `# Consensus file pattern. Regex must be flanked by '"..."'`\
   $OUT_DIR             `# Output folder`\
   $FW2                 `# Forward primer sequence`\
   $RV2                 `# Reverse primer sequence`\
