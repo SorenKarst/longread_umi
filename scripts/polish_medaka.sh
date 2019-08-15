@@ -53,7 +53,7 @@ medaka_align() {
 
   # Name format
   local UMI_NAME=$(echo "$IN" | grep -o "umi.*bins")
-  local UMI_BIN=$BINNING_DIR/*/${UMI_NAME}.fa*
+  local UMI_BIN=$(find $BINNING_DIR -name ${UMI_NAME}.fastq)
 
   # Setup working directory
   mkdir $OUT_DIR/$UMI_NAME
