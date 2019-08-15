@@ -444,13 +444,15 @@ $GAWK \
   (FILENAME == C_UC){
     sub(";size.*", "", $9)
     # Remove cluster < 3 reads and assign new cluster names
-    if ($1 == "C" && $3 >= 3){
+    if ($1 == "C" && $3+0 >= 3){
       CLUSTER_C[$9]="Cluster" $2 ";size=" $3 ";"
-      for (READ in READS){
-        READS_CLUSTERS[READ]=CLUSTER_C[READS[READ]]
+	  for (READ in READS){
+	    if (READS[READ] in CLUSTER_C){
+          READS_CLUSTERS[READ]=CLUSTER_C[READS[READ]]
+		}
       }
     }
-  } 
+  }
   # Output filtered clusters
   (FILENAME == R_FA && FNR%2==1){
     READ_HEADER=$0
