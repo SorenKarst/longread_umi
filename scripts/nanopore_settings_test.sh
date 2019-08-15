@@ -14,7 +14,7 @@
 
 USAGE="$(basename "$0" .sh) [-h] [-d file -n value -c value -o dir -s value -e value 
 -m value -M value -f string -F string -r string -R string -t value -T value 
--x value -y value] 
+-x value -y value -p ] 
 -- longread_umi nanopore_settings_test: Testing settings for racon consensus and
    medaka polishing.
 
@@ -40,6 +40,7 @@ where:
 		Default is 1 job.
     -x  Test Racon consensus rounds from 1 to <value>.
     -y  Test Medaka polishing rounds from 1 to <value>.
+    -p  Flag to disable Nanopore trimming and filtering.
 
 Test run:
 longread_umi nanopore_settings_test \
@@ -56,7 +57,7 @@ longread_umi nanopore_settings_test \
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:o:s:e:m:M:f:F:r:R:n:w:t:T:x:y:' OPTION; do
+while getopts ':hzd:o:s:e:m:M:f:F:r:R:n:w:t:T:x:y:p' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) INPUT_READS=$OPTARG;;
@@ -75,6 +76,7 @@ while getopts ':hzd:o:s:e:m:M:f:F:r:R:n:w:t:T:x:y:' OPTION; do
     T) MEDAKA_JOBS=$OPTARG;;
     x) RACON_ROUNDS=$OPTARG;;
     y) MEDAKA_ROUNDS=$OPTARG;;
+    p) TRIM_FLAG="-p";;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
     \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
   esac
@@ -142,7 +144,6 @@ echo ""
 
 # Read filtering and UMI binning
 UMI_DIR=$OUT_DIR/umi_binning
-
 longread_umi umi_binning  \
   -d $INPUT_READS      `# Raw nanopore data in fastq format`\
   -o $UMI_DIR          `# Output folder`\
@@ -154,8 +155,8 @@ longread_umi umi_binning  \
   -F $FW2              `# Forward primer sequence` \
   -r $RV1              `# Reverse adaptor sequence` \
   -R $RV2              `# Reverse primer sequence` \
-  -t $THREADS          `# Number of threads`
-
+  -t $THREADS          `# Number of threads` \
+  $TRIM_FLAG
 
 # Sample UMI bins for testing
 if [ ! -z ${UMI_SUBSET_N+x} ]; then
