@@ -79,7 +79,7 @@ A collection of scripts for processing longread UMI data.
 5. Open a terminal in the directory and run:  
   `longread_umi qc_pipeline \`  
    `  -d "umi_binning/trim/reads_tf.fq;reads.fq" \`  
-   `  -c "consensus_racon_medaka_medaka.fa;variants_all.fa" \`  
-   `  -r "zymo_curated;zymo_vendor;variants_all.fa" \`  
+   `  -c "consensus_racon_medaka_medaka.fa;variants.fa" \`  
+   `  -r "zymo_curated;zymo_vendor;variants.fa" \`  
    `  -s SILVA_132_SSURef_Nr99_tax_silva.fasta \`  
    `  -t <Number-of-threads>`  
