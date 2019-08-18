@@ -214,7 +214,7 @@ CON_LIST=$(echo $OUT_DIR/consensus* | sed 's/ /;/g')
 longread_umi qc_pipeline \
   -d $OUT_DIR/umi_binning/trim/reads_tf.fq \
   -c $CON_LIST \
-  -u $OUT_DIR/umi_binning \
+  -u $UMI_DIR \
   -o $OUT_DIR/qc \
   -r "zymo_curated" \
   -t 100
