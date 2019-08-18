@@ -14,7 +14,7 @@
 
 USAGE="$(basename "$0" .sh) [-h] [-d file -n value -c value -o dir -s value -e value 
 -m value -M value -f string -F string -r string -R string -t value -T value 
--x value -y value -p ] 
+-x value -y value -p -u dir ] 
 -- longread_umi nanopore_settings_test: Testing settings for racon consensus and
    medaka polishing.
 
@@ -41,6 +41,7 @@ where:
     -x  Test Racon consensus rounds from 1 to <value>.
     -y  Test Medaka polishing rounds from 1 to <value>.
     -p  Flag to disable Nanopore trimming and filtering.
+	-u  Directory with UMI binned reads.
 
 Test run:
 longread_umi nanopore_settings_test \
@@ -57,7 +58,7 @@ longread_umi nanopore_settings_test \
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:o:s:e:m:M:f:F:r:R:n:w:t:T:x:y:p' OPTION; do
+while getopts ':hzd:o:s:e:m:M:f:F:r:R:n:w:t:T:x:y:pu:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) INPUT_READS=$OPTARG;;
@@ -77,6 +78,7 @@ while getopts ':hzd:o:s:e:m:M:f:F:r:R:n:w:t:T:x:y:p' OPTION; do
     x) RACON_ROUNDS=$OPTARG;;
     y) MEDAKA_ROUNDS=$OPTARG;;
     p) TRIM_FLAG="-p";;
+    u) UMI_DIR=$OPTARG;;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
     \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
   esac
@@ -140,23 +142,28 @@ echo "UMI subsampling: $UMI_SUBSET_N"
 echo "Preset workflow: $WORKFLOW"
 echo "Threads: $THREADS"
 echo "Medaka jobs: $MEDAKA_JOBS"
+echo "Racon rounds: $RACON_ROUNDS"
+echo "Medaka rounds: $MEDAKA_ROUNDS"
+echo "UMI directory: $UMI_DIR"
 echo ""
 
 # Read filtering and UMI binning
-UMI_DIR=$OUT_DIR/umi_binning
-longread_umi umi_binning  \
-  -d $INPUT_READS      `# Raw nanopore data in fastq format`\
-  -o $UMI_DIR          `# Output folder`\
-  -m $MIN_LENGTH       `# Min read length`\
-  -M $MAX_LENGTH       `# Max read length` \
-  -s $START_READ_CHECK `# Start of read to check` \
-  -e $END_READ_CHECK   `# End of read to check` \
-  -f $FW1              `# Forward adaptor sequence` \
-  -F $FW2              `# Forward primer sequence` \
-  -r $RV1              `# Reverse adaptor sequence` \
-  -R $RV2              `# Reverse primer sequence` \
-  -t $THREADS          `# Number of threads` \
-  $TRIM_FLAG
+if [ -z ${UMI_DIR+x} ]; then
+  UMI_DIR=$OUT_DIR/umi_binning
+  longread_umi umi_binning  \
+    -d $INPUT_READS      `# Raw nanopore data in fastq format`\
+    -o $UMI_DIR          `# Output folder`\
+    -m $MIN_LENGTH       `# Min read length`\
+    -M $MAX_LENGTH       `# Max read length` \
+    -s $START_READ_CHECK `# Start of read to check` \
+    -e $END_READ_CHECK   `# End of read to check` \
+    -f $FW1              `# Forward adaptor sequence` \
+    -F $FW2              `# Forward primer sequence` \
+    -r $RV1              `# Reverse adaptor sequence` \
+    -R $RV2              `# Reverse primer sequence` \
+    -t $THREADS          `# Number of threads` \
+    $TRIM_FLAG
+fi
 
 # Sample UMI bins for testing
 if [ ! -z ${UMI_SUBSET_N+x} ]; then
