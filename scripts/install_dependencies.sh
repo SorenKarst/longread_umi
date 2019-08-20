@@ -155,7 +155,6 @@ ln -s $SOFTWARE_DIR/htslib_1.9/bin/bgzip ~/bin/bgzip
 conda create -c bioconda -n medaka medaka
 echo "export MEDAKA_ENV_START='eval \"\$(conda shell.bash hook)\"; conda activate medaka'" >> ./longread-UMI-pipeline_paths.txt
 echo "export MEDAKA_ENV_STOP='conda deactivate'" >> ./longread-UMI-pipeline_paths.txt
-echo "export MEDAKA_MODEL=r941_min_high" >> ./longread-UMI-pipeline_paths.txt
 
 # cutadapt
 pip3 install --user --upgrade cutadapt
@@ -207,5 +206,5 @@ sed -i \
 
 ### Test longread-UMI-pipeline
 cd longread-UMI-pipeline/test_data
-longread_umi nanopore_pipeline -d test_reads.fq -o . -c 30 -w rrna_operon -t 1
+longread_umi nanopore_pipeline -d test_reads.fq -o . -v 30 -w rrna_operon -t 1 -q r941_min_high
 longread_umi qc_pipeline -d test_reads.fq -c consensus_racon_medaka_medaka.fa -r zymo_curated -t 1
