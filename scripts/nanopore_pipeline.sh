@@ -12,15 +12,16 @@
 
 ### Description ----------------------------------------------------------------
 
-USAGE="$(basename "$0" .sh) [-h] [-d file -n value -c value -o dir -s value -e value 
--m value -M value -f string -F string -r string -R string -t value -T value ] 
+USAGE="$(basename "$0" .sh) [-h] [-d file -v value -o dir -s value -e value 
+-m value -M value -f string -F string -r string -R string -c value -p value 
+-w string -n value -u dir -t value -T value ] 
 -- longread_umi nanopore_pipeline: Generates UMI consensus sequences from
    raw Nanopore fastq reads with UMIs in both terminals.
 
 where:
     -h  Show this help text.
     -d  Single file containing raw Nanopore data in fastq format.
-    -c  Minimum read coverage for using UMI consensus sequences for 
+    -v  Minimum read coverage for using UMI consensus sequences for 
         variant calling.
     -o  Output directory.
     -s  Check start of read up to s bp for UMIs.
@@ -31,24 +32,29 @@ where:
     -F  Forward primer sequence.
     -r  Reverse adaptor sequence.
     -R  Reverse primer sequence.
+    -c  Number of iterative rounds of consensus calling with Racon.
+    -p  Number of iterative rounds of consensus calling with Medaka.
+    -q  Medaka model used for polishing. r941_min_high, r10_min_high etc.
+    -w  Use predefined workflow with settings for s, e, m, M, f, F, r, R, c, p.
+        rrna_operon [70, 80, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
+        AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC,
+        3, 1]
     -n  Process n number of bins. If not defined all bins are processed.
         Pratical for testing large datasets.
-    -w  Use predefined workflow with settings for s, e, m, M, f, F, r, R.
-        rrna_operon [70, 80, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
-        AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC]
+    -u  Directory with UMI binned reads.
     -t  Number of threads to use.
     -T  Number of medaka jobs to start. Threads pr. job is threads/jobs.
-		Default is 1 job.
+        Default is 1 job.
 "
 
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:c:o:s:e:m:M:f:F:r:R:n:w:t:T:' OPTION; do
+while getopts ':hzd:v:o:s:e:m:M:f:F:r:R:c:p:q:w:n:u:t:T:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) INPUT_READS=$OPTARG;;
-    c) UMI_COVERAGE_MIN=$OPTARG;;
+    v) UMI_COVERAGE_MIN=$OPTARG;;
     o) OUT_DIR=$OPTARG;;
     s) START_READ_CHECK=$OPTARG;;
     e) END_READ_CHECK=$OPTARG;;
@@ -58,8 +64,12 @@ while getopts ':hzd:c:o:s:e:m:M:f:F:r:R:n:w:t:T:' OPTION; do
     F) FW2=$OPTARG;;
     r) RV1=$OPTARG;;
     R) RV2=$OPTARG;;  
-    n) UMI_SUBSET_N=$OPTARG;;
+    c) CON_N=$OPTARG;;
+    p) POL_N=$OPTARG;;
+    q) MEDAKA_MODEL=$OPTARG;;
     w) WORKFLOW=$OPTARG;;
+    n) UMI_SUBSET_N=$OPTARG;;
+    u) UMI_DIR=$OPTARG;;
     t) THREADS=$OPTARG;;
     T) MEDAKA_JOBS=$OPTARG;;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
@@ -78,9 +88,11 @@ if [ "$WORKFLOW" == rrna_operon ]; then
   FW2=AGRGTTYGATYMTGGCTCAG
   RV1=AATGATACGGCGACCACCGAGATC
   RV2=CGACATCGAGGTGCCAAAC
+  CON_N=3
+  POL_N=1
 fi
 if [ -z ${INPUT_READS+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
-if [ -z ${UMI_COVERAGE_MIN+x} ]; then echo "-c $MISSING"; echo "$USAGE"; exit 1; fi;
+if [ -z ${UMI_COVERAGE_MIN+x} ]; then echo "-v $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${OUT_DIR+x} ]; then echo "-o $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${START_READ_CHECK+x} ]; then echo "-s $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${END_READ_CHECK+x} ]; then echo "-e $MISSING"; echo "$USAGE"; exit 1; fi;
@@ -90,6 +102,9 @@ if [ -z ${FW1+x} ]; then echo "-f $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${FW2+x} ]; then echo "-F $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${RV1+x} ]; then echo "-r $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${RV2+x} ]; then echo "-R $MISSING"; echo "$USAGE"; exit 1; fi;
+if [ -z ${CON_N+x} ]; then echo "-c $MISSING"; echo "$USAGE"; exit 1; fi;
+if [ -z ${POL_N+x} ]; then echo "-p $MISSING"; echo "$USAGE"; exit 1; fi;
+if [ -z ${MEDAKA_MODEL+x} ]; then echo "-q $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 if [ -z ${MEDAKA_JOBS+x} ]; then echo "-T is missing. Medaka jobs set to 1."; MEDAKA_JOBS=1; fi;
 
@@ -110,7 +125,6 @@ exec 2>&1
 echo ""
 echo "### Settings:"
 echo "Input reads: $INPUT_READS"
-echo "Bin size cutoff: $UMI_COVERAGE_MIN"
 echo "Output directory: $OUT_DIR"
 echo "Check start of read: $START_READ_CHECK"
 echo "Check end of read: $END_READ_CHECK"
@@ -121,26 +135,32 @@ echo "Forward primer sequence: $FW2"
 echo "Reverse adaptor sequence: $RV1"
 echo "Reverse adaptor primer: $RV2" 
 echo "UMI subsampling: $UMI_SUBSET_N"
+echo "Racon consensus rounds: $CON_N"
+echo "Medaka consensus rounds: $POL_N"
+echo "Medaka model: $MEDAKA_MODEL"
 echo "Preset workflow: $WORKFLOW"
+echo "Bin size cutoff: $UMI_COVERAGE_MIN"
+echo "UMI binning dir: $UMI_DIR"
 echo "Threads: $THREADS"
 echo "Medaka jobs: $MEDAKA_JOBS"
 echo ""
 
 # Read filtering and UMI binning
-UMI_DIR=$OUT_DIR/umi_binning
-
-longread_umi umi_binning  \
-  -d $INPUT_READS      `# Raw nanopore data in fastq format`\
-  -o $UMI_DIR          `# Output folder`\
-  -m $MIN_LENGTH       `# Min read length`\
-  -M $MAX_LENGTH       `# Max read length` \
-  -s $START_READ_CHECK `# Start of read to check` \
-  -e $END_READ_CHECK   `# End of read to check` \
-  -f $FW1              `# Forward adaptor sequence` \
-  -F $FW2              `# Forward primer sequence` \
-  -r $RV1              `# Reverse adaptor sequence` \
-  -R $RV2              `# Reverse primer sequence` \
-  -t $THREADS          `# Number of threads`
+if [ -z ${UMI_DIR+x} ]; then
+  UMI_DIR=$OUT_DIR/umi_binning
+  longread_umi umi_binning  \
+    -d $INPUT_READS      `# Raw nanopore data in fastq format`\
+    -o $UMI_DIR          `# Output folder`\
+    -m $MIN_LENGTH       `# Min read length`\
+    -M $MAX_LENGTH       `# Max read length` \
+    -s $START_READ_CHECK `# Start of read to check` \
+    -e $END_READ_CHECK   `# End of read to check` \
+    -f $FW1              `# Forward adaptor sequence` \
+    -F $FW2              `# Forward primer sequence` \
+    -r $RV1              `# Reverse adaptor sequence` \
+    -R $RV2              `# Reverse primer sequence` \
+    -t $THREADS          `# Number of threads`
+fi
 
 # Sample UMI bins for testing
 if [ ! -z ${UMI_SUBSET_N+x} ]; then
@@ -150,38 +170,36 @@ if [ ! -z ${UMI_SUBSET_N+x} ]; then
 fi
 
 # Consensus
-CON_DIR=$OUT_DIR/racon
+CON_NAME=raconx${CON_N}
+CON_DIR=$OUT_DIR/$CON_NAME
 longread_umi consensus_racon \
-  $UMI_DIR/read_binning/bins    `# Path to UMI bins`\
-  $CON_DIR                      `# Output folder`\
-  4                             `# Number of racon polishing times`\
-  $THREADS                      `# Number of threads`\
-  $OUT_DIR/sample$UMI_SUBSET_N.txt       `# List of bins to process`
+  $UMI_DIR/read_binning/bins           `# Path to UMI bins`\
+  ${CON_DIR}                           `# Output folder`\
+  $CON_N                               `# Number of racon polishing times`\
+  $THREADS                             `# Number of threads`\
+  $OUT_DIR/sample$UMI_SUBSET_N.txt     `# List of bins to process`
 
 # Polishing
-POLISH_DIR1=$OUT_DIR/racon_medaka
-longread_umi polish_medaka \
-  $CON_DIR/consensus_*.fa       `# Path to consensus data`\
-  $MAX_LENGTH                   `# Sensible chunk size`\
-  $UMI_DIR/read_binning/bins    `# Path to UMI bins`\
-  $POLISH_DIR1                  `# Output folder`\
-  $THREADS                      `# Number of threads`\
-  $OUT_DIR/sample$UMI_SUBSET_N.txt       `# List of bins to process` \
-  $MEDAKA_JOBS                        `# Uses ALL threads with medaka`
-
-POLISH_DIR2=$OUT_DIR/racon_medaka_medaka
-longread_umi polish_medaka \
-  $POLISH_DIR1/consensus_*.fa   `# Path to consensus data`\
-  $MAX_LENGTH                   `# Sensible chunk size`\
-  $UMI_DIR/read_binning/bins    `# Path to UMI bins`\
-  $POLISH_DIR2                  `# Output folder`\
-  $THREADS                      `# Number of threads`\
-  $OUT_DIR/sample$UMI_SUBSET_N.txt       `# List of bins to process` \
-  $MEDAKA_JOBS                        `# Uses ALL threads with medaka`
+CON=${CON_DIR}/consensus_${CON_NAME}.fa
+for j in `seq 1 $POL_N`; do
+  POLISH_NAME=medakax${j}
+  POLISH_DIR=${CON_DIR}_${POLISH_NAME}
+  longread_umi polish_medaka \
+    $CON                              `# Path to consensus data`\
+    $MEDAKA_MODEL                     `# Path to consensus data`\
+    $MAX_LENGTH                       `# Sensible chunk size`\
+    $UMI_DIR                          `# Path to UMI bins`\
+    $POLISH_DIR                       `# Output folder`\
+    $THREADS                          `# Number of threads`\
+    $OUT_DIR/sample$UMI_SUBSET_N.txt  `# List of bins to process` \
+    $MEDAKA_JOBS                      `# Uses ALL threads with medaka`
+  CON=$POLISH_DIR/consensus_${CON_NAME}_${POLISH_NAME}.fa
+done
+  
 
 # Trim UMI consensus data
 longread_umi trim_amplicon \
-  $POLISH_DIR2         `# Path to consensus data`\
+  $POLISH_DIR          `# Path to consensus data`\
   '"consensus*fa"'     `# Consensus file pattern. Regex must be flanked by '"..."'`\
   $OUT_DIR             `# Output folder`\
   $FW2                 `# Forward primer sequence`\
@@ -194,9 +212,6 @@ longread_umi trim_amplicon \
 # Generate variants
 
 ## Subset to UMI consensus sequences with min read coverage
-POLISH_DIR2_NAME=${POLISH_DIR2##*/}
-POLISH_DIR2_NAME=${POLISH_DIR2_NAME%.*}
-  
 $GAWK -v UBS="$UMI_COVERAGE_MIN" '
   /^>/{
     match($0,/;ubs=([0-9]+)/, s)
@@ -206,12 +221,12 @@ $GAWK -v UBS="$UMI_COVERAGE_MIN" '
       print
     }
   }
-' $OUT_DIR/consensus_${POLISH_DIR2_NAME}.fa \
-> $OUT_DIR/consensus_${POLISH_DIR2_NAME}_${UMI_COVERAGE_MIN}.fa
+' $OUT_DIR/consensus_${CON_NAME}_${POLISH_NAME}.fa \
+> $OUT_DIR/consensus_${CON_NAME}_${POLISH_NAME}_${UMI_COVERAGE_MIN}.fa
 
 ## Variant calling of from UMI consensus sequences
 longread_umi variants \
-  $OUT_DIR/consensus_${POLISH_DIR2_NAME}_${UMI_COVERAGE_MIN}.fa `# Path to consensus data`\
+  $OUT_DIR/consensus_${CON_NAME}_${POLISH_NAME}_${UMI_COVERAGE_MIN}.fa `# Path to consensus data`\
   $OUT_DIR/variants `# Output folder`\
   $THREADS `# Number of threads`
 
