@@ -14,7 +14,7 @@
 
 USAGE="$(basename "$0" .sh) [-h] [-d file -n value -c value -o dir -s value -e value 
 -m value -M value -f string -F string -r string -R string -t value -T value 
--x value -y value -p -u dir ] 
+-x value -y value -q string -p -u dir ] 
 -- longread_umi nanopore_settings_test: Testing settings for racon consensus and
    medaka polishing.
 
@@ -40,6 +40,7 @@ where:
 		Default is 1 job.
     -x  Test Racon consensus rounds from 1 to <value>.
     -y  Test Medaka polishing rounds from 1 to <value>.
+    -q  Medaka model used for polishing. r941_min_high, r10_min_high etc.
     -p  Flag to disable Nanopore trimming and filtering.
 	-u  Directory with UMI binned reads.
 
@@ -58,7 +59,7 @@ longread_umi nanopore_settings_test \
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:o:s:e:m:M:f:F:r:R:n:w:t:T:x:y:pu:' OPTION; do
+while getopts ':hzd:o:s:e:m:M:f:F:r:R:n:w:t:T:x:y:q:pu:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) INPUT_READS=$OPTARG;;
@@ -77,6 +78,7 @@ while getopts ':hzd:o:s:e:m:M:f:F:r:R:n:w:t:T:x:y:pu:' OPTION; do
     T) MEDAKA_JOBS=$OPTARG;;
     x) RACON_ROUNDS=$OPTARG;;
     y) MEDAKA_ROUNDS=$OPTARG;;
+    q) MEDAKA_MODEL=$OPTARG;;
     p) TRIM_FLAG="-p";;
     u) UMI_DIR=$OPTARG;;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
@@ -110,6 +112,7 @@ if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THRE
 if [ -z ${MEDAKA_JOBS+x} ]; then echo "-T is missing. Medaka jobs set to 1."; MEDAKA_JOBS=1; fi;
 if [ -z ${RACON_ROUNDS+x} ]; then echo "-x $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${MEDAKA_ROUNDS+x} ]; then echo "-y $MISSING"; echo "$USAGE"; exit 1; fi;
+if [ -z ${MEDAKA_MODEL+x} ]; then echo "-q $MISSING"; echo "$USAGE"; exit 1; fi;
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -144,6 +147,7 @@ echo "Threads: $THREADS"
 echo "Medaka jobs: $MEDAKA_JOBS"
 echo "Racon rounds: $RACON_ROUNDS"
 echo "Medaka rounds: $MEDAKA_ROUNDS"
+echo "Medaka model: $MEDAKA_MODEL"
 echo "UMI directory: $UMI_DIR"
 echo ""
 
@@ -175,25 +179,27 @@ fi
 # Consensus and polishing
 for i in `seq 1 $RACON_ROUNDS`; do
   # Racon consensus
+  CON_NAME=raconx$i
   longread_umi consensus_racon \
     $UMI_DIR/read_binning/bins          `# Path to UMI bins`\
-    $OUT_DIR/raconx$i                   `# Output folder`\
+    $OUT_DIR/$CON_NAME                   `# Output folder`\
     $i                                  `# Number of racon polishing times`\
     $THREADS                            `# Number of threads`\
     $OUT_DIR/sample$UMI_SUBSET_N.txt    `# List of bins to process`
-  CON=$OUT_DIR/raconx$i/consensus_raconx$i.fa
+  CON=$OUT_DIR/$CON_NAME/consensus_${CON_NAME}.fa
   # Medaka polishing
   for j in `seq 1 $MEDAKA_ROUNDS`; do
+    POLISH_NAME=${CON_NAME}_medakax$j
     longread_umi polish_medaka \
       $CON                              `# Path to consensus data`\
+      $MEDAKA_MODEL                     `# Path to consensus data`\
       $MAX_LENGTH                       `# Sensible chunk size`\
       $UMI_DIR                          `# Path to UMI bins`\
-      $OUT_DIR/raconx${i}_medakax${j}   `# Output folder`\
+      $OUT_DIR/${POLISH_NAME}   `# Output folder`\
       $THREADS                          `# Number of threads`\
       $OUT_DIR/sample$UMI_SUBSET_N.txt  `# List of bins to process` \
       $MEDAKA_JOBS                      `# Uses ALL threads with medaka`
-    CON=$OUT_DIR/raconx${i}_medakax${j}/consensus_raconx${i}_medakax${j}.fa
-    mv $OUT_DIR/raconx${i}_medakax${j}/consensus_raconx${i}*medaka.fa $CON
+    CON=$OUT_DIR/${POLISH_NAME}/consensus_${POLISH_NAME}.fa
   done
 done
 
@@ -212,10 +218,10 @@ longread_umi trim_amplicon \
 # Perform qc
 CON_LIST=$(echo $OUT_DIR/consensus* | sed 's/ /;/g')
 longread_umi qc_pipeline \
-  -d $OUT_DIR/umi_binning/trim/reads_tf.fq \
+  -d $UMI_DIR/trim/reads_tf.fq \
   -c $CON_LIST \
   -u $UMI_DIR \
   -o $OUT_DIR/qc \
   -r "zymo_curated" \
-  -t 100
+  -t $THREADS
 
