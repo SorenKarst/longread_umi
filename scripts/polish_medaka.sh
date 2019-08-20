@@ -12,12 +12,13 @@
 
 ### Terminal input ------------------------------------------------------------
 CONSENSUS_FILE=$1 #Consensus file path name
-CHUNK_SIZE=$2 # Sensible chunk size for amplicon type
-BINNING_DIR=$3 #Raw read bins file path name
-OUT_DIR=$4 #output folder name
-THREADS=$5 #Number of threads
-SAMPLE=$6 # List of bins to process
-MEDAKA_JOBS=${7:-1} # Number medaka jobs to start
+MEDAKA_MODEL=$2 #Medaka model to use.
+CHUNK_SIZE=$3 # Sensible chunk size for amplicon type
+BINNING_DIR=$4 #Raw read bins file path name
+OUT_DIR=$5 #output folder name
+THREADS=$6 #Number of threads
+SAMPLE=$7 # List of bins to process
+MEDAKA_JOBS=${8:-1} # Number medaka jobs to start
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -25,8 +26,7 @@ MEDAKA_JOBS=${7:-1} # Number medaka jobs to start
 ### Medaka polishing assembly -------------------------------------------------
 
 # Format names
-CONSENSUS_NAME=${CONSENSUS_FILE##*/}
-CONSENSUS_NAME=${CONSENSUS_NAME%.*}
+OUT_NAME=${OUT_DIR##*/}
 
 # Medaka jobs
 MEDAKA_THREADS=$(( THREADS/MEDAKA_JOBS ))
@@ -91,14 +91,40 @@ consensus_wrapper() {
   # Input
   local JOB_NR=$1
   local OUT_DIR=$2
-  local MODEL=$3
-  local CON_THREADS=$4
+  local MEDAKA_MODEL=$3
+  local MEDAKA_THREADS=$4
   local CHUNK_SIZE=$5
 
-  # Merge bams
-  $SAMTOOLS merge \
-    -b <(cat) \
-    $OUT_DIR/${JOB_NR}.bam
+  # Merge bam files
+  
+  ### Custom merge function required for > 1024 files
+  bam_merge() {
+    # Input
+    local OUT_DIR=$1
+	local JOB_NR=$2
+  
+    awk -v OUT_BAM="$OUT_DIR/${JOB_NR}" '
+      # Print HD line
+      (NR==1 && $1 ~ /^@HD$/){print $0 > OUT_BAM ".header"}
+      # Print reference lines
+      ($1 ~ /^@SQ$/){print $0 > OUT_BAM ".header"}
+      # Print reads lines
+      ($1 ~ !/^@/){print $0 > OUT_BAM ".body"}
+    '
+  }  
+  export -f bam_merge
+  
+  ### View bam files in parallel and pipe into merge function
+  cat |\
+    $GNUPARALLEL \
+      -j $MEDAKA_THREADS \
+      $SAMTOOLS view -h {} |\
+      bam_merge $OUT_DIR $JOB_NR
+
+  ### Build bam file
+  cat $OUT_DIR/${JOB_NR}.header $OUT_DIR/${JOB_NR}.body  |\
+    samtools view -b - > $OUT_DIR/${JOB_NR}.bam
+  rm $OUT_DIR/${JOB_NR}.header $OUT_DIR/${JOB_NR}.body
 
   # Index bam
   $SAMTOOLS index \
@@ -108,8 +134,8 @@ consensus_wrapper() {
   medaka consensus \
     $OUT_DIR/${JOB_NR}.bam \
     $OUT_DIR/${JOB_NR}_consensus.hdf \
-    --threads $CON_THREADS \
-    --model $MODEL \
+    --threads $MEDAKA_THREADS \
+    --model $MEDAKA_MODEL \
 	--chunk_len $CHUNK_SIZE
 }
 
@@ -131,16 +157,15 @@ $GNUPARALLEL \
      $OUT_DIR/consensus \
      $MEDAKA_MODEL \
      $MEDAKA_THREADS \
-	 $CHUNK_SIZE
-  "
+     $CHUNK_SIZE"
 
 # Stitch consensus sequences
 medaka stitch \
   $OUT_DIR/consensus/*_consensus.hdf \
-  $OUT_DIR/${CONSENSUS_NAME}_medaka.fa
+  $OUT_DIR/consensus_${OUT_NAME}.fa
 
 # Clean consensus header
-sed -i "s/:.*//" $OUT_DIR/${CONSENSUS_NAME}_medaka.fa   
+sed -i "s/:.*//" $OUT_DIR/consensus_${OUT_NAME}.fa
 
 # Deactivate medaka environment if relevant
 eval "$MEDAKA_ENV_STOP"
