@@ -77,7 +77,7 @@ A collection of scripts for processing longread UMI data.
 5. Run qc pipeline:  
    `longread_umi qc_pipeline \`  
      `-d test_reads.fq \`  
-     `-c consensus_racon_medaka_medaka.fa \`  
+     `-c consensus_raconx3_medakax1.fa \`  
      `-r zymo_curated \`  
      `-t 1`  
 
