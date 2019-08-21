@@ -95,7 +95,7 @@ A collection of scripts for processing longread UMI data.
      `-o . \`  
      `-v 30  \`  
      `-w rrna_operon \`  
-     `-t <Number-of-threads> \  
+     `-t <Number-of-threads> \`  
      `-q r941_min_high`  
 5. Open a terminal in the directory and run:  
    `longread_umi qc_pipeline \`  
