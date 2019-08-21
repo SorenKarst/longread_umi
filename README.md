@@ -49,22 +49,37 @@ A collection of scripts for processing longread UMI data.
   `longread_umi nanopore_pipeline -h` or `/path/to/longread_umi.sh nanopore_pipeline -h`
 3. Test longread_umi nanopore_pipeline and qc_pipeline on test data:  
    Go to /path/to/longread-UMI-pipeline/test_data and open a terminal in the directory.
-4. Run `longread_umi nanopore_pipeline -d test_reads.fq -o . -c 30 -w rrna_operon -t 1`  
-   or  
-   `longread_umi nanopore_pipeline \`  
-   `  -d test_reads.fq \`  
-   `  -c 30 \`  
-   `  -o . \`  
-   `  -s 70 \`  
-   `  -e 80 \`  
-   `  -m 3500 \`  
-   `  -M 6000 \`  
-   `  -f CAAGCAGAAGACGGCATACGAGAT \`  
-   `  -F AGRGTTYGATYMTGGCTCAG \`  
-   `  -r AATGATACGGCGACCACCGAGATC \`  
-   `  -R CGACATCGAGGTGCCAAAC \`  
-   `  -t 1`
-5. Run `longread_umi qc_pipeline -d test_reads.fq -c consensus_racon_medaka_medaka.fa -r zymo_curated -t 1`
+4. Run nanopore pipeline:
+  `longread_umi nanopore_pipeline \`  
+  `  -d test_reads.fq \`  
+  `  -o . \`  
+  `  -v 30 \`  
+  `  -w rrna_operon \  
+  `  -t 1 \  
+     -q r941_min_high`  
+  or  
+  `longread_umi nanopore_pipeline \`  
+  `  -d test_reads.fq \`  
+  `  -v 30 \`  
+  `  -o . \`  
+  `  -s 70 \`  
+  `  -e 80 \`  
+  `  -m 3500 \`  
+  `  -M 6000 \`  
+  `  -f CAAGCAGAAGACGGCATACGAGAT \`  
+  `  -F AGRGTTYGATYMTGGCTCAG \`  
+  `  -r AATGATACGGCGACCACCGAGATC \`  
+  `  -R CGACATCGAGGTGCCAAAC \`  
+  `  -c 3 \`  
+  `  -p 1 \`
+  `  -q r941_min_high\`  
+  `  -t 1`
+5. Run qc pipeline:
+  `longread_umi qc_pipeline \`  
+  `  -d test_reads.fq \`  
+  `  -c consensus_racon_medaka_medaka.fa \`  
+  `  -r zymo_curated \`  
+  `  -t 1`  
 
 ### Run pipeline on Zymo mock Nanopore data and perform qc
 1. Create a working directory and open a terminal
@@ -75,7 +90,13 @@ A collection of scripts for processing longread UMI data.
    `wget https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz`  
    `gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz`  
 4. Open a terminal in the directory and run:  
-  `longread_umi nanopore_pipeline -d reads.fq -o . -c 30 -w rrna_operon -t <Number-of-threads>`
+  `longread_umi nanopore_pipeline \`  
+  `  -d reads.fq \`  
+  `  -o . \`  
+  `  -v 30  \`  
+  `  -w rrna_operon \`  
+  `  -t <Number-of-threads> \  
+     -q r941_min_high`  
 5. Open a terminal in the directory and run:  
   `longread_umi qc_pipeline \`  
    `  -d "umi_binning/trim/reads_tf.fq;reads.fq" \`  
