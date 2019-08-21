@@ -88,7 +88,7 @@ A collection of scripts for processing longread UMI data.
    `gunzip -c ERR3336963_1.fastq.gz > reads.fq`
 3. Download the SILVA database and decompress:  
    `wget https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz`  
-   `gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz`  
+   `gunzip -c SILVA_132_SSURef_Nr99_tax_silva.fasta.gz | sed '/^>/! s/U/T/g' >  silva_db.fasta` 
 4. Open a terminal in the directory and run:  
    `longread_umi nanopore_pipeline \`  
      `-d reads.fq \`  
@@ -102,5 +102,5 @@ A collection of scripts for processing longread UMI data.
      `-d "umi_binning/trim/reads_tf.fq;reads.fq" \`  
      `-c "consensus_racon_medaka_medaka.fa;variants.fa" \`  
      `-r "zymo_curated;zymo_vendor;variants.fa" \`  
-     `-s SILVA_132_SSURef_Nr99_tax_silva.fasta \`  
+     `-s silva_db.fasta \`  
      `-t <Number-of-threads>`  

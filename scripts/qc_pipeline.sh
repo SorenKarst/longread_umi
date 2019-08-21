@@ -200,6 +200,24 @@ if [ ! -z ${SILVA+x} ]; then
     $SAMTOOLS view -F 2308 - |\
     cut -f1-9,12,21 \
     > $OUT/${CON1_NAME}_${SILVA_NAME}.sam
+
+  # Export target taxonomy
+  awk \
+    -v SAM="$OUT/${CON1_NAME}_${SILVA_NAME}.sam" \
+    -v SILVA="$SILVA" \
+    '
+      (FILENAME == SAM){
+        TARGETS[$3]++ 
+      }
+      (FILENAME == SILVA && $0 ~ /^>/){
+        TARGET=substr($1,2)
+        if (TARGET in TARGETS){
+          print TARGET, $2
+        }
+      }
+    ' \
+    $OUT/${CON1_NAME}_${SILVA_NAME}.sam \
+    $SILVA > $OUT/${CON1_NAME}_${SILVA_NAME}_tax.txt
 fi
 
 # Testing
