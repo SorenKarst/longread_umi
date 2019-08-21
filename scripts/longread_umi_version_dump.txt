@@ -1,0 +1,17 @@
+Script start: 2019-08-21-12:56:27
+Software Version:
+longread_umi - v0.2.0-58-g78d162d
+seqtk - Version: 1.3-r106
+Parallel - GNU parallel 20190722
+Usearch - usearch v11.0.667_i86linux32
+Racon - v1.4.3
+Minimap2 - 2.17-r954-dirty
+medaka - 0.8.1
+medaka model - 
+Gawk - GNU Awk 4.1.3, API: 1.1 (GNU MPFR 3.1.4, GNU MP 6.1.0)
+Cutadapt - 2.4
+Porechop - 0.2.4 + add UMI adaptors to adaptors.py
+Filtlong - Filtlong v0.2.0
+BWA - Version: 0.7.17-r1198-dirty
+Samtools - Version: 1.9 (using htslib 1.9)
+Bcftools - bcftools 1.9
