@@ -2,7 +2,7 @@
 A collection of scripts for processing longread UMI data.
 
 ## Requirements
-1. Tested on Ubuntu 14.04 (Yeah, we know...)
+1. Tested on Ubuntu 14.04 and 16.04.
 2. Dependencies: See scripts/dependencies.sh and scripts/longread_umi_version_dump.txt
 
 ## Automatic installation
@@ -10,7 +10,7 @@ A collection of scripts for processing longread UMI data.
    folders and files in the working directory. USE AT OWN RISK!!
 2. Go to a folder where you want the longread UMI pipeline and dependencies installed.
 3. Open a terminal in the installation folder and download the installation script:  
-  `wget https://raw.githubusercontent.com/SorenKarst/longread-UMI-pipeline/master/scripts/install_dependencies.sh`
+   `wget https://raw.githubusercontent.com/SorenKarst/longread-UMI-pipeline/master/scripts/install_dependencies.sh`
 4. Option A (Recommended): Open script in a text editor and copy installation commands for missing dependencies to
    terminal one by one.
 4. Option B: Install pipeline and dependencies automatically by excuting script `bash install_dependencies.sh`
@@ -49,37 +49,37 @@ A collection of scripts for processing longread UMI data.
   `longread_umi nanopore_pipeline -h` or `/path/to/longread_umi.sh nanopore_pipeline -h`
 3. Test longread_umi nanopore_pipeline and qc_pipeline on test data:  
    Go to /path/to/longread-UMI-pipeline/test_data and open a terminal in the directory.
-4. Run nanopore pipeline:
-  `longread_umi nanopore_pipeline \`  
-  `  -d test_reads.fq \`  
-  `  -o . \`  
-  `  -v 30 \`  
-  `  -w rrna_operon \  
-  `  -t 1 \  
-     -q r941_min_high`  
-  or  
-  `longread_umi nanopore_pipeline \`  
-  `  -d test_reads.fq \`  
-  `  -v 30 \`  
-  `  -o . \`  
-  `  -s 70 \`  
-  `  -e 80 \`  
-  `  -m 3500 \`  
-  `  -M 6000 \`  
-  `  -f CAAGCAGAAGACGGCATACGAGAT \`  
-  `  -F AGRGTTYGATYMTGGCTCAG \`  
-  `  -r AATGATACGGCGACCACCGAGATC \`  
-  `  -R CGACATCGAGGTGCCAAAC \`  
-  `  -c 3 \`  
-  `  -p 1 \`
-  `  -q r941_min_high\`  
-  `  -t 1`
-5. Run qc pipeline:
-  `longread_umi qc_pipeline \`  
-  `  -d test_reads.fq \`  
-  `  -c consensus_racon_medaka_medaka.fa \`  
-  `  -r zymo_curated \`  
-  `  -t 1`  
+4. Run nanopore pipeline:  
+   `longread_umi nanopore_pipeline \`  
+     `-d test_reads.fq \`  
+     `-o . \`  
+     `-v 30 \`  
+     `-w rrna_operon \`  
+     `-t 1 \`  
+     `-q r941_min_high`  
+   or  
+   `longread_umi nanopore_pipeline \`  
+     `-d test_reads.fq \`  
+     `-v 30 \`  
+     `-o . \`  
+     `-s 70 \`  
+     `-e 80 \`  
+     `-m 3500 \`  
+     `-M 6000 \`  
+     `-f CAAGCAGAAGACGGCATACGAGAT \`  
+     `-F AGRGTTYGATYMTGGCTCAG \`  
+     `-r AATGATACGGCGACCACCGAGATC \`  
+     `-R CGACATCGAGGTGCCAAAC \`  
+     `-c 3 \`  
+     `-p 1 \`  
+     `-q r941_min_high\`  
+     `-t 1`
+5. Run qc pipeline:  
+   `longread_umi qc_pipeline \`  
+     `-d test_reads.fq \`  
+     `-c consensus_racon_medaka_medaka.fa \`  
+     `-r zymo_curated \`  
+     `-t 1`  
 
 ### Run pipeline on Zymo mock Nanopore data and perform qc
 1. Create a working directory and open a terminal
@@ -90,17 +90,17 @@ A collection of scripts for processing longread UMI data.
    `wget https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz`  
    `gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz`  
 4. Open a terminal in the directory and run:  
-  `longread_umi nanopore_pipeline \`  
-  `  -d reads.fq \`  
-  `  -o . \`  
-  `  -v 30  \`  
-  `  -w rrna_operon \`  
-  `  -t <Number-of-threads> \  
-     -q r941_min_high`  
+   `longread_umi nanopore_pipeline \`  
+     `-d reads.fq \`  
+     `-o . \`  
+     `-v 30  \`  
+     `-w rrna_operon \`  
+     `-t <Number-of-threads> \  
+     `-q r941_min_high`  
 5. Open a terminal in the directory and run:  
-  `longread_umi qc_pipeline \`  
-   `  -d "umi_binning/trim/reads_tf.fq;reads.fq" \`  
-   `  -c "consensus_racon_medaka_medaka.fa;variants.fa" \`  
-   `  -r "zymo_curated;zymo_vendor;variants.fa" \`  
-   `  -s SILVA_132_SSURef_Nr99_tax_silva.fasta \`  
-   `  -t <Number-of-threads>`  
+   `longread_umi qc_pipeline \`  
+     `-d "umi_binning/trim/reads_tf.fq;reads.fq" \`  
+     `-c "consensus_racon_medaka_medaka.fa;variants.fa" \`  
+     `-r "zymo_curated;zymo_vendor;variants.fa" \`  
+     `-s SILVA_132_SSURef_Nr99_tax_silva.fasta \`  
+     `-t <Number-of-threads>`  
