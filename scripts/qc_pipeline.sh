@@ -191,19 +191,43 @@ $USEARCH \
 if [ ! -z ${SILVA+x} ]; then
   SILVA_NAME=${SILVA%.*};
   SILVA_NAME=${SILVA_NAME##*/};
+  REF1_NAME=${REF1%.*};
+  REF1_NAME=${REF1_NAME##*/};
+
+  # Extract SSU from data
+  $CUTADAPT \
+    --discard-untrimmed \
+    -m 1200 \
+    -M 2000 \
+    -a TGYACWCACCGCCCGTC \
+    $CON1 > $OUT/${CON1_NAME}_ssu.fa
 
   # Map to SILVA database
-  $MINIMAP2 -ax map-ont \
+  $MINIMAP2 -a \
+    -k 15 \
+    -w 1 \
     $SILVA \
-    $CON1 \
+    $OUT/${CON1_NAME}_ssu.fa \
     -t $THREADS --cs |\
     $SAMTOOLS view -F 2308 - |\
     cut -f1-9,12,21 \
-    > $OUT/${CON1_NAME}_${SILVA_NAME}.sam
+    > $OUT/${CON1_NAME}_ssu_${SILVA_NAME}.sam
+	
 
+  # Map to ref database
+  $MINIMAP2 -a \
+    -k 15 \
+    -w 1 \
+    $REF1 \
+    $OUT/${CON1_NAME}_ssu.fa \
+    -t $THREADS --cs |\
+    $SAMTOOLS view -F 2308 - |\
+    cut -f1-9,12,21 \
+    > $OUT/${CON1_NAME}_ssu_${REF1_NAME}.sam
+  
   # Export target taxonomy
-  awk \
-    -v SAM="$OUT/${CON1_NAME}_${SILVA_NAME}.sam" \
+  $GAWK \
+    -v SAM="$OUT/${CON1_NAME}_ssu_${SILVA_NAME}.sam" \
     -v SILVA="$SILVA" \
     '
       (FILENAME == SAM){
@@ -216,8 +240,8 @@ if [ ! -z ${SILVA+x} ]; then
         }
       }
     ' \
-    $OUT/${CON1_NAME}_${SILVA_NAME}.sam \
-    $SILVA > $OUT/${CON1_NAME}_${SILVA_NAME}_tax.txt
+    $OUT/${CON1_NAME}_ssu_${SILVA_NAME}.sam \
+    $SILVA > $OUT/${CON1_NAME}_ssu_${SILVA_NAME}_tax.txt
 fi
 
 # Testing
