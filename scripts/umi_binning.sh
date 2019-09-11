@@ -135,7 +135,7 @@ fi
 mkdir $OUT_DIR/umi_ref
 UMI_DIR=$OUT_DIR/umi_ref
 
-# Extract UMIs and 5' flanking region
+# Extract UMI terminal region
 $GAWK -v UD="$UMI_DIR" 'NR%4==1{
        print $0 > UD"/reads_tf_start.fq";
        print $0 > UD"/reads_tf_end.fq";  
@@ -154,20 +154,21 @@ $GAWK -v UD="$UMI_DIR" 'NR%4==1{
      }
 ' $TRIM_DIR/reads_tf.fq
 
-# Extract UMIs with correct length in both ends
+
+# Extract UMI pairs with correct lengths
 $CUTADAPT -j $THREADS -e 0.2 -O 11 -m 18 -M 18 \
   --discard-untrimmed \
   -g $FW1...$FW2 -g $RV1...$RV2 \
   -G $RV2R...$RV1R -G $FW2R...$FW1R \
   -o $UMI_DIR/umi1.fq -p $UMI_DIR/umi2.fq \
   $UMI_DIR/reads_tf_start.fq $UMI_DIR/reads_tf_end.fq \
-  > $UMI_DIR/trim.log
+  > $UMI_DIR/perfect_trim.log
 
 paste -d "" <( sed -n '1~4s/^@/>/p;2~4p' $UMI_DIR/umi1.fq ) \
             <( sed -n '1~4s/^@/>/p;2~4p' $UMI_DIR/umi2.fq ) |\
   cut -d " " -f1 > $UMI_DIR/umi12.fa
 
-# Extract UMIs with correct patterns 
+# Extract UMI pairs with correct patterns 
 
 # Pattern: (NNNYRNNNYRNNNYRNNN NNNYRNNNYRNNNYRNNN)
 PATTERN="[ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{6}\
@@ -175,19 +176,81 @@ PATTERN="[ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{6}\
 grep -B1 -E "$PATTERN" $UMI_DIR/umi12.fa |\
   sed '/^--$/d' > $UMI_DIR/umi12f.fa
 
-# Extract UMIs with abundance >= 2 
-$USEARCH -fastx_uniques $UMI_DIR/umi12f.fa \
-  -fastaout $UMI_DIR/umi12u.fa -sizeout -minuniquesize 2 \
-  -relabel umi -strand both
+# Cluster UMI pairs
+$USEARCH \
+  -fastx_uniques \
+  $UMI_DIR/umi12f.fa \
+  -fastaout $UMI_DIR/umi12u.fa \
+  -sizeout \
+  -minuniquesize 1 \
+  -relabel umi \
+  -strand both
 
-$USEARCH -cluster_fast $UMI_DIR/umi12u.fa -id 0.85 \
-  -centroids $UMI_DIR/umi12c.fa -uc $UMI_DIR/umi12c.txt \
-  -sizein -sizeout -strand both 
+$USEARCH \
+  -cluster_fast $UMI_DIR/umi12u.fa \
+  -id 0.90 \
+  -centroids $UMI_DIR/umi12c.fa \
+  -uc $UMI_DIR/umi12c.txt \
+  -sizein \
+  -sizeout \
+  -strand both \
+  -minsize 1
 
+# Extract putative UMI pairs
+$CUTADAPT -j $THREADS -e 0.2 -O 11 -m 18 -l 18 \
+  --discard-untrimmed \
+  -g $FW1 -g $RV1 \
+  -G $RV2R -G $FW2R \
+  -o $UMI_DIR/umi1p.fq -p $UMI_DIR/umi2p.fq \
+  $UMI_DIR/reads_tf_start.fq $UMI_DIR/reads_tf_end.fq \
+  > $UMI_DIR/putative_trim.log
+
+paste -d "" <( sed -n '1~4s/^@/>/p;2~4p' $UMI_DIR/umi1p.fq ) \
+            <( sed -n '1~4s/^@/>/p;2~4p' $UMI_DIR/umi2p.fq ) |\
+  cut -d " " -f1 > $UMI_DIR/umi12p.fa
+
+$BWA index $UMI_DIR/umi12c.fa
+
+$BWA aln \
+  $UMI_DIR/umi12c.fa \
+  $UMI_DIR/umi12p.fa \
+  -n 6 \
+  -t $THREADS \
+  -N > $UMI_DIR/umi12p_map.sai
+$BWA samse \
+  -n 10000000 \
+  $UMI_DIR/umi12c.fa \
+  $UMI_DIR/umi12p_map.sai \
+  $UMI_DIR/umi12p.fa|\
+  $SAMTOOLS view -F 20 - \
+  > $UMI_DIR/umi12p_map.sam
+
+$GAWK \
+  -v UMS="$UMI_DIR/umi12p_map.sam" \
+  -v UC="$UMI_DIR/umi12c.fa" \
+  '
+  (FILENAME == UMS){
+      CLUSTER[$3]++
+  }
+  (FILENAME == UC && FNR%2==1){
+    NAME=substr($1,2)
+    if (NAME in CLUSTER){
+      if (CLUSTER[NAME]+0 > 2){
+        SIZE=CLUSTER[NAME]
+        gsub(";.*", "", NAME)
+        print ">" NAME ";size=" SIZE ";"
+        getline; print
+      }
+    }
+  }
+  ' \
+  $UMI_DIR/umi12p_map.sam \
+  $UMI_DIR/umi12c.fa \
+  > $UMI_DIR/umi12cf.fa 
 
 # Remove potential chimeras
-paste <(cat $UMI_DIR/umi12c.fa | paste - - ) \
-  <($GAWK '!/^>/{print}' $UMI_DIR/umi12c.fa | rev | tr ATCG TAGC) |\
+paste <(cat $UMI_DIR/umi12cf.fa | paste - - ) \
+  <($GAWK '!/^>/{print}' $UMI_DIR/umi12cf.fa | rev | tr ATCG TAGC) |\
   $GAWK -v UD="$UMI_DIR" 'NR==FNR {
       #Format columns
       split($1, a, /[>;]/);
@@ -469,14 +532,68 @@ rm -r $BINNING_DIR/bins/job*
 
 ## Testing
 exit 0
-READ_IN=$1
-OUT_DIR=$2
-THREADS=$3
-MIN_LENGTH=$4
-MAX_LENGTH=$5
-START_READ_CHECK=${6:-70}
-END_READ_CHECK=${7:-80}
-FW1=${8:-CAAGCAGAAGACGGCATACGAGAT} #RC: ATCTCGTATGCCGTCTTCTGCTTG
-FW2=${9:-AGRGTTYGATYMTGGCTCAG} #RC: CTGAGCCAKRATCRAACYCT
-RV1=${10:-AATGATACGGCGACCACCGAGATC} #RC: GATCTCGGTGGTCGCCGTATCATT
-RV2=${11:-CGACATCGAGGTGCCAAAC} #RC: GTTTGGCACCTCGATGTCG
+# Filtering based on sub UMIs
+cat \
+  $UMI_DIR/reads_tf_start.fq \
+  <($SEQTK seq -r $UMI_DIR/reads_tf_end.fq) |\
+$CUTADAPT \
+  -j $THREADS \
+  -e 0.2 \
+  -O 11 \
+  -m 18 \
+  -M 18 \
+  --discard-untrimmed \
+  -g $FW1...$FW2 \
+  -g $RV1...$RV2 \
+  - 2> $UMI_DIR/sumi_trim.log |\
+  $GAWK '
+    NR%4==1{print ">" substr($1, 2)}
+    NR%4==2{print $0}
+  ' > $UMI_DIR/sumi.fa
+
+$USEARCH \
+  -fastx_uniques $UMI_DIR/sumi.fa \
+  -fastaout $UMI_DIR/sumi_u.fa \
+  -relabel sumi \
+  -strand plus \
+  -sizeout \
+  -minuniquesize 2
+
+PATTERN="[ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{3}"
+grep -B1 -E "$PATTERN" $UMI_DIR/sumi_u.fa |\
+  sed '/^--$/d' > $UMI_DIR/sumi_f.fa
+
+$SEQTK seq -r $UMI_DIR/sumi_f.fa > $UMI_DIR/sumi_frc.fa
+
+$GAWK \
+  -v UF="$UMI_DIR/sumi_f.fa" \
+  -v UR="$UMI_DIR/sumi_frc.fa" \
+  -v UFR="umi12u.fa" \
+  '
+  (FILENAME == UF && FNR%2==1){
+    SIZE=$1
+    sub(".*=|;", "", SIZE)
+    getline
+    UMI_FWD[$0]=SIZE
+  }
+  (FILENAME == UR && FNR%2==1){
+    SIZE=$1
+    gsub(".*=|;", "", SIZE)
+    getline
+    UMI_RV[$0]=SIZE
+  }
+  (FILENAME == UFR && FNR%2==1){
+    NAME=$1
+    getline
+    # Extract UMI1 and UMI2 in both orientations
+    s1 = substr($1, 1, 18);
+    s2 = substr($1, 19, 36);
+    if (s1 in UMI_FWD && s2 in UMI_RV){
+      print NAME UMI_FWD[s1] ";" UMI_RV[s2] ";" s1 ";" s2 ";\n" $1 
+    }
+  }
+ ' \
+ $UMI_DIR/sumi_f.fa \
+ $UMI_DIR/sumi_frc.fa \
+ $UMI_DIR/umi12u.fa \
+ > $UMI_DIR/umi12uf.fa
