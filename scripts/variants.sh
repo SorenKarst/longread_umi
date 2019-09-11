@@ -16,6 +16,7 @@
 CONSENSUS_FILE=$1 #Consensus file path name
 OUT_DIR=$2 #output folder name
 THREADS=$3 #Number of threads
+DEBUG=${4:-NO} # Print temp files for cluster assignment
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -429,16 +430,24 @@ $GAWK \
   -v R_FA="$OUT_DIR/m_temp.fa" \
   -v C_UC="$OUT_DIR/c2_temp.uc" \
   -v OUT_DIR="$OUT_DIR" \
+  -v DEBUG="$DEBUG" \
   '
   # Bin reads based on clustering results
   (FILENAME != R_FA && $1 ~ /S|H/) {
     sub(";size.*", "", $9)
     sub(";size.*", "", $10)
-    if ($10 ~ /\*/){
-      READS[$9]=$9
+    if ($10 ~ /\*/){ 
+      READS[$9]=$9 # Assign read to own cluster
     } else if ($10 !~ /\*/){
-      READS[$9]=$10
+      READS[$9]=$10 # Assign read to new cluster
+	  for (READ in READS){
+	    if (READS[READ] == $9){
+		  READS[READ]=$10 # Update reads in same cluster to new cluster
+		}
+	  }
     }
+	# Temp output
+	  print $9, READS[$9], FILENAME > OUT_DIR "/clusters/temp_cluster_assign.txt" 
   }
   # Bin reads based on clustering results and define cluster # 
   (FILENAME == C_UC){
@@ -486,7 +495,9 @@ $GAWK \
   $OUT_DIR/c1_temp.uc \
   $OUT_DIR/c2_temp.uc \
   $OUT_DIR/m_temp.fa
-rm $OUT_DIR/*temp*
+if [ "$DEBUG" = "YES" ]; then
+  rm $OUT_DIR/*temp*
+fi
 
 # Phasing and consensus
 VARIANT_OUT=$OUT_DIR/phasing_consensus
