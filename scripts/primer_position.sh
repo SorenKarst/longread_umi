@@ -85,19 +85,40 @@ $SEQTK seq -r $OUT_DIR/reads_t2.fa |\
 # Determine fraction of reads with terminal adaptors
 adp_presence(){
   $CUTADAPT \
-    -j $THREADS \
+    -j 1 \
     -O 10 \
 	-e 0.2\
-    -a $FW1 \
-    -a $RV1 \
-    - \
+    -g $FW1 \
+    -g $RV1 \
+    -G $FW1 \
+    -G $RV1 \
+    $1 \
+	$2 \
     --discard-untrimmed \
-	1> /dev/null \
-	2>> $OUT_DIR/adp_presence_log.txt
+	-p /dev/null \
+	-o /dev/null \
+    > $OUT_DIR/adp_presence_log.txt
 }
 
-cat $OUT_DIR/reads_t1.fa |\
-  adp_presence 
+adp_presence \
+  $OUT_DIR/reads_t1.fa \
+  <($SEQTK seq -r $OUT_DIR/reads_t2.fa)
 
-$SEQTK seq -r $OUT_DIR/reads_t2.fa |\
-  adp_presence 
+#adp_presence2(){
+#  $CUTADAPT \
+#    -j $THREADS \
+#    -O 10 \
+#	-e 0.2\
+#    -a $FW1 \
+#    -a $RV1 \
+#    - \
+#    --discard-untrimmed \
+#	1> /dev/null \
+#	2>> $OUT_DIR/adp_presence_log.txt
+#}
+
+#cat $OUT_DIR/reads_t1.fa |\
+#  adp_presence2 
+#
+#$SEQTK seq -r $OUT_DIR/reads_t2.fa |\
+#  adp_presence2 
