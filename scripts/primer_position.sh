@@ -43,6 +43,8 @@ $GAWK -v BD="$OUT_DIR" -v TL="$TERMINAL_LENGTH" '
        print substr($0, length($0) - TL + 1, TL)  > BD"/reads_t2.fa"; 
      }
 '
+$SEQTK seq -r $OUT_DIR/reads_t2.fa > $OUT_DIR/reads_t2_rc.fa
+
 # Determine primer start position from either end
 primer_start_pos(){
   $CUTADAPT \
@@ -78,7 +80,7 @@ cat $OUT_DIR/reads_t1.fa |\
   primer_start_pos \
   > $OUT_DIR/reads_t1_umi_endpos.txt
 
-$SEQTK seq -r $OUT_DIR/reads_t2.fa |\
+cat $OUT_DIR/reads_t2_rc.fa |\
   primer_start_pos \
   > $OUT_DIR/reads_t2_umi_endpos.txt
   
@@ -102,7 +104,7 @@ adp_presence(){
 
 adp_presence \
   $OUT_DIR/reads_t1.fa \
-  <($SEQTK seq -r $OUT_DIR/reads_t2.fa)
+  $OUT_DIR/reads_t2_rc.fa
 
 #adp_presence2(){
 #  $CUTADAPT \
