@@ -68,13 +68,8 @@ done
 
 # Check missing arguments
 MISSING="is missing but required. Exiting."
-if [ -z ${READ_LIST+x} ]; then echo "-d $MISSING"; echo ""; echo "$USAGE"; exit 1; fi; 
 if [ -z ${CON_LIST+x} ]; then echo "-c $MISSING"; echo ""; echo "$USAGE"; exit 1; fi; 
 if [ -z ${REF_LIST+x} ]; then echo "-r $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
-if [ -z ${UMI_DIR+x} ]; then
-  echo "-u is missing. Using default UMI dir 'umi_binning'."
-  UMI_DIR=umi_binning
-fi
 if [ -z ${OUT+x} ]; then
   echo "-o is missing. Using default output dir 'qc'."
   OUT=qc
@@ -88,9 +83,6 @@ if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THRE
 
 # Prepare folders and vars
 mkdir $OUT
-READ_LIST=$(echo $READ_LIST | sed -e 's|[,;\t]| |g')
-READ1=$(echo "$READ_LIST " | cut -d' ' -f1)
-READ_=$(echo "$READ_LIST " | cut -d' ' -f2-)
 
 REF_LIST=$(echo $REF_LIST |\
   sed -e 's/[,;\t]/ /g' \
@@ -106,47 +98,54 @@ CON1_NAME=${CON1%.*}
 CON1_NAME=${CON1_NAME##*/}
 
 # Prepare binning statistics
-cp $UMI_DIR/read_binning/umi_bin_map.txt $OUT/
-cp $UMI_DIR/umi_ref/umi_ref.txt $OUT/
-
+if [ ! -z ${UMI_DIR+x} ]; then
+ cp $UMI_DIR/read_binning/umi_bin_map.txt $OUT/
+ cp $UMI_DIR/umi_ref/umi_ref.txt $OUT/
+fi
 # Process read data
-echo "data_type,read_count,bp_total,bp_average" > $OUT/data_stats.txt
+if [ ! -z ${READ_LIST+x} ]; then
+  # Format read list
+  READ_LIST=$(echo $READ_LIST | sed -e 's|[,;\t]| |g')
+  READ1=$(echo "$READ_LIST " | cut -d' ' -f1)
+  READ_=$(echo "$READ_LIST " | cut -d' ' -f2-)
+  echo "data_type,read_count,bp_total,bp_average" > $OUT/data_stats.txt
+  
+  for READ_FILE in $READ_LIST; do
+    # Format name
+    READ_NAME=${READ_FILE%.*};
+    READ_NAME=${READ_NAME##*/};
+  
+    # Subset data
+    $SEQTK sample \
+      -s1334 \
+      $READ_FILE \
+      5000 |\
+      $SEQTK seq -a - \
+      > $OUT/${READ_NAME}.fa
+  
+    # Read stats
+    fastq_stats(){
+      awk -v sample="$2" '
+        NR%4==2{
+          rc++
+          bp+=length
+        } END {
+          print sample","rc","bp","bp/rc
+        }
+      ' $1
+    }
+    fastq_stats $READ_FILE $READ_NAME >> $OUT/data_stats.txt
+ done
+ 
+ $MINIMAP2 \
+   -x map-ont \
+   $REF1 \
+   $READ1 \
+   -t $THREADS |\
+   $GAWK '$13 ~ /tp:A:P/{split($6,tax,"_"); print $1, tax[1]"_"tax[2]}'\
+   > $OUT/read_classification.txt
+fi
 
-for READ_FILE in $READ_LIST; do
-  # Format name
-  READ_NAME=${READ_FILE%.*};
-  READ_NAME=${READ_NAME##*/};
-
-  # Subset data
-  $SEQTK sample \
-    -s1334 \
-    $READ_FILE \
-    5000 |\
-    $SEQTK seq -a - \
-    > $OUT/${READ_NAME}.fa
-
-  # Read stats
-  fastq_stats(){
-    awk -v sample="$2" '
-      NR%4==2{
-        rc++
-        bp+=length
-      } END {
-        print sample","rc","bp","bp/rc
-      }
-    ' $1
-  }
-  fastq_stats $READ_FILE $READ_NAME >> $OUT/data_stats.txt
-
-done
-
-$MINIMAP2 \
-  -x map-ont \
-  $REF1 \
-  $READ1 \
-  -t $THREADS |\
-  $GAWK '$13 ~ /tp:A:P/{split($6,tax,"_"); print $1, tax[1]"_"tax[2]}'\
-  > $OUT/read_classification.txt
 
 # Prepare consensus data
 cp -t $OUT $CON_LIST
@@ -206,6 +205,7 @@ if [ ! -z ${SILVA+x} ]; then
   $MINIMAP2 -a \
     -k 15 \
     -w 1 \
+    -K 100M \
     $SILVA \
     $OUT/${CON1_NAME}_ssu.fa \
     -t $THREADS --cs |\
