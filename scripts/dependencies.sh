@@ -3,7 +3,7 @@
 #    Paths to dependencies for longread-UMI-pipeline 
 #
 # IMPLEMENTATION
-#    author	SÃ¸ren Karst (sorenkarst@gmail.com)
+#    author	Søren Karst (sorenkarst@gmail.com)
 #               Ryans Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 
@@ -23,26 +23,27 @@ export PORECHOP_UMI=/space/users/smk/software/Porechop/porechop-runner.py
 export FILTLONG=/space/users/smk/software/Filtlong/bin/filtlong
 export BWA=/space/users/smk/software/bwa/bwa
 export USEARCH=/space/users/smk/software/usearch/usearch11.0.667_i86linux32
+export BARRNAP=/space/users/smk/software/barrnap/bin/barrnap
 
 # longread_umi paths
-export REF_CURATED=$LONGREAD_UMI_PATH/scripts/zymo-ref-uniq_2019-03-15.fa
+export REF_CURATED=$LONGREAD_UMI_PATH/scripts/zymo-ref-uniq_2019-10-28.fa
 export REF_VENDOR=$LONGREAD_UMI_PATH/scripts/zymo-ref-uniq_vendor.fa
-export NANOPORE_BARCODES=$LONGREAD_UMI_PATH/scripts/nanopore_barcodes.csv
+export BARCODES=$LONGREAD_UMI_PATH/scripts/barcodes.tsv
 
 # Version dump
 longread_umi_version_dump (){
   local OUT=${1:-./longread_umi_version_dump.txt}
-  local INSTALL_DIR=${2:-$LONGREAD_UMI_PATH}
 
   echo "Script start: $(date +%Y-%m-%d-%T)"  >> $OUT
   echo "Software Version:" >> $OUT
-  echo "longread_umi - $(git --git-dir ${INSTALL_DIR}/.git describe --tag)" >> $OUT
+  echo "longread_umi - $(git --git-dir ${LONGREAD_UMI_PATH}/.git describe --tag)" >> $OUT
   echo "seqtk - $($SEQTK 2>&1 >/dev/null | grep 'Version')" >> $OUT 
   echo "Parallel - $($GNUPARALLEL --version | head -n 1)" >> $OUT 
   echo "Usearch - $($USEARCH --version)" >> $OUT 
   echo "Racon - $($RACON --version)" >> $OUT
   echo "Minimap2 - $($MINIMAP2 --version)" >> $OUT
   echo "medaka - $(eval $MEDAKA_ENV_START; medaka --version | cut -d" " -f2; eval $MEDAKA_ENV_STOP)"  >> $OUT
+  echo "medaka model - ${MEDAKA_MODEL##*/}"  >> $OUT
   echo "Gawk - $($GAWK --version | head -n 1)" >> $OUT 
   echo "Cutadapt - $($CUTADAPT --version | head -n 1)" >> $OUT 
   echo "Porechop - $($PORECHOP_UMI --version) + add UMI adaptors to adaptors.py" >> $OUT 
