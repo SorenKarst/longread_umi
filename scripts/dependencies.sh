@@ -1,3 +1,4 @@
+
 #!/bin/bash
 # DESCRIPTION
 #    Paths to dependencies for longread-UMI-pipeline 
@@ -9,21 +10,21 @@
 
 # Program paths
 
-export SEQTK=/space/users/smk/software/seqtk/seqtk
-export GNUPARALLEL=/user/bio.aau.dk/smk/bin/parallel
-export RACON=/space/users/smk/software/racon/build/bin/racon
-export MINIMAP2=/user/bio.aau.dk/smk/bin/minimap2
-export GAWK=/usr/bin/gawk
-export SAMTOOLS=/user/bio.aau.dk/smk/bin/samtools
-export BCFTOOLS=/user/bio.aau.dk/smk/bin/bcftools
-export MEDAKA_ENV_START='. /space/users/smk/software/medaka/bin/activate'
-export MEDAKA_ENV_STOP='deactivate'
+export SEQTK=seqtk
+export GNUPARALLEL=parallel
+export RACON=racon
+export MINIMAP2=minimap2
+export GAWK=gawk
+export SAMTOOLS=samtools
+export BCFTOOLS=bcftools
+#export MEDAKA_ENV_START='. /space/users/smk/software/medaka/bin/activate'
+#export MEDAKA_ENV_STOP='deactivate'
 export MEDAKA_MODEL=r941_min_high
-export CUTADAPT=/user/bio.aau.dk/smk/.local/bin/cutadapt
-export PORECHOP_UMI=/space/users/smk/software/Porechop/porechop-runner.py
-export FILTLONG=/space/users/smk/software/Filtlong/bin/filtlong
-export BWA=/space/users/smk/software/bwa/bwa
-export USEARCH=/space/users/smk/software/usearch/usearch11.0.667_i86linux32
+export CUTADAPT=cutadapt
+export PORECHOP_UMI=porechop
+export FILTLONG=filtlong
+export BWA=bwa
+export USEARCH=/home/ziels/bioinfo/usearch10.0.240_i86linux32
 
 # Scripts paths
 export UMI_BINNING=$PIPELINE_PATH/scripts/umi_binning.sh

@@ -62,7 +62,7 @@ export -f cutadapt_wrapper
 # Trim sequences
 mkdir $OUT_DIR
 FIND_CMD="find $IN_DIR_F -maxdepth 2 -type f \( $IN_REGEX_F \)"
-eval $FIND_CMD | $GNUPARALLEL -j 10 cutadapt_wrapper {} $OUT_DIR $TYPE  
+eval $FIND_CMD | $GNUPARALLEL --env cutadapt_wrapper -j 10 cutadapt_wrapper {} $OUT_DIR $TYPE  
 
 # Testing
 # Reverse complement adaptors
