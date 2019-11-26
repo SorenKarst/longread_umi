@@ -2,6 +2,10 @@
 A collection of scripts for processing longread UMI data.
 Tested on Linux 3.10.0
 
+<b> Citation: </b> \
+Karst, S. M., Ziels, R. M., Kirkegaard, R. H., & Albertsen, M. (2019). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers and Nanopore sequencing. bioRxiv, 645903.
+https://www.biorxiv.org/content/10.1101/645903v2
+
 ## Installing the Easy Way -- via Conda
 ### Requirements/Dependencies 
 Conda or Miniconda3 installed 
