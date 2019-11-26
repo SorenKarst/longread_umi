@@ -7,7 +7,7 @@ Tested on Linux 3.10.0
 Conda or Miniconda3 installed 
 
 ### Clone from github
-1. Go to desired installation directory, open a terminal and run:  
+1. Go to desired installation directory, open a terminal and run:  \
    `git clone https://github.com/ziels/longread-UMI-pipeline`
 
 2. Go to scripts directory:
@@ -35,7 +35,7 @@ Note the installation path of the longread-UMI environment (for next steps)
 
 Make sure you get something like: 
 
-3. Back-up and replace `adapters.py`
+3. Back-up and replace `adapters.py`\
    `mv < path to conda environments >/longread-UMI/lib/python3.6/site-packages/porechop/adapters.py < path to conda  environments >/longread-UMI/lib/python3.6/site-packages/porechop/adapters_old.py`
 
 (From within `longread-UMI-pipeline/scripts` directory):
