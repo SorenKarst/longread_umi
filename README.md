@@ -1,21 +1,55 @@
 # longread-UMI-pipeline
 A collection of scripts for processing longread UMI data.
+Tested on Linux 3.10.0
 
-## Requirements
-1. Tested on Ubuntu 14.04 (Yeah, we know...)
-2. Dependencies: See scripts/dependencies.sh and scripts/longread-UMI-pipeline_version_dump.txt
+## Installing the Easy Way -- via Conda
+### Requirements/Dependencies 
+Conda or Miniconda3 installed 
 
-## Automatic installation
-1. Naive semi-automatic installation of pipeline and dependencies. The script will overwrite
-   folders and files in the working directory. USE AT OWN RISK!!
-2. Go to a folder where you want the longread UMI pipeline and dependencies installed.
-3. Open a terminal in the installation folder and download the installation script:  
-  `wget https://raw.githubusercontent.com/SorenKarst/longread-UMI-pipeline/master/scripts/install_dependencies.sh`
-4. Option A (Recommended): Open script in a text editor and copy installation commands for missing dependencies to
-   terminal one by one.
-4. Option B: Install pipeline and dependencies automatically by excuting script `bash install_dependencies.sh`
+### Clone from github
+1. Go to desired installation directory, open a terminal and run:  
+   `git clone https://github.com/ziels/longread-UMI-pipeline`
 
-## Manual installation
+2. Go to scripts directory:
+   `cd longread-UMI-pipeline/scripts` 
+
+### Install conda environment 
+   `conda env create -f environment.yaml`
+
+1. Check that Conda env is installed 
+   `conda info —-envs`
+Make sure you get something like: 
+
+
+Note the installation path of the longread-UMI environment (for next steps)
+
+2. Activate conda environment 
+   `conda activate longread-UMI`
+
+### Editing porechop adapters with custom primers
+1. Find path of conda environments from command
+   `conda info —-envs` 
+
+2. Check the `porechop` path works:
+   `ls < path to conda environments >/longread-UMI/lib/python3.6/site-packages/porechop`
+
+Make sure you get something like: 
+
+3. Back-up and replace `adapters.py`
+   `mv < path to conda environments >/longread-UMI/lib/python3.6/site-packages/porechop/adapters.py < path to conda  environments >/longread-UMI/lib/python3.6/site-packages/porechop/adapters_old.py`
+
+(From within `longread-UMI-pipeline/scripts` directory):
+   `cp ./adapters.py < path to conda environments >/longread-UMI/lib/python3.6/site-packages/porechop/adapters.py`
+
+## Test longread-UMI-pipeline on test data:  
+   Go to /path/to/longread-UMI-pipeline/test_data  
+   Open a terminal in the directory and run 
+   `../longread-UMI-pipeline.sh -d test_reads.fq -s 10 -c 30 -t 1`
+
+
+## Installing the Hard Way -- Manual installation
+### Requirements/Dependencies
+
 
 ### Clone from github
 1. Go to desired installation directory, open a terminal and run:  
@@ -50,10 +84,10 @@ A collection of scripts for processing longread UMI data.
    Go to /path/to/longread-UMI-pipeline/test_data  
    Open a terminal in the directory and run `longread-UMI-pipeline -d test_reads.fq -s 10 -c 30 -t 1`
 
-### Run pipeline on Zymo mock data
+## Run pipeline on Zymo mock data
 1. Create a working directory, open a terminal, download the Zymo mock fastq data and decompress:  
    `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963_1.fastq.gz; gunzip -c ERR3336963_1.fastq.gz > reads.fq`  
 2. Open a terminal in the directory and run:  
   `longread-UMI-pipeline -d reads.fq -s 1000000 -c 30 -t <Number-of-threads>`
 3. Open a terminal in the directory and run:  
-  `longread-UMI-mockanalysis <Number-of-threads>` 
+  `longread-UMI-mockanalysis <Number-of-threads>`
