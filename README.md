@@ -21,10 +21,14 @@ Conda or Miniconda3 installed
    `conda env create -f environment.yaml`
 
 1. Check that Conda env is installed \
-   `conda info —-envs` \
-Make sure you get something like: \
+   `conda info —-envs` 
+   
+Make sure you get something like: 
 
-
+   > `# conda environments:`\
+   > `#`\
+   >  ` longread-UMI       <path to conda envs>/longread-UMI ` 
+   
 Note the installation path of the longread-UMI environment (for next steps)
 
 2. Activate conda environment \
