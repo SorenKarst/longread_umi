@@ -14,40 +14,40 @@ Conda or Miniconda3 installed
 1. Go to desired installation directory, open a terminal and run:  \
    `git clone https://github.com/ziels/longread-UMI-pipeline`
 
-2. Go to scripts directory:
+2. Go to scripts directory: \
    `cd longread-UMI-pipeline/scripts` 
 
 ### Install conda environment 
    `conda env create -f environment.yaml`
 
-1. Check that Conda env is installed 
-   `conda info —-envs`
-Make sure you get something like: 
+1. Check that Conda env is installed \
+   `conda info —-envs` \
+Make sure you get something like: \
 
 
 Note the installation path of the longread-UMI environment (for next steps)
 
-2. Activate conda environment 
+2. Activate conda environment \
    `conda activate longread-UMI`
 
 ### Editing porechop adapters with custom primers
-1. Find path of conda environments from command
+1. Find path of conda environments from command \
    `conda info —-envs` 
 
-2. Check the `porechop` path works:
-   `ls < path to conda environments >/longread-UMI/lib/python3.6/site-packages/porechop`
+2. Check the `porechop` path works: \
+   `ls < path to conda environments >/longread-UMI/lib/python3.6/site-packages/porechop` 
 
-Make sure you get something like: 
+Make sure you get something like: \
 
 3. Back-up and replace `adapters.py`\
    `mv < path to conda environments >/longread-UMI/lib/python3.6/site-packages/porechop/adapters.py < path to conda  environments >/longread-UMI/lib/python3.6/site-packages/porechop/adapters_old.py`
 
-(From within `longread-UMI-pipeline/scripts` directory):
+(From within `longread-UMI-pipeline/scripts` directory):\
    `cp ./adapters.py < path to conda environments >/longread-UMI/lib/python3.6/site-packages/porechop/adapters.py`
 
 ## Test longread-UMI-pipeline on test data:  
-   Go to /path/to/longread-UMI-pipeline/test_data  
-   Open a terminal in the directory and run 
+   Go to /path/to/longread-UMI-pipeline/test_data\  
+   Open a terminal in the directory and run \
    `../longread-UMI-pipeline.sh -d test_reads.fq -s 10 -c 30 -t 1`
 
 
