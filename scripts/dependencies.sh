@@ -24,7 +24,7 @@ export CUTADAPT=cutadapt
 export PORECHOP_UMI=porechop
 export FILTLONG=filtlong
 export BWA=bwa
-export USEARCH=/home/ziels/bioinfo/usearch10.0.240_i86linux32
+export USEARCH=usearch_path
 
 # Scripts paths
 export UMI_BINNING=$PIPELINE_PATH/scripts/umi_binning.sh
