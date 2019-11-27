@@ -57,7 +57,7 @@ Make sure you see an `adapters.py` returned from the above command.
 ## Test longread-UMI-pipeline on test data:  
    Go to `/path/to/longread-UMI-pipeline/test_data`   
    Open a terminal in the directory and run \
-   `../longread-UMI-pipeline.sh -d test_reads.fq -s 10 -c 30 -t 1`
+   `../longread_UMI_pipeline.sh -d test_reads.fq -s 10 -c 30 -t 1`
 
 
 ## Installing the Hard Way -- Manual installation
