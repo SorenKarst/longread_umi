@@ -8,14 +8,18 @@ https://www.biorxiv.org/content/10.1101/645903v2
 
 ## Installing the Easy Way -- via Conda
 ### Requirements/Dependencies 
-Conda or Miniconda3 installed 
+Conda or Miniconda3 installed  
+`usearch` version 10 or higher
 
 ### Clone from github
 1. Go to desired installation directory, open a terminal and run:  \
    `git clone https://github.com/ziels/longread-UMI-pipeline`
 
 2. Go to scripts directory: \
-   `cd longread-UMI-pipeline/scripts` 
+   `cd longread-UMI-pipeline/scripts`  
+
+3. Modify `dependencies.sh` with path to `usearch`  
+Change line `export USEARCH=usearch_path` to give your exact file path to the `usearch` executable file (instead of `usearch_path`). 
 
 ### Install conda environment 
    `conda env create -f environment.yaml`
@@ -51,7 +55,7 @@ Make sure you see an `adapters.py` returned from the above command.
    `cp ./adapters.py <path_to_conda_environments>/longread-UMI/lib/python3.6/site-packages/porechop/adapters.py`
 
 ## Test longread-UMI-pipeline on test data:  
-   Go to /path/to/longread-UMI-pipeline/test_data\  
+   Go to `/path/to/longread-UMI-pipeline/test_data`   
    Open a terminal in the directory and run \
    `../longread-UMI-pipeline.sh -d test_reads.fq -s 10 -c 30 -t 1`
 
