@@ -32,7 +32,7 @@ Make sure you get something like:
 Note the installation path of the longread-UMI environment (for next steps)
 
 2. Activate conda environment \
-   `conda activate longread-UMI` \ 
+   `conda activate longread-UMI` \
    Or, depending on your conda version: `source activate longread-UMI`
 
 ### Editing porechop adapters with custom primers
@@ -42,7 +42,7 @@ Note the installation path of the longread-UMI environment (for next steps)
 2. Check the `porechop` path works: \
    `ls < path to conda environments >/longread-UMI/lib/python3.6/site-packages/porechop` 
 
-Make sure you get something like: \
+Make sure you see an `adapters.py` returned from the above command.
 
 3. Back-up and replace `adapters.py`\
    `mv <path_to_conda_environments>/longread-UMI/lib/python3.6/site-packages/porechop/adapters.py <path_to_conda_environments>/longread-UMI/lib/python3.6/site-packages/porechop/adapters_old.py`
