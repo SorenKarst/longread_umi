@@ -33,7 +33,7 @@ Make sure you get something like:
    > `#`\
    >  ` longread-UMI       <path to conda envs>/longread-UMI ` 
    
-Note the installation path of the longread-UMI environment (for next steps)
+Note the installation path of the `longread-UMI` environment (for next steps)
 
 2. Activate conda environment \
    `conda activate longread-UMI` \
@@ -54,7 +54,7 @@ Make sure you see an `adapters.py` returned from the above command.
 (From within `longread-UMI-pipeline/scripts` directory):\
    `cp ./adapters.py <path_to_conda_environments>/longread-UMI/lib/python3.6/site-packages/porechop/adapters.py`
 
-## Test longread-UMI-pipeline on test data:  
+### Test longread-UMI-pipeline on test data:  
    Go to `/path/to/longread-UMI-pipeline/test_data`   
    Open a terminal in the directory and run \
    `../longread_UMI_pipeline.sh -d test_reads.fq -s 10 -c 30 -t 1`
