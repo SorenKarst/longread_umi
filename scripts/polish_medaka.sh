@@ -136,7 +136,7 @@ consensus_wrapper() {
     $OUT_DIR/${JOB_NR}_consensus.hdf \
     --threads $MEDAKA_THREADS \
     --model $MEDAKA_MODEL \
-	--chunk_len $CHUNK_SIZE
+	  --chunk_len $CHUNK_SIZE
 }
 
 export -f consensus_wrapper
@@ -165,7 +165,7 @@ medaka stitch \
   $OUT_DIR/consensus_${OUT_NAME}.fa
 
 # Clean consensus header
-sed -i "s/:.*//" $OUT_DIR/consensus_${OUT_NAME}.fa
+sed -i -e "s/:.*//" -e "s/_segment.*//" $OUT_DIR/consensus_${OUT_NAME}.fa
 
 # Deactivate medaka environment if relevant
 eval "$MEDAKA_ENV_STOP"
