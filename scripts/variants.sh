@@ -291,7 +291,7 @@ phasing () {
   export SEQTK=$SEQTK 
 
   bam_read_split $CLUSTER_OUT/${CLUSTER_NAME}.bam |\
-    $GNUPARALLEL -j --env extract_vars $CLUSTER_THREADS -L 4 -N 1 --pipe \
+    $GNUPARALLEL --env extract_vars -j $CLUSTER_THREADS -L 4 -N 1 --pipe \
     "cat | extract_vars \"$REG\" \"$CLUSTER_OUT/${CLUSTER_NAME}_con.fa\"" \
     > $CLUSTER_OUT/read_variants.txt
 
