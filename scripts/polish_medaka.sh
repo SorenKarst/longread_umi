@@ -149,7 +149,7 @@ find $OUT_DIR/mapping/ \
   -type f \
   -name "umi*bins.bam" |\
 $GNUPARALLEL \
---env consensus_wrapper
+  --env consensus_wrapper \
   --progress \
   -j $MEDAKA_JOBS \
   -N1 \
