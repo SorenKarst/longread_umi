@@ -4,7 +4,7 @@
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
+#               Ryan Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 #
 # To-do:
