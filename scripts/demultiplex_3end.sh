@@ -12,7 +12,7 @@
 #    
 # IMPLEMENTATION
 #    author  Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
+#               Ryan Ziels (ziels@mail.ubc.ca)
 #    license  GNU General Public License
 #
 # TO DO
@@ -141,6 +141,7 @@ export -f demultiplex_cutadapt_3
 # Find 5' barcodes
 cat $RAW_IN |\
 $GNUPARALLEL \
+  --env demultiplex_cutadapt_5 \
   --progress \
   -j $THREADS \
   -L4 \
@@ -156,6 +157,7 @@ $GNUPARALLEL \
 # Find 3' barcodes
 cat $RAW_IN |\
 $GNUPARALLEL \
+  --env demultiplex_cutadapt_3 \
   --progress \
   -j $THREADS \
   -L4 \
