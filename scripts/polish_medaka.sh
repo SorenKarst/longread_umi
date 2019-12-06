@@ -5,7 +5,7 @@
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
+#               Ryan Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 # TODO
 #
@@ -74,6 +74,7 @@ cat $CONSENSUS_FILE |\
   $SEQTK seq -l0 - |\
   ( [[ -f "${SAMPLE}" ]] && grep -A1 -Ff $SAMPLE | sed '/^--$/d' || cat ) |\
   $GNUPARALLEL \
+  --env medaka_align \
     --progress  \
     -j $(( THREADS * 5 )) \
     --recstart ">" \
@@ -117,6 +118,7 @@ consensus_wrapper() {
   ### View bam files in parallel and pipe into merge function
   cat |\
     $GNUPARALLEL \
+    --env bam_merge \
       -j $MEDAKA_THREADS \
       $SAMTOOLS view -h {} |\
       bam_merge $OUT_DIR $JOB_NR
@@ -147,6 +149,7 @@ find $OUT_DIR/mapping/ \
   -type f \
   -name "umi*bins.bam" |\
 $GNUPARALLEL \
+--env consensus_wrapper
   --progress \
   -j $MEDAKA_JOBS \
   -N1 \
