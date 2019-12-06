@@ -6,7 +6,7 @@
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
+#               Ryan Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 #
 # TO DO
@@ -503,7 +503,7 @@ umi_binning() {
 
 export -f umi_binning
 
-cat $TRIM_DIR/reads_tf.fq | $GNUPARALLEL -L4 -j $THREADS --block 300M --pipe \
+cat $TRIM_DIR/reads_tf.fq | $GNUPARALLEL --env umi_binning -L4 -j $THREADS --block 300M --pipe \
   "mkdir $BINNING_DIR/bins/job{#}; cat | umi_binning $BINNING_DIR/umi_bin_map.txt\
   $BINNING_DIR/bins/job{#}"
 
@@ -525,7 +525,7 @@ aggregate_bins() {
 export -f aggregate_bins
 
 find $BINNING_DIR/bins/*/*/ -name "*bins.fastq" -printf "%f\n" |\
-  sort | uniq | $GNUPARALLEL -j $THREADS "aggregate_bins '$BINNING_DIR/bins/*/*/'{/} \
+  sort | uniq | $GNUPARALLEL --env aggregate_bins -j $THREADS "aggregate_bins '$BINNING_DIR/bins/*/*/'{/} \
   $BINNING_DIR/bins {/} {#}"
 
 rm -r $BINNING_DIR/bins/job*
