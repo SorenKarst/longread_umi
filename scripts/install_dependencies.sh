@@ -206,5 +206,5 @@ sed -i \
 
 ### Test longread-UMI-pipeline
 cd longread-UMI-pipeline/test_data
-longread_umi nanopore_pipeline -d test_reads.fq -o . -v 30 -w rrna_operon -t 1 -q r941_min_high
+longread_umi nanopore_pipeline -d test_reads.fq -o . -v 30 -w rrna_operon -t 1 -q r941_min_high_g303
 longread_umi qc_pipeline -d test_reads.fq -c consensus_raconx3_medakax1.fa -r zymo_curated -t 1
