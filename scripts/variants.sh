@@ -5,7 +5,7 @@
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
+#               Ryan Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 # TODO
 # - extract_vars and bin_vars can greately simplified by proper use
@@ -291,7 +291,7 @@ phasing () {
   export SEQTK=$SEQTK 
 
   bam_read_split $CLUSTER_OUT/${CLUSTER_NAME}.bam |\
-    $GNUPARALLEL -j $CLUSTER_THREADS -L 4 -N 1 --pipe \
+    $GNUPARALLEL -j --env extract_vars $CLUSTER_THREADS -L 4 -N 1 --pipe \
     "cat | extract_vars \"$REG\" \"$CLUSTER_OUT/${CLUSTER_NAME}_con.fa\"" \
     > $CLUSTER_OUT/read_variants.txt
 
@@ -311,7 +311,7 @@ phasing () {
   export USEARCH=$USEARCH
 
   find $CLUSTER_OUT -type f -name "*_bin.fa" |\
-    $GNUPARALLEL -j $CLUSTER_THREADS \
+    $GNUPARALLEL --env phased_consensus -j $CLUSTER_THREADS \
     --rpl '{name} s:.*/::; s/_bin.fa$//' \
     "phased_consensus {} {name}"
 }
@@ -359,7 +359,7 @@ subsample_phasing(){
   export USEARCH=$USEARCH
 
   find $OUT_DIR -type f -name "*_sample.fa" |\
-    $GNUPARALLEL -j $THREADS \
+    $GNUPARALLEL --env phased_consensus -j $THREADS \
       --rpl '{name} s:.*/::; s/_sample.fa$//' \
       "phased_consensus {} {name}"
 }
@@ -504,7 +504,7 @@ VARIANT_OUT=$OUT_DIR/phasing_consensus
 mkdir -p $VARIANT_OUT
 
 cat $OUT_DIR/centroids.fa | $SEQTK seq -l0 - |\
-  $GNUPARALLEL --progress -j$CLUSTER_JOBS --recstart ">" -N 1 --pipe \
+  $GNUPARALLEL --env phasing --progress -j$CLUSTER_JOBS --recstart ">" -N 1 --pipe \
   "cat | phasing $VARIANT_OUT $OUT_DIR/clusters \
    $CONSENSUS_FILE $CLUSTER_THREADS"
 cat $VARIANT_OUT/*/*variant.fa > $OUT_DIR/variants.fa
