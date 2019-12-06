@@ -79,7 +79,7 @@ mkdir -p $OUT_DIR
 FIND_CMD="find $IN_DIR_F -mindepth 1 -maxdepth 1 -type f \( $IN_REGEX_F \)"
 eval $FIND_CMD |\
   $GNUPARALLEL \
-  --env cutadapt_wrapper
+    --env cutadapt_wrapper \ 
     -j $THREADS \
     cutadapt_wrapper \
       {} \
