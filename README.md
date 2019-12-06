@@ -1,19 +1,58 @@
 # longread-UMI-pipeline
 A collection of scripts for processing longread UMI data.
+Tested on Linux 3.10.0
 
-## Requirements
-1. Tested on Ubuntu 14.04 and 16.04.
-2. Dependencies: See scripts/dependencies.sh and scripts/longread_umi_version_dump.txt
+<b> Citation: </b> \
+Karst, S. M., Ziels, R. M., Kirkegaard, R. H., & Albertsen, M. (2019). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers and Nanopore sequencing. bioRxiv, 645903.
+https://www.biorxiv.org/content/10.1101/645903v2
 
-## Automatic installation
-1. Naive semi-automatic installation of pipeline and dependencies. The script will overwrite
-   folders and files in the working directory. USE AT OWN RISK!!
-2. Go to a folder where you want the longread UMI pipeline and dependencies installed.
-3. Open a terminal in the installation folder and download the installation script:  
-   `wget https://raw.githubusercontent.com/SorenKarst/longread-UMI-pipeline/master/scripts/install_dependencies.sh`
-4. Option A (Recommended): Open script in a text editor and copy installation commands for missing dependencies to
-   terminal one by one.
-4. Option B: Install pipeline and dependencies automatically by excuting script `bash install_dependencies.sh`
+## Installing the Easy Way with Conda
+### Requirements/Dependencies 
+Conda or Miniconda3 installed  
+`usearch` version 10 or higher
+
+### Clone from github
+1. Go to desired installation directory, open a terminal and run:  \
+   `git clone https://github.com/ziels/longread-UMI-pipeline --branch develop`
+
+2. Go to scripts directory: \
+   `cd longread-UMI-pipeline/scripts`  
+
+3. Modify `dependencies.sh` with path to `usearch`  
+Change line `export USEARCH=usearch_path` to give your exact file path to the `usearch` executable file (instead of `usearch_path`). 
+
+### Install conda environment 
+   `conda env create -f environment.yaml`
+
+1. Check that Conda env is installed \
+   `conda info —-envs` 
+   
+Make sure you get something like: 
+
+   > `# conda environments:`\
+   > `#`\
+   >  ` longread-UMI       <path to conda envs>/longread-UMI ` 
+   
+Note the installation path of the `longread-UMI` environment (for next steps)
+
+2. Activate conda environment \
+   `conda activate longread-UMI` \
+   Or, depending on your conda version: `source activate longread-UMI`
+
+### Editing porechop adapters with custom primers
+1. Find path of conda environments from command \
+   `conda info —-envs` 
+
+2. Check the `porechop` path works: \
+   `ls < path to conda environments >/longread-UMI/lib/python3.6/site-packages/porechop` 
+
+Make sure you see an `adapters.py` returned from the above command.
+
+3. Back-up and replace `adapters.py`\
+   `mv <path_to_conda_environments>/longread-UMI/lib/python3.6/site-packages/porechop/adapters.py <path_to_conda_environments>/longread-UMI/lib/python3.6/site-packages/porechop/adapters_old.py`
+
+(From within `longread-UMI-pipeline/scripts` directory):\
+   `cp ./adapters.py <path_to_conda_environments>/longread-UMI/lib/python3.6/site-packages/porechop/adapters.py`
 
 ## Manual installation
 
@@ -42,7 +81,8 @@ A collection of scripts for processing longread UMI data.
 3. Backup current adapters.py.
 4. Replace current adapters.py with path/to/longread-UMI-pipeline/scripts/adapters.py.
 
-### Test scripts
+
+## Test installation
 1. Open a terminal anywhere and test the initialization command:  
   `longread_umi -h` or `/path/to/longread_umi.sh -h`
 2. Open a terminal anywhere and test the nanopore_pipeline command:  
