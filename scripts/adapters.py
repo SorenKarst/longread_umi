@@ -43,9 +43,7 @@ class Adapter(object):
         Gets the barcode name for the output files. We want a concise name, so it looks at all
         options and chooses the shortest.
         """
-        possible_names = [self.name]
-        if self.start_sequence:
-            possible_names.append(self.start_sequence[0])
+        possible_names = [self.name, self.start_sequence[0]]
         if self.end_sequence:
             possible_names.append(self.end_sequence[0])
         barcode_name = sorted(possible_names, key=lambda x: len(x))[0]
@@ -77,7 +75,7 @@ class Adapter(object):
 ADAPTERS = [Adapter('SQK-NSK007',
                     start_sequence=('SQK-NSK007_Y_Top', 'AATGTACTTCGTTCAGTTACGTATTGCT'),
                     end_sequence=('SQK-NSK007_Y_Bottom', 'GCAATACGTAACTGAACGAAGT')),
-            Adapter('NCEC_ADP_FWRV',
+	    Adapter('NCEC_ADP_FWRV',
                     start_sequence=('ncec_adpfwrv', 'GTCTTCTGCTTGAATGATACGGCG'),
                     end_sequence=('ncec_adpfwrv_rv', 'CGCCGTATCATTCAAGCAGAAGAC')),
             Adapter('NCEC_ADP_FWFW',
@@ -101,23 +99,11 @@ def make_full_native_barcode_adapter(barcode_num):
                    end_sequence=('NB' + '%02d' % barcode_num + '_end', end_full_seq))
 
 
-def make_old_full_rapid_barcode_adapter(barcode_num):  # applies to SQK-RBK001
+def make_full_rapid_barcode_adapter(barcode_num):
     barcode = [x for x in ADAPTERS if x.name == 'Barcode ' + str(barcode_num) + ' (forward)'][0]
     start_barcode_seq = barcode.start_sequence[1]
 
-    start_full_seq = 'AATGTACTTCGTTCAGTTACG' + 'TATTGCT' + start_barcode_seq + \
-                     'GTTTTCGCATTTATCGTGAAACGCTTTCGCGTTTTTCGTGCGCCGCTTCA'
+    start_full_seq = 'AATGTACTTCGTTCAGTTACGTATTGCT' + start_barcode_seq + 'GTTTTCGCATTTATCGTGAAACGCTTTCGCGTTTTTCGTGCGCCGCTTCA'
 
-    return Adapter('Rapid barcoding ' + str(barcode_num) + ' (full sequence, old)',
-                   start_sequence=('RB' + '%02d' % barcode_num + '_full', start_full_seq))
-
-
-def make_new_full_rapid_barcode_adapter(barcode_num):  # applies to SQK-RBK004
-    barcode = [x for x in ADAPTERS if x.name == 'Barcode ' + str(barcode_num) + ' (forward)'][0]
-    start_barcode_seq = barcode.start_sequence[1]
-
-    start_full_seq = 'AATGTACTTCGTTCAGTTACG' + 'GCTTGGGTGTTTAACC' + start_barcode_seq + \
-                     'GTTTTCGCATTTATCGTGAAACGCTTTCGCGTTTTTCGTGCGCCGCTTCA'
-
-    return Adapter('Rapid barcoding ' + str(barcode_num) + ' (full sequence, new)',
+    return Adapter('Rapid barcoding ' + str(barcode_num) + ' (full sequence)',
                    start_sequence=('RB' + '%02d' % barcode_num + '_full', start_full_seq))
