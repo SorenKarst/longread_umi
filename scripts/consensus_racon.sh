@@ -58,7 +58,7 @@ seed_racon () {
   for i in `seq 1 $ROUNDS`; do
     $MINIMAP2 \
       -t 1 \
-      -x ava-ont \
+      -x map-ont \
       $OUT/${UMINO}_sr.fa \
       $RB > $OUT/ovlp.paf
 
