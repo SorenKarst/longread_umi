@@ -71,6 +71,7 @@ cat $CONSENSUS_FILE |\
   $SEQTK seq -l0 - |\
   ( [[ "${SAMPLE}" ]] && grep -A1 -Ff $SAMPLE | sed '/^--$/d' || cat ) |\
   $GNUPARALLEL \
+    --env medaka_align \
     --progress  \
     -j $(( THREADS * 10 )) \
     --recstart ">" \
@@ -116,6 +117,7 @@ find $OUT_DIR/mapping/ \
   -type f \
   -name "umi*bins.bam" |\
 $GNUPARALLEL \
+  --env consensus_wrapper \
   --progress \
   -j $THREADS \
   -N1 \

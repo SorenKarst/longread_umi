@@ -1,10 +1,11 @@
+
 #!/bin/bash
 # DESCRIPTION
 #    Paths to dependencies for longread-UMI-pipeline 
 #
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
+#               Ryan Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 
 # Program paths
@@ -23,7 +24,7 @@ export CUTADAPT=cutadapt
 export PORECHOP_UMI=porechop
 export FILTLONG=filtlong
 export BWA=bwa
-export USEARCH=usearch
+export USEARCH=usearch_path
 
 # Scripts paths
 export UMI_BINNING=$PIPELINE_PATH/scripts/umi_binning.sh

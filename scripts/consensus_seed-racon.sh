@@ -75,7 +75,7 @@ export -f seed_racon
 # Perform assembly in parallel
 find $IN -name 'umi*bins.fastq'  |\
   ( [[ "${SAMPLE}" ]] && grep -Ff $SAMPLE || cat ) |\
-  $GNUPARALLEL --progress -j $THREADS "seed_racon {} $OUT"
+  $GNUPARALLEL --env seed_racon --progress -j $THREADS "seed_racon {} $OUT"
 
 #Collect seed-racon consensus sequences
 find $OUT/ \
