@@ -17,14 +17,12 @@ export MINIMAP2=minimap2
 export GAWK=gawk
 export SAMTOOLS=samtools
 export BCFTOOLS=bcftools
-#export MEDAKA_ENV_START='. /space/users/smk/software/medaka/bin/activate'
-#export MEDAKA_ENV_STOP='deactivate'
 export MEDAKA_MODEL=r941_min_high
 export CUTADAPT=cutadapt
 export PORECHOP_UMI=porechop
 export FILTLONG=filtlong
 export BWA=bwa
-export USEARCH=usearch_path
+export USEARCH=usearch
 
 # Scripts paths
 export UMI_BINNING=$PIPELINE_PATH/scripts/umi_binning.sh
@@ -47,7 +45,7 @@ ncec_version_dump (){
   echo "Usearch - $($USEARCH --version)" >> $OUT 
   echo "Racon - $($RACON --version)" >> $OUT
   echo "Minimap2 - $($MINIMAP2 --version)" >> $OUT
-  echo "medaka - $(eval $MEDAKA_ENV_START; medaka --version | cut -d" " -f2; eval $MEDAKA_ENV_STOP)"  >> $OUT
+  echo "medaka - medaka --version | cut -d" " -f2; eval $MEDAKA_ENV_STOP)"  >> $OUT
   echo "medaka model - ${MEDAKA_MODEL##*/}"  >> $OUT
   echo "Gawk - $($GAWK --version | head -n 1)" >> $OUT 
   echo "Cutadapt - $($CUTADAPT --version | head -n 1)" >> $OUT 
