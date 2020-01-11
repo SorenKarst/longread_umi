@@ -9,8 +9,8 @@ https://www.biorxiv.org/content/10.1101/645903v3
 
 ### Conda
 
-1. Requirements/Dependencies
-   OS tested (Linux 3.10.0, Ubuntu 14.04, Ubuntu 16.04)
+1. Requirements/Dependencies \
+   OS tested (Linux 3.10.0, Ubuntu 14.04, Ubuntu 16.04) \
   `usearch` >=10
 2. Download installer script from terminal \
    `https://raw.githubusercontent.com/SorenKarst/longread-UMI-pipeline/master/scripts/install_conda.sh`
