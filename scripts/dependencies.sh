@@ -30,7 +30,7 @@ export CONSENSUS_SRACON=$PIPELINE_PATH/scripts/consensus_seed-racon.sh
 export POLISH_MEDAKA=$PIPELINE_PATH/scripts/polish_medaka.sh
 export TRIM_AMPLICON=$PIPELINE_PATH/scripts/trim_amplicon.sh
 export VARIANTS=$PIPELINE_PATH/scripts/variants.sh
-export REF=$PIPELINE_PATH/scripts/zymo-ref-uniq_2019-03-15.fa
+export REF=$PIPELINE_PATH/scripts/zymo-ref-uniq_2019-10-28.fa
 export REF_VENDOR=$PIPELINE_PATH/scripts/zymo-ref-uniq_vendor.fa
 export NANOPORE_BARCODES=$PIPELINE_PATH/scripts/nanopore_barcodes.csv
 
