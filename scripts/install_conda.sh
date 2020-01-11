@@ -71,7 +71,12 @@ git clone \
   -b v0.2 \
   https://github.com/SorenKarst/longread-UMI-pipeline.git \
   $CONDA_PREFIX/longread-UMI
-  
+
+# Modify adapters.py
+\cp \
+  $CONDA_PREFIX/longread-UMI/scripts/adapters.py \
+  $CONDA_PREFIX/lib/python3.6/site-packages/porechop/adapters.py
+
 # Create links to pipeline
 find \
   $CONDA_PREFIX/longread-UMI/ \
@@ -121,3 +126,13 @@ fi
 
 conda deactivate
 
+# Cleanup
+if [ -f Miniconda3-latest-Linux-x86_64.sh  ]; then 
+  rm -f ./Miniconda3-latest-${OS}-x86_64.sh
+fi
+if [ -f install_conda.sh  ]; then 
+  rm -f ./install_conda.sh
+fi
+if [ -f longread-UMI.yml  ]; then 
+  rm -f ./longread-UMI.yml
+fi
