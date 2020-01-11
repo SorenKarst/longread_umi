@@ -45,7 +45,7 @@ ncec_version_dump (){
   echo "Usearch - $($USEARCH --version)" >> $OUT 
   echo "Racon - $($RACON --version)" >> $OUT
   echo "Minimap2 - $($MINIMAP2 --version)" >> $OUT
-  echo "medaka - medaka --version | cut -d" " -f2; eval $MEDAKA_ENV_STOP)"  >> $OUT
+  echo "medaka - $(medaka --version | cut -d" " -f2; eval $MEDAKA_ENV_STOP)"  >> $OUT
   echo "medaka model - ${MEDAKA_MODEL##*/}"  >> $OUT
   echo "Gawk - $($GAWK --version | head -n 1)" >> $OUT 
   echo "Cutadapt - $($CUTADAPT --version | head -n 1)" >> $OUT 

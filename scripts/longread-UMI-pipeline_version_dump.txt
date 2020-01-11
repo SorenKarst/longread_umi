@@ -1,16 +1,16 @@
-Script start: 2019-06-18-16:09:23
+Script start: 2020-01-11-21:18:53
 Software Version:
 seqtk - Version: 1.3-r106
 Parallel - GNU parallel 20190522
 Usearch - usearch v11.0.667_i86linux32
 Racon - v1.3.3
-Minimap2 - 2.17-r943-dirty
+Minimap2 - 2.11-r797
 medaka - 0.7.1
 medaka model - r941_min_high
-Gawk - GNU Awk 4.1.3, API: 1.1 (GNU MPFR 3.1.4, GNU MP 6.1.0)
+Gawk - GNU Awk 4.1.3, API: 1.1
 Cutadapt - 2.3
-Porechop - 0.2.4 + add UMI adaptors to adaptors.py
+Porechop - 0.2.3_seqan2.1.1 + add UMI adaptors to adaptors.py
 Filtlong - Filtlong v0.2.0
-BWA - Version: 0.7.17-r1198-dirty
+BWA - Version: 0.7.17-r1188
 Samtools - Version: 1.9 (using htslib 1.9)
 Bcftools - bcftools 1.9
