@@ -12,60 +12,81 @@
 IN_DIR=$1
 IN_REGEX=$2
 OUT_DIR=$3
-TYPE=$4
-THREADS=$5
+FW2=$4
+RV2=$5
+MIN_LENGTH=$6
+MAX_LENGTH=$7
+THREADS=$8
+LOG_DIR=${9:-logs}
+
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
 
 #Format input
 IN_DIR_F=$(echo $IN_DIR | sed -e 's/[,;\t]/ /g')
-IN_REGEX_F=$(echo "$IN_REGEX" |\
-  sed -e 's/^/-name "/g' \
-      -e 's/$/"/g' \
-      -e 's/[,;\t]/" -o -name "/g')
+IN_REGEX_F=$(echo $IN_REGEX |\
+  sed -e 's/^/-name /g' \
+      -e 's/[,;\t]/ -o -name /g')
+
+### Primer formating
+revcom() {
+  echo $1 |\
+  $GAWK '{print ">dummy\n" $0}' |\
+  $SEQTK seq -r - |\
+  $GAWK '!/^>/'  
+}
+RV2R=$(revcom "$RV2")
+
 
 # Custom functions
 cutadapt_wrapper(){
   # Input
-  IN=$1
-  OUT_DIR=$2
-  TYPE=$3
+  local IN=$1
+  local OUT_DIR=$2
+  local FW2=$3
+  local RV2R=$4
+  local MIN_LENGTH=$5
+  local MAX_LENGTH=$6
+  local LOG_DIR=$7
+  local THREADS=$8
 
   # Format input name
   local IN_NAME=${IN##*/}
   local IN_NAME=${IN_NAME%.*}
-
-  # Load amplicon specific vars
-  if [[ "$TYPE" == "rrna_8f2490r" ]]; then
-    ADP1=AGRGTTYGATYMTGGCTCAG
-    ADP2=GTTTGGCACCTCGATGTCG
-    MIN_LENGTH=3000
-    MAX_LENGTH=6000
-  fi
-
+  
   # Run cutadapt
-  $CUTADAPT --untrimmed-output $OUT_DIR/$IN_NAME.tmp\
-    -m $MIN_LENGTH -M $MAX_LENGTH -g $ADP1...$ADP2 \
-    $IN > $OUT_DIR/${IN_NAME}.fa 2> $OUT_DIR/${IN_NAME}_log.txt
+  ### Trims all sequences with correct orientation
+  $CUTADAPT \
+    --untrimmed-output $OUT_DIR/${IN_NAME}.tmp \
+    -m $MIN_LENGTH \
+    -M $MAX_LENGTH \
+    -g $FW2...$RV2R \
+    $IN > $OUT_DIR/${IN_NAME}.fa 2> $LOG_DIR/${IN_NAME}_amplicon_trim_log.txt
+  ### Reverse/complement untrimmed and trim again
   $SEQTK seq -r $OUT_DIR/$IN_NAME.tmp |\
     $CUTADAPT \
-    -m $MIN_LENGTH -M $MAX_LENGTH \
-    -g $ADP1...$ADP2 - >> $OUT_DIR/${IN_NAME}.fa
-
-    # For troubleshooting
-    #2>> $OUT_DIR/${IN_NAME}_log.txt
-    #--untrimmed-output $OUT_DIR/$IN_NAME.discarded 
-
+      --discard-untrimmed \
+      -m $MIN_LENGTH \
+      -M $MAX_LENGTH \
+      -g $FW2...$RV2R - >> $OUT_DIR/${IN_NAME}.fa 2>> $LOG_DIR/${IN_NAME}_amplicon_trim_log.txt
   rm $OUT_DIR/$IN_NAME.tmp
 }
 
 export -f cutadapt_wrapper
 
 # Trim sequences
-mkdir $OUT_DIR
-FIND_CMD="find $IN_DIR_F -maxdepth 2 -type f \( $IN_REGEX_F \)"
-eval $FIND_CMD | $GNUPARALLEL -j 10 cutadapt_wrapper {} $OUT_DIR $TYPE  
-
-# Testing
-# Reverse complement adaptors
-#ADP1RC=$(echo $ADP1 | rev | tr TACGRYSWMKVHDBN ATGCYRSWKMBDHVN)
-#ADP2RC=$(echo $ADP2 | rev | tr TACGRYSWMKVHDBN ATGCYRSWKMBDHVN)
+mkdir -p $OUT_DIR
+FIND_CMD="find $IN_DIR_F -mindepth 1 -maxdepth 1 -type f \( $IN_REGEX_F \)"
+eval $FIND_CMD |\
+  $GNUPARALLEL \
+    -j $THREADS \
+    cutadapt_wrapper \
+      {} \
+      $OUT_DIR \
+      $FW2 \
+      $RV2R \
+      $MIN_LENGTH \
+      $MAX_LENGTH \
+      $LOG_DIR \
+      $THREADS
 

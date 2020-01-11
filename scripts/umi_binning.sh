@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # DESCRIPTION
-#    Script for binning Nanopore reads based on UMIs. Part of the 
-#    longread-UMI-pipeline.
+#    Script for binning long reads based on UMIs. Part of 
+#    longread_umi.
 #    
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
@@ -15,26 +15,74 @@
 #    Add bin size limit to 200 x
 #    Add mapping against adaptors to remove UMI artifacts
 
-### Terminal input ------------------------------------------------------------
-READ_IN=$1
-OUT_DIR=$2
-THREADS=$3
-MIN_LENGTH=$4
-MAX_LENGTH=$5
-TERMINAL1_CHECK_RANGE=${6:-70}
-TERMINAL2_CHECK_RANGE=${7:-80}
-FW1=${8:-CAAGCAGAAGACGGCATACGAGAT} #RC: ATCTCGTATGCCGTCTTCTGCTTG
-FW2=${9:-AGRGTTYGATYMTGGCTCAG} #RC: CTGAGCCAKRATCRAACYCT
-RV1=${10:-AATGATACGGCGACCACCGAGATC} #RC: GATCTCGGTGGTCGCCGTATCATT
-RV2=${11:-CGACATCGAGGTGCCAAAC} #RC: GTTTGGCACCTCGATGTCG
+USAGE="$(basename "$0" .sh) [-h] [-d file -o dir -m value -M value 
+-s value -e value -f string -F string -r string -R string -p -t value] 
+-- longread_umi umi_binning: Longread UMI detection and read binning.
+   Tool requires UMIs in both ends of the read flanked by defined
+   adaptor regions.
 
+where:
+    -h  Show this help text.
+    -d  Reads in fastq format.
+    -o  Output directory.
+    -m  Minimum read length.
+    -M  Maximum read length.
+    -s  Check start of read up to s bp for UMIs.
+    -e  Check end of read up to f bp for UMIs.
+    -f  Forward adaptor sequence. 
+    -F  Forward primer sequence.
+    -r  Reverse adaptor sequence.
+    -R  Reverse primer sequence.
+    -p  Flag to disable Nanopore trimming and filtering. Use with PacBio reads.
+    -t  Number of threads to use.
+"
+
+### Terminal Arguments ---------------------------------------------------------
+
+# Import user arguments
+while getopts ':hzd:o:m:M:s:e:f:F:r:R:pt:' OPTION; do
+  case $OPTION in
+    h) echo "$USAGE"; exit 1;;
+    d) READ_IN=$OPTARG;;
+    o) OUT_DIR=$OPTARG;;
+    m) MIN_LENGTH=$OPTARG;;
+    M) MAX_LENGTH=$OPTARG;;
+    s) START_READ_CHECK=$OPTARG;;
+    e) END_READ_CHECK=$OPTARG;;
+    f) FW1=$OPTARG;;
+    F) FW2=$OPTARG;;
+    r) RV1=$OPTARG;;
+    R) RV2=$OPTARG;;
+    p) TRIM_FLAG=YES;;
+    t) THREADS=$OPTARG;;
+    :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
+    \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
+  esac
+done
+
+# Check missing arguments
+MISSING="is missing but required. Exiting."
+if [ -z ${READ_IN+x} ]; then echo "-d $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${OUT_DIR+x} ]; then echo "-o $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${MIN_LENGTH+x} ]; then echo "-m $MISSING"; echo ""; echo "$USAGE"; exit 1; fi; 
+if [ -z ${MAX_LENGTH+x} ]; then echo "-M $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${START_READ_CHECK+x} ]; then echo "-s $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${END_READ_CHECK+x} ]; then echo "-e $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${FW1+x} ]; then echo "-f $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${FW2+x} ]; then echo "-F $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${RV1+x} ]; then echo "-r $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${RV2+x} ]; then echo "-R $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
+
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
 
 ### Primer formating
 revcom() {
   echo $1 |\
-  awk '{print ">dummy\n" $0}' |\
+  $GAWK '{print ">dummy\n" $0}' |\
   $SEQTK seq -r - |\
-  awk '!/^>/'  
+  $GAWK '!/^>/'  
 }
 FW1R=$(revcom "$FW1")
 FW2R=$(revcom "$FW2")
@@ -44,11 +92,10 @@ RV2R=$(revcom "$RV2")
 ### Read trimming and filtering -----------------------------------------------
 mkdir $OUT_DIR
 TRIM_DIR=$OUT_DIR/trim
+mkdir $TRIM_DIR
 
-# Check if data is trimmed
-if [ ! -f "$TRIM_DIR/reads_tf.fq" ]; then
-  # Create trim dir
-  mkdir $TRIM_DIR
+# Trim data
+if [ -z ${TRIM_FLAG+x} ]; then
 
   # Perform porechop and filtlong in parallel
   FT_THREADS=$(( $THREADS/10 ))
@@ -79,13 +126,16 @@ if [ ! -f "$TRIM_DIR/reads_tf.fq" ]; then
   # Concatenate temp files
   cat $TRIM_DIR/*_filt.tmp > $TRIM_DIR/reads_tf.fq
   rm $TRIM_DIR/*.tmp
+else
+# Create symlink if already trimmed.
+  ln -s $PWD/$READ_IN $PWD/$TRIM_DIR/reads_tf.fq  
 fi
 
 ### Extract UMI references sequences ------------------------------------------- 
 mkdir $OUT_DIR/umi_ref
 UMI_DIR=$OUT_DIR/umi_ref
 
-# Extract UMIs and 5' flanking region
+# Extract UMI terminal region
 $GAWK -v UD="$UMI_DIR" 'NR%4==1{
        print $0 > UD"/reads_tf_start.fq";
        print $0 > UD"/reads_tf_end.fq";  
@@ -104,20 +154,21 @@ $GAWK -v UD="$UMI_DIR" 'NR%4==1{
      }
 ' $TRIM_DIR/reads_tf.fq
 
-# Extract UMIs with correct length in both ends
+
+# Extract UMI pairs with correct lengths
 $CUTADAPT -j $THREADS -e 0.2 -O 11 -m 18 -M 18 \
   --discard-untrimmed \
   -g $FW1...$FW2 -g $RV1...$RV2 \
   -G $RV2R...$RV1R -G $FW2R...$FW1R \
   -o $UMI_DIR/umi1.fq -p $UMI_DIR/umi2.fq \
   $UMI_DIR/reads_tf_start.fq $UMI_DIR/reads_tf_end.fq \
-  > $UMI_DIR/trim.log
+  > $UMI_DIR/perfect_trim.log
 
 paste -d "" <( sed -n '1~4s/^@/>/p;2~4p' $UMI_DIR/umi1.fq ) \
             <( sed -n '1~4s/^@/>/p;2~4p' $UMI_DIR/umi2.fq ) |\
   cut -d " " -f1 > $UMI_DIR/umi12.fa
 
-# Extract UMIs with correct patterns 
+# Extract UMI pairs with correct patterns 
 
 # Pattern: (NNNYRNNNYRNNNYRNNN NNNYRNNNYRNNNYRNNN)
 PATTERN="[ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{6}\
@@ -125,19 +176,81 @@ PATTERN="[ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{6}\
 grep -B1 -E "$PATTERN" $UMI_DIR/umi12.fa |\
   sed '/^--$/d' > $UMI_DIR/umi12f.fa
 
-# Extract UMIs with abundance >= 2 
-$USEARCH -fastx_uniques $UMI_DIR/umi12f.fa \
-  -fastaout $UMI_DIR/umi12u.fa -sizeout -minuniquesize 2 \
-  -relabel umi -strand both
+# Cluster UMI pairs
+$USEARCH \
+  -fastx_uniques \
+  $UMI_DIR/umi12f.fa \
+  -fastaout $UMI_DIR/umi12u.fa \
+  -sizeout \
+  -minuniquesize 1 \
+  -relabel umi \
+  -strand both
 
-$USEARCH -cluster_fast $UMI_DIR/umi12u.fa -id 0.85 \
-  -centroids $UMI_DIR/umi12c.fa -uc $UMI_DIR/umi12c.txt \
-  -sizein -sizeout -strand both 
+$USEARCH \
+  -cluster_fast $UMI_DIR/umi12u.fa \
+  -id 0.90 \
+  -centroids $UMI_DIR/umi12c.fa \
+  -uc $UMI_DIR/umi12c.txt \
+  -sizein \
+  -sizeout \
+  -strand both \
+  -minsize 1
 
+# Extract putative UMI pairs
+$CUTADAPT -j $THREADS -e 0.2 -O 11 -m 18 -l 18 \
+  --discard-untrimmed \
+  -g $FW1 -g $RV1 \
+  -G $RV2R -G $FW2R \
+  -o $UMI_DIR/umi1p.fq -p $UMI_DIR/umi2p.fq \
+  $UMI_DIR/reads_tf_start.fq $UMI_DIR/reads_tf_end.fq \
+  > $UMI_DIR/putative_trim.log
+
+paste -d "" <( sed -n '1~4s/^@/>/p;2~4p' $UMI_DIR/umi1p.fq ) \
+            <( sed -n '1~4s/^@/>/p;2~4p' $UMI_DIR/umi2p.fq ) |\
+  cut -d " " -f1 > $UMI_DIR/umi12p.fa
+
+$BWA index $UMI_DIR/umi12c.fa
+
+$BWA aln \
+  $UMI_DIR/umi12c.fa \
+  $UMI_DIR/umi12p.fa \
+  -n 6 \
+  -t $THREADS \
+  -N > $UMI_DIR/umi12p_map.sai
+$BWA samse \
+  -n 10000000 \
+  $UMI_DIR/umi12c.fa \
+  $UMI_DIR/umi12p_map.sai \
+  $UMI_DIR/umi12p.fa|\
+  $SAMTOOLS view -F 20 - \
+  > $UMI_DIR/umi12p_map.sam
+
+$GAWK \
+  -v UMS="$UMI_DIR/umi12p_map.sam" \
+  -v UC="$UMI_DIR/umi12c.fa" \
+  '
+  (FILENAME == UMS){
+      CLUSTER[$3]++
+  }
+  (FILENAME == UC && FNR%2==1){
+    NAME=substr($1,2)
+    if (NAME in CLUSTER){
+      if (CLUSTER[NAME]+0 > 2){
+        SIZE=CLUSTER[NAME]
+        gsub(";.*", "", NAME)
+        print ">" NAME ";size=" SIZE ";"
+        getline; print
+      }
+    }
+  }
+  ' \
+  $UMI_DIR/umi12p_map.sam \
+  $UMI_DIR/umi12c.fa \
+  > $UMI_DIR/umi12cf.fa 
 
 # Remove potential chimeras
-paste <(cat $UMI_DIR/umi12c.fa | paste - - ) \
-  <($GAWK '!/^>/{print}' $UMI_DIR/umi12c.fa | rev | tr ATCG TAGC) |\
+paste <(cat $UMI_DIR/umi12cf.fa | paste - - ) \
+  <($GAWK '!/^>/{print}' $UMI_DIR/umi12cf.fa | rev | tr ATCG TAGC) |\
   $GAWK -v UD="$UMI_DIR" 'NR==FNR {
       #Format columns
       split($1, a, /[>;]/);
@@ -196,7 +309,7 @@ mkdir $OUT_DIR/read_binning/bins
 BINNING_DIR=$OUT_DIR/read_binning
 
 # Extract UMI region
-$GAWK -v BD="$BINNING_DIR" -v TL="$TERMINAL1_CHECK_RANGE" '
+$GAWK -v BD="$BINNING_DIR" -v TL="$START_READ_CHECK" '
   NR%4==1{
     print ">" substr($1,2) > BD"/reads_tf_umi1.fa";
   }
@@ -205,7 +318,7 @@ $GAWK -v BD="$BINNING_DIR" -v TL="$TERMINAL1_CHECK_RANGE" '
   }
 ' $UMI_DIR/reads_tf_start.fq
 
-$GAWK -v BD="$BINNING_DIR" -v TL="$TERMINAL2_CHECK_RANGE" '
+$GAWK -v BD="$BINNING_DIR" -v TL="$END_READ_CHECK" '
   NR%4==1{
      print ">" substr($1,2) > BD"/reads_tf_umi2.fa";  
    }
@@ -417,4 +530,70 @@ find $BINNING_DIR/bins/*/*/ -name "*bins.fastq" -printf "%f\n" |\
 
 rm -r $BINNING_DIR/bins/job*
 
+## Testing
+exit 0
+# Filtering based on sub UMIs
+cat \
+  $UMI_DIR/reads_tf_start.fq \
+  <($SEQTK seq -r $UMI_DIR/reads_tf_end.fq) |\
+$CUTADAPT \
+  -j $THREADS \
+  -e 0.2 \
+  -O 11 \
+  -m 18 \
+  -M 18 \
+  --discard-untrimmed \
+  -g $FW1...$FW2 \
+  -g $RV1...$RV2 \
+  - 2> $UMI_DIR/sumi_trim.log |\
+  $GAWK '
+    NR%4==1{print ">" substr($1, 2)}
+    NR%4==2{print $0}
+  ' > $UMI_DIR/sumi.fa
 
+$USEARCH \
+  -fastx_uniques $UMI_DIR/sumi.fa \
+  -fastaout $UMI_DIR/sumi_u.fa \
+  -relabel sumi \
+  -strand plus \
+  -sizeout \
+  -minuniquesize 2
+
+PATTERN="[ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{3}"
+grep -B1 -E "$PATTERN" $UMI_DIR/sumi_u.fa |\
+  sed '/^--$/d' > $UMI_DIR/sumi_f.fa
+
+$SEQTK seq -r $UMI_DIR/sumi_f.fa > $UMI_DIR/sumi_frc.fa
+
+$GAWK \
+  -v UF="$UMI_DIR/sumi_f.fa" \
+  -v UR="$UMI_DIR/sumi_frc.fa" \
+  -v UFR="umi12u.fa" \
+  '
+  (FILENAME == UF && FNR%2==1){
+    SIZE=$1
+    sub(".*=|;", "", SIZE)
+    getline
+    UMI_FWD[$0]=SIZE
+  }
+  (FILENAME == UR && FNR%2==1){
+    SIZE=$1
+    gsub(".*=|;", "", SIZE)
+    getline
+    UMI_RV[$0]=SIZE
+  }
+  (FILENAME == UFR && FNR%2==1){
+    NAME=$1
+    getline
+    # Extract UMI1 and UMI2 in both orientations
+    s1 = substr($1, 1, 18);
+    s2 = substr($1, 19, 36);
+    if (s1 in UMI_FWD && s2 in UMI_RV){
+      print NAME UMI_FWD[s1] ";" UMI_RV[s2] ";" s1 ";" s2 ";\n" $1 
+    }
+  }
+ ' \
+ $UMI_DIR/sumi_f.fa \
+ $UMI_DIR/sumi_frc.fa \
+ $UMI_DIR/umi12u.fa \
+ > $UMI_DIR/umi12uf.fa

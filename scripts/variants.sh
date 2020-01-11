@@ -16,6 +16,10 @@
 CONSENSUS_FILE=$1 #Consensus file path name
 OUT_DIR=$2 #output folder name
 THREADS=$3 #Number of threads
+DEBUG=${4:-NO} # Print temp files for cluster assignment
+
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
 
 ### Custom functions ----------------------------------------------------------
 bam_read_split() {
@@ -200,7 +204,7 @@ phased_consensus(){
           ++n;
           if (n == 1){
             split($0,size,";")
-            gsub("size=", ";", size[2])
+            gsub("size=", ";depth=", size[2])
             print ">" name size[2] > out "/" name "_variant.fa"
             getline
             print > out "/" name "_variant.fa"
@@ -389,55 +393,121 @@ $GAWK '
     gsub(/C{3,}/, "CC", $0)
     gsub(/G{3,}/, "GG", $0)
     print $0
-  }' > $OUT_DIR/${CONSENSUS_NAME}_m_temp.fa
+  }' > $OUT_DIR/m_temp.fa
+
+# Usearch find unqiues
+$USEARCH \
+  -fastx_uniques $OUT_DIR/m_temp.fa \
+  -strand both \
+  -fastaout $OUT_DIR/u_temp.fa  \
+  -uc $OUT_DIR/u_temp.uc \
+  -sizeout
 
 # Usearch cluster round 1
 $USEARCH \
-  -cluster_fast $OUT_DIR/${CONSENSUS_NAME}_m_temp.fa \
+  -cluster_fast $OUT_DIR/u_temp.fa \
   -id 0.995 \
   -strand both \
-  -consout $OUT_DIR/${CONSENSUS_NAME}_c1_temp.fa \
-  -clusters $OUT_DIR/clusters/Cluster \
+  -centroids $OUT_DIR/c1_temp.fa \
+  -uc $OUT_DIR/c1_temp.uc \
   -sort length \
-  -sizeout
+  -sizeout \
+  -sizein
 
 # Usearch cluster round 2
 $USEARCH \
-  -cluster_fast $OUT_DIR/${CONSENSUS_NAME}_c1_temp.fa \
+  -cluster_fast $OUT_DIR/c1_temp.fa \
   -id 0.995 \
   -strand both \
-  -centroids $OUT_DIR/${CONSENSUS_NAME}_c2_temp.fa\
-  -uc $OUT_DIR/merge_c2_temp.uc \
+  -centroids $OUT_DIR/c2_temp.fa \
+  -uc $OUT_DIR/c2_temp.uc \
   -sort length \
   -sizein \
   -sizeout
 
-# Merge clusters
-$GAWK -v cd="$OUT_DIR/clusters/" '
-  $10 !~ /\*/{
-    sub(";.*", "", $9)
-    sub(";.*", "", $10)
-    system("cat " cd $9 " >> " cd $10)
-    system("rm " cd $9)
-  }' $OUT_DIR/merge_c2_temp.uc 
-
-# Filter clusters
-$USEARCH \
-  -sortbysize \
-  $OUT_DIR/${CONSENSUS_NAME}_c2_temp.fa \
-  -fastaout $OUT_DIR/${CONSENSUS_NAME}_clusters.fa \
-  -minsize 3
-rm $OUT_DIR/*temp*
+# Bin reads according to clusters
+$GAWK \
+  -v R_FA="$OUT_DIR/m_temp.fa" \
+  -v C_UC="$OUT_DIR/c2_temp.uc" \
+  -v OUT_DIR="$OUT_DIR" \
+  -v DEBUG="$DEBUG" \
+  '
+  # Bin reads based on clustering results
+  (FILENAME != R_FA && $1 ~ /S|H/) {
+    sub(";size.*", "", $9)
+    sub(";size.*", "", $10)
+    if ($10 ~ /\*/){ 
+      READS[$9]=$9 # Assign read to own cluster
+    } else if ($10 !~ /\*/){
+      READS[$9]=$10 # Assign read to new cluster
+	  for (READ in READS){
+	    if (READS[READ] == $9){
+		  READS[READ]=$10 # Update reads in same cluster to new cluster
+		}
+	  }
+    }
+	# Temp output
+	  print $9, READS[$9], FILENAME > OUT_DIR "/clusters/temp_cluster_assign.txt" 
+  }
+  # Bin reads based on clustering results and define cluster # 
+  (FILENAME == C_UC){
+    sub(";size.*", "", $9)
+    # Remove cluster < 3 reads and assign new cluster names
+    if ($1 == "C" && $3+0 >= 3){
+      CLUSTER_C[$9]="Cluster" $2 ";size=" $3 ";"
+	  for (READ in READS){
+	    if (READS[READ] in CLUSTER_C){
+          READS_CLUSTERS[READ]=CLUSTER_C[READS[READ]]
+		}
+      }
+    }
+  }
+  # Output filtered clusters
+  (FILENAME == R_FA && FNR%2==1){
+    READ_HEADER=$0
+    sub("^>", "", READ_HEADER)
+    if (READ_HEADER in CLUSTER_C){
+      # Format cluster name
+      CLUSTER_NAME=READS_CLUSTERS[READ_HEADER]
+      sub(";.*", "", CLUSTER_NAME)
+      # Output header to centroid file
+      print ">" CLUSTER_C[READ_HEADER] > OUT_DIR "/centroids.fa"
+      # Output header to read cluster file
+      print ">" READ_HEADER > OUT_DIR "/clusters/" CLUSTER_NAME
+      getline
+      # Output sequence to centroid file
+      print $0 > OUT_DIR "/centroids.fa"
+      # Output sequence to read cluster file
+      print $0 > OUT_DIR "/clusters/" CLUSTER_NAME
+    } else if (READ_HEADER in READS_CLUSTERS){
+      # Format cluster name
+      CLUSTER_NAME=READS_CLUSTERS[READ_HEADER]
+      sub(";.*", "", CLUSTER_NAME)
+      # Output header to read cluster file
+      print ">" READ_HEADER > OUT_DIR "/clusters/" CLUSTER_NAME
+      getline
+      # Output sequence to read cluster file
+      print $0 > OUT_DIR "/clusters/" CLUSTER_NAME
+    }
+    next
+  }' \
+  $OUT_DIR/u_temp.uc \
+  $OUT_DIR/c1_temp.uc \
+  $OUT_DIR/c2_temp.uc \
+  $OUT_DIR/m_temp.fa
+if [ "$DEBUG" = "YES" ]; then
+  rm $OUT_DIR/*temp*
+fi
 
 # Phasing and consensus
 VARIANT_OUT=$OUT_DIR/phasing_consensus
 mkdir -p $VARIANT_OUT
 
-cat $OUT_DIR/${CONSENSUS_NAME}_clusters.fa | $SEQTK seq -l0 - |\
+cat $OUT_DIR/centroids.fa | $SEQTK seq -l0 - |\
   $GNUPARALLEL --progress -j$CLUSTER_JOBS --recstart ">" -N 1 --pipe \
   "cat | phasing $VARIANT_OUT $OUT_DIR/clusters \
    $CONSENSUS_FILE $CLUSTER_THREADS"
-cat $VARIANT_OUT/*/*variant.fa > $OUT_DIR/variants_all.fa
+cat $VARIANT_OUT/*/*variant.fa > $OUT_DIR/variants.fa
 
 ### Testing
 exit 0

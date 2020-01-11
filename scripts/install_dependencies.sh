@@ -15,18 +15,34 @@
 #               Ryans Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 
-### Create file with paths
-
-echo '' > ./longread-UMI-pipeline_paths.txt
-
-### Install helper tools
-# Check presence by:
-# which pip3
-# which cmake
-# If not present install:
+### Terminal input
+BRANCH=${1:-master}
 
 # Store software dir path
 SOFTWARE_DIR=$PWD
+
+### Check for installation depenencies
+if command -v conda >/dev/null 2>&1 ; then
+    echo "conda found"
+    echo "version: $(conda -V)"
+else
+    echo "conda not found. Install conda and re-run install script:
+	# Miniconda3 install example
+	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+	sh Miniconda3-latest-Linux-x86_64.sh -p $PWD/miniconda3
+	source ~/.bashrc
+	conda config --add channels defaults
+	conda config --add channels bioconda
+	conda config --add channels conda-forge
+	conda config --set auto_activate_base false
+	source ~/.bashrc"
+	exit 0
+fi
+
+
+### Create file with paths
+
+echo '' > ./longread-UMI-pipeline_paths.txt
 
 # Make ~/bin if it doesn't exist
 mkdir -p ~/bin
@@ -37,25 +53,22 @@ python3 get-pip.py --user
 rm ./get-pip.py
 
 # Python virtual environment
-python3 -m pip install virtualenv --user
+# python3 -m pip install virtualenv --user
 
 # Cmake
-module load git
-git clone https://github.com/scivision/cmake-utils.git;
+git clone https://github.com/scivision/cmake-utils.git -b v1.4.0.0;
 cd cmake-utils
-python3 cmake_setup.py \
+python3 cmake_setup.py 3.15.2 \
   --install_path $SOFTWARE_DIR/cmake
 cd ..
-module purge
 rm -rf ./cmake-utils
 
 ### Install longread-UMI-pipeline
-git clone https://github.com/SorenKarst/longread-UMI-pipeline
+git clone https://github.com/SorenKarst/longread-UMI-pipeline -b $BRANCH
 cd ./longread-UMI-pipeline
 find . -name "*.sh" -exec chmod +x {} \;
 cd ..
-ln -s $SOFTWARE_DIR/longread-UMI-pipeline/longread_UMI_pipeline.sh ~/bin/longread-UMI-pipeline
-ln -s $SOFTWARE_DIR/longread-UMI-pipeline/longread_UMI_mockanalysis.sh ~/bin/longread-UMI-mockanalysis
+ln -s $SOFTWARE_DIR/longread-UMI-pipeline/longread_umi.sh ~/bin/longread_umi
 
 ### Install dependencies automaticly
 
@@ -129,8 +142,8 @@ tar -xjf ./htslib-1.9.tar.bz2
 cd htslib-1.9 
 ./configure \
   --prefix=$SOFTWARE_DIR/htslib_1.9 \
-  --disable-bz2 \
-  --disable-lzma
+  --disable-lzma \
+  --disable-bz2 
 make
 make install
 cd ..
@@ -139,13 +152,9 @@ ln -s $SOFTWARE_DIR/htslib_1.9/bin/tabix ~/bin/tabix
 ln -s $SOFTWARE_DIR/htslib_1.9/bin/bgzip ~/bin/bgzip
 
 # Medaka
-virtualenv medaka --python=python3 --prompt "(medaka) "
-. medaka/bin/activate
-pip install medaka
-deactivate
-echo "export MEDAKA_ENV_START='. $SOFTWARE_DIR/medaka/bin/activate'" >> ./longread-UMI-pipeline_paths.txt
-echo "export MEDAKA_ENV_STOP='deactivate'" >> ./longread-UMI-pipeline_paths.txt
-echo "export MEDAKA_MODEL=r941_min_high" >> ./longread-UMI-pipeline_paths.txt
+conda create -c bioconda -n medaka medaka
+echo "export MEDAKA_ENV_START='eval \"\$(conda shell.bash hook)\"; conda activate medaka'" >> ./longread-UMI-pipeline_paths.txt
+echo "export MEDAKA_ENV_STOP='conda deactivate'" >> ./longread-UMI-pipeline_paths.txt
 
 # cutadapt
 pip3 install --user --upgrade cutadapt
@@ -188,7 +197,7 @@ echo "export USEARCH=$(find $SOFTWARE_DIR/usearch/ -type f -name "usearch*")" >>
 
 echo "" >> ./longread-UMI-pipeline_paths.txt
 LEAD='^# Program paths$'
-TAIL='^# Scripts paths'
+TAIL='^# longread_umi paths'
 
 sed -i \
   -e "/$LEAD/,/$TAIL/{ /$LEAD/{p; r ./longread-UMI-pipeline_paths.txt
@@ -197,5 +206,5 @@ sed -i \
 
 ### Test longread-UMI-pipeline
 cd longread-UMI-pipeline/test_data
-longread-UMI-pipeline -d test_reads.fq -s 10 -c 30 -t 1
-
+longread_umi nanopore_pipeline -d test_reads.fq -o . -v 30 -w rrna_operon -t 1 -q r941_min_high_g303
+longread_umi qc_pipeline -d test_reads.fq -c consensus_raconx3_medakax1.fa -r zymo_curated -t 1
