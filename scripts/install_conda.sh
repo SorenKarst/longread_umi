@@ -128,7 +128,7 @@ conda deactivate
 
 # Cleanup
 if [ -f Miniconda3-latest-Linux-x86_64.sh  ]; then 
-  rm -f ./Miniconda3-latest-${OS}-x86_64.sh
+  rm -f ./Miniconda3-latest-Linux-x86_64.sh
 fi
 if [ -f install_conda.sh  ]; then 
   rm -f ./install_conda.sh
