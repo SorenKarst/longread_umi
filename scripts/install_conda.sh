@@ -70,14 +70,8 @@ eval "$(conda shell.bash hook)"
 conda activate longread_umi
 
 # Install porechop
-WDIR=$PWD
-git clone \
-  https://github.com/rrwick/Porechop.git \
-  $CONDA_PREFIX/Porechop
-
-cd $CONDA_PREFIX/Porechop
-python3 setup.py install
-cd $WDIR  
+$CONDA_PREFIX/bin/pip install \
+  git+https://github.com/rrwick/Porechop.git  
 
 # Download longread-UMI from git
 git clone \
