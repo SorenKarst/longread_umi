@@ -67,7 +67,7 @@ https://www.biorxiv.org/content/10.1101/645903v3
      `-R CGACATCGAGGTGCCAAAC \`  
      `-c 3 \`  
      `-p 1 \`  
-     `-q r941_min_high_g330\`  
+     `-q r941_min_high_g330 \`  
      `-t 1`
 5. Run qc pipeline:  
    `longread_umi qc_pipeline \`  
