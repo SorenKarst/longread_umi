@@ -81,7 +81,8 @@ cd $WDIR
 
 # Download longread-UMI from git
 git clone \
-  https://github.com/SorenKarst/$BRANCH/longread-UMI-pipeline.git \
+  --branch "$BRANCH" \
+  https://github.com/SorenKarst/longread-UMI-pipeline.git \
   $CONDA_PREFIX/longread_umi
 
 # Modify adapters.py
