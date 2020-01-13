@@ -7,6 +7,8 @@
 #           Ryan Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 
+# Terminal input
+BRANCH=${1:-master} # Default to master branch
 
 # Check conda installation ----------------------------------------------------
 if [[ -z $(which conda) ]]; then
@@ -79,7 +81,7 @@ cd $WDIR
 
 # Download longread-UMI from git
 git clone \
-  https://github.com/SorenKarst/longread-UMI-pipeline.git \
+  https://github.com/SorenKarst/$BRANCH/longread-UMI-pipeline.git \
   $CONDA_PREFIX/longread_umi
 
 # Modify adapters.py
