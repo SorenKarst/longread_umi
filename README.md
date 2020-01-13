@@ -13,7 +13,7 @@ https://www.biorxiv.org/content/10.1101/645903v3
    OS tested (Linux 3.10.0, Ubuntu 14.04, Ubuntu 16.04) \
   `usearch` >=10
 2. Download installer script from terminal \
-   `https://raw.githubusercontent.com/SorenKarst/longread-UMI-pipeline/master/scripts/install_conda.sh`
+   `wget https://raw.githubusercontent.com/SorenKarst/longread-UMI-pipeline/master/scripts/install_conda.sh`
 3. Run installation script from terminal and follow instructions \
    `bash ./install_conda.sh` 
 
@@ -45,16 +45,16 @@ https://www.biorxiv.org/content/10.1101/645903v3
 4. Run nanopore pipeline:  
    `longread_umi nanopore_pipeline \`  
      `-d test_reads.fq \`  
-     `-o . \`  
+     `-o test \`  
      `-v 30 \`  
      `-w rrna_operon \`  
      `-t 1 \`  
-     `-q r941_min_high_303`  
+     `-q r941_min_high_330`  
    or  
    `longread_umi nanopore_pipeline \`  
      `-d test_reads.fq \`  
      `-v 30 \`  
-     `-o . \`  
+     `-o test \`  
      `-s 70 \`  
      `-e 80 \`  
      `-m 3500 \`  
@@ -65,7 +65,7 @@ https://www.biorxiv.org/content/10.1101/645903v3
      `-R CGACATCGAGGTGCCAAAC \`  
      `-c 3 \`  
      `-p 1 \`  
-     `-q r941_min_high_303\`  
+     `-q r941_min_high_330\`  
      `-t 1`
 5. Run qc pipeline:  
    `longread_umi qc_pipeline \`  
@@ -89,7 +89,7 @@ https://www.biorxiv.org/content/10.1101/645903v3
      `-v 30  \`  
      `-w rrna_operon \`  
      `-t <Number-of-threads> \`  
-     `-q r941_min_high_303`  
+     `-q r941_min_high_330`  
 5. Open a terminal in the directory and run:  
    `longread_umi qc_pipeline \`  
      `-d "umi_binning/trim/reads_tf.fq;reads.fq" \`  
