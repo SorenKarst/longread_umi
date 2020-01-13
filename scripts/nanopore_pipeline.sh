@@ -113,7 +113,7 @@ if [ -z ${MEDAKA_JOBS+x} ]; then echo "-T is missing. Medaka jobs set to 1."; ME
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
 
-if [ ! -z ${OUT_DIR+x} ]; then
+if [ -d ${OUT_DIR+x} ]; then
   echo ""
   echo "$OUT_DIR exists. Remove existing directory or rename desired output directory."
   echo "Analysis aborted ..."
