@@ -1,67 +1,60 @@
-# longread-UMI-pipeline
+# longread_umi 
 A collection of scripts for processing longread UMI data.
 
-## Requirements
-1. Tested on Ubuntu 14.04 and 16.04.
-2. Dependencies: See scripts/dependencies.sh and scripts/longread_umi_version_dump.txt
+<b> Pipeline version reference: </b> \
+SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, & M Albertsen. (2019). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers with Nanopore or PacBio sequencing. bioRxiv, 645903.
+https://www.biorxiv.org/content/10.1101/645903v3
 
-## Automatic installation
-1. Naive semi-automatic installation of pipeline and dependencies. The script will overwrite
-   folders and files in the working directory. USE AT OWN RISK!!
-2. Go to a folder where you want the longread UMI pipeline and dependencies installed.
-3. Open a terminal in the installation folder and download the installation script:  
-   `wget https://raw.githubusercontent.com/SorenKarst/longread-UMI-pipeline/master/scripts/install_dependencies.sh`
-4. Option A (Recommended): Open script in a text editor and copy installation commands for missing dependencies to
-   terminal one by one.
-4. Option B: Install pipeline and dependencies automatically by excuting script `bash install_dependencies.sh`
+## Installation
 
-## Manual installation
+### Conda
 
-### Clone from github
-1. Go to desired installation directory, open a terminal and run:  
-   `git clone https://github.com/SorenKarst/longread-UMI-pipeline`
+1. Requirements/Dependencies \
+   OS tested (Linux 3.10.0, Ubuntu 14.04, Ubuntu 16.04) \
+  `usearch` >=10
+2. Download installer script from terminal \
+   `wget https://raw.githubusercontent.com/SorenKarst/longread-UMI-pipeline/master/scripts/install_conda.sh`
+3. Run installation script from terminal and follow instructions \
+   `bash ./install_conda.sh` 
 
-### Make bash scripts executable
-1. Go to longread-UMI-pipeline directory, open a terminal and run:  
-   `find . -name "*.sh" -exec chmod +x {} \;`
+### Manual
 
-### Create symlink to run longread-UMI-pipeline commands from terminal
-1. Create symlink in ~/bin by opening a terminal and run:  
-   `mkdir -p ~/bin`  
-   `ln -s /path/to/longread-UMI-pipeline/longread_umi.sh ~/bin/longread_umi`  
+1. Requirements/Dependencies \
+   OS tested (Linux 3.10.0, Ubuntu 14.04, Ubuntu 16.04) \
+   See `scripts/longread-UMI-pipeline_version_dump.txt`
+2. Clone from github in terminal \
+   `git clone https://github.com/SorenKarst/longread-UMI-pipeline.git`
+3. Make bash scripts executable \
+   `find ./longread-UMI-pipeline -name "*.sh" -exec chmod +x {} \;`
+4. Install dependencies \
+   See `./longread-UMI-pipeline/scripts/install_dependencies.sh` for inspiration.
+5. Change paths to dependencies \
+   Modify `./longread-UMI-pipeline/scripts/dependencies.sh` in a texteditor.
+6. Customize porechop adaptors.py to be able to detect custom primers \
+   Replace current `adapters.py` with `./longread-UMI-pipeline/scripts/adapters.py`
 
-### Change paths to dependencies
-1. Open /path/to/longread-UMI-pipeline/scripts/dependencies.sh in a texteditor.
-2. Change all paths under "Program paths" to reflect installation paths on your system.
-3. If unsure of the paths try to type `which <function>` in the terminal i.e. `which racon`.
-4. Install any missing dependencies.
+## Usage
 
-### Customize porechop adaptors.py to be able to detect custom primers
-1. We recommend to make a seperate installation of porechop to use with the longread-UMI-pipeline.
-2. Go to path/to/porechop/porechop/
-3. Backup current adapters.py.
-4. Replace current adapters.py with path/to/longread-UMI-pipeline/scripts/adapters.py.
-
-### Test scripts
-1. Open a terminal anywhere and test the initialization command:  
+### Test data
+1. Test the initialization command in terminal:  
   `longread_umi -h` or `/path/to/longread_umi.sh -h`
-2. Open a terminal anywhere and test the nanopore_pipeline command:  
+2. Test the nanopore_pipeline in terminal:  
   `longread_umi nanopore_pipeline -h` or `/path/to/longread_umi.sh nanopore_pipeline -h`
 3. Test longread_umi nanopore_pipeline and qc_pipeline on test data:  
    Go to /path/to/longread-UMI-pipeline/test_data and open a terminal in the directory.
 4. Run nanopore pipeline:  
    `longread_umi nanopore_pipeline \`  
      `-d test_reads.fq \`  
-     `-o . \`  
+     `-o test \`  
      `-v 30 \`  
      `-w rrna_operon \`  
      `-t 1 \`  
-     `-q r941_min_high`  
+     `-q r941_min_high_330`  
    or  
    `longread_umi nanopore_pipeline \`  
      `-d test_reads.fq \`  
      `-v 30 \`  
-     `-o . \`  
+     `-o test \`  
      `-s 70 \`  
      `-e 80 \`  
      `-m 3500 \`  
@@ -72,7 +65,7 @@ A collection of scripts for processing longread UMI data.
      `-R CGACATCGAGGTGCCAAAC \`  
      `-c 3 \`  
      `-p 1 \`  
-     `-q r941_min_high\`  
+     `-q r941_min_high_330\`  
      `-t 1`
 5. Run qc pipeline:  
    `longread_umi qc_pipeline \`  
@@ -83,7 +76,7 @@ A collection of scripts for processing longread UMI data.
 
 ### Run pipeline on Zymo mock Nanopore data and perform qc
 1. Create a working directory and open a terminal
-2. Download the Zymo mock Nanopore fastq data and decompress:  
+2. Download the Zymo mock Nanopore R9.4.1 fastq data and decompress:  
    `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963_1.fastq.gz`  
    `gunzip -c ERR3336963_1.fastq.gz > reads.fq`
 3. Download the SILVA database and decompress:  
@@ -96,7 +89,7 @@ A collection of scripts for processing longread UMI data.
      `-v 30  \`  
      `-w rrna_operon \`  
      `-t <Number-of-threads> \`  
-     `-q r941_min_high`  
+     `-q r941_min_high_330`  
 5. Open a terminal in the directory and run:  
    `longread_umi qc_pipeline \`  
      `-d "umi_binning/trim/reads_tf.fq;reads.fq" \`  

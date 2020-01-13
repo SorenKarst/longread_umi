@@ -35,10 +35,10 @@ where:
     -c  Number of iterative rounds of consensus calling with Racon.
     -p  Number of iterative rounds of consensus calling with Medaka.
     -q  Medaka model used for polishing. r941_min_high, r10_min_high etc.
-    -w  Use predefined workflow with settings for s, e, m, M, f, F, r, R, c, p.
+    -w  Use predefined workflow with settings for s, e, m, M, f, F, r, R.
         rrna_operon [70, 80, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
-        AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC,
-        3, 1]
+        AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC]
+        Overwrites other input.
     -n  Process n number of bins. If not defined all bins are processed.
         Pratical for testing large datasets.
     -u  Directory with UMI binned reads.
@@ -80,16 +80,18 @@ done
 # Check missing arguments
 MISSING="is missing but required. Exiting."
 if [ "$WORKFLOW" == rrna_operon ]; then
-  START_READ_CHECK=70
-  END_READ_CHECK=80
+  START_READ_CHECK=90
+  END_READ_CHECK=90
   MIN_LENGTH=3500
   MAX_LENGTH=6000
   FW1=CAAGCAGAAGACGGCATACGAGAT
   FW2=AGRGTTYGATYMTGGCTCAG
   RV1=AATGATACGGCGACCACCGAGATC
   RV2=CGACATCGAGGTGCCAAAC
-  CON_N=3
-  POL_N=1
+elif [ "$WORKFLOW" != rrna_operon]; then
+  echo "Unknown argument to workflow (-w). Defined workflows are: rrna_operon"
+  echo "$USAGE"
+  exit 1
 fi
 if [ -z ${INPUT_READS+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
 if [ -z ${UMI_COVERAGE_MIN+x} ]; then echo "-v $MISSING"; echo "$USAGE"; exit 1; fi;
