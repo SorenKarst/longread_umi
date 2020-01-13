@@ -3,7 +3,7 @@
 #    Install longread_umi as conda environment.
 #
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
+#    author	SÃ¸ren Karst (sorenkarst@gmail.com)
 #           Ryan Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 
@@ -11,6 +11,7 @@
 # Check conda installation ----------------------------------------------------
 if [[ -z $(which conda) ]]; then
   # Ask to install
+  while read -r -t 0; do read -r; done
   read \
     -n 1 \
     -p "Conda not found. Install miniconda3 (y/n)? " \
@@ -98,6 +99,7 @@ ln -s \
   
   
 # Create link to usearch installation
+while read -r -t 0; do read -r; done
 read \
   -p "Type path to usearch excutable and press enter:  " \
   USEARCH_PATH
@@ -107,6 +109,7 @@ unset USEARCH_PATH
 
 if [[ ! -x "$USEARCH_PATH_F" ]]; then
   echo "File '$USEARCH_PATH_F' is not executable or found."
+  while read -r -t 0; do read -r; done
   read \
     -n 1 \
     -p "Attempt to make '$USEARCH_PATH_F' excutable (y/n)? " \
@@ -161,6 +164,7 @@ fi
 conda deactivate
 
 # Cleanup
+while read -r -t 0; do read -r; done
 read \
   -n 1 \
   -p "Cleanup install files (y/n)? " \
