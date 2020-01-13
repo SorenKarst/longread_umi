@@ -48,7 +48,7 @@ https://www.biorxiv.org/content/10.1101/645903v3
      `-o test \`  
      `-v 30 \`  
      `-w rrna_operon \`  
-     `-t 1 \`
+     `-t 1 \`  
      `-c 3 \`  
      `-p 1 \`  
      `-q r941_min_high_g330`  
