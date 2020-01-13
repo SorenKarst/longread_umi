@@ -11,7 +11,7 @@
 # Check conda installation ----------------------------------------------------
 if [[ -z $(which conda) ]]; then
   # Ask to install
-  while read -r -t 0; do read -r; done
+  read -t 1 -n 10000 discard # Clears stdin before read
   read \
     -n 1 \
     -p "Conda not found. Install miniconda3 (y/n)? " \
@@ -99,7 +99,7 @@ ln -s \
   
   
 # Create link to usearch installation
-while read -r -t 0; do read -r; done
+read -t 1 -n 10000 discard
 read \
   -p "Type path to usearch excutable and press enter:  " \
   USEARCH_PATH
@@ -109,7 +109,7 @@ unset USEARCH_PATH
 
 if [[ ! -x "$USEARCH_PATH_F" ]]; then
   echo "File '$USEARCH_PATH_F' is not executable or found."
-  while read -r -t 0; do read -r; done
+  read -t 1 -n 10000 discard
   read \
     -n 1 \
     -p "Attempt to make '$USEARCH_PATH_F' excutable (y/n)? " \
@@ -164,7 +164,7 @@ fi
 conda deactivate
 
 # Cleanup
-while read -r -t 0; do read -r; done
+read -t 1 -n 10000 discard
 read \
   -n 1 \
   -p "Cleanup install files (y/n)? " \
