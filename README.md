@@ -49,14 +49,16 @@ https://www.biorxiv.org/content/10.1101/645903v3
      `-v 30 \`  
      `-w rrna_operon \`  
      `-t 1 \`  
-     `-q r941_min_high_330`  
+     `-c 3 \`  
+     `-p 1 \`  
+     `-q r941_min_high_g330`  
    or  
    `longread_umi nanopore_pipeline \`  
      `-d test_reads.fq \`  
      `-v 30 \`  
      `-o test \`  
-     `-s 70 \`  
-     `-e 80 \`  
+     `-s 90 \`  
+     `-e 90 \`  
      `-m 3500 \`  
      `-M 6000 \`  
      `-f CAAGCAGAAGACGGCATACGAGAT \`  
@@ -65,15 +67,16 @@ https://www.biorxiv.org/content/10.1101/645903v3
      `-R CGACATCGAGGTGCCAAAC \`  
      `-c 3 \`  
      `-p 1 \`  
-     `-q r941_min_high_330\`  
+     `-q r941_min_high_g330 \`  
      `-t 1`
 5. Run qc pipeline:  
    `longread_umi qc_pipeline \`  
      `-d test_reads.fq \`  
-     `-c consensus_raconx3_medakax1.fa \`  
+     `-c test/consensus_raconx3_medakax1.fa \`  
      `-r zymo_curated \`  
-     `-t 1`  
-
+     `-t 1 \`  
+	 `-o test/qc \`  
+	 
 ### Run pipeline on Zymo mock Nanopore data and perform qc
 1. Create a working directory and open a terminal
 2. Download the Zymo mock Nanopore R9.4.1 fastq data and decompress:  

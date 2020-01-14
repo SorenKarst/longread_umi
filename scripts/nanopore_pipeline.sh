@@ -88,7 +88,7 @@ if [ "$WORKFLOW" == rrna_operon ]; then
   FW2=AGRGTTYGATYMTGGCTCAG
   RV1=AATGATACGGCGACCACCGAGATC
   RV2=CGACATCGAGGTGCCAAAC
-elif [ "$WORKFLOW" != rrna_operon]; then
+elif [ "$WORKFLOW" != rrna_operon && ! -z ${WORKFLOW+x} ]; then
   echo "Unknown argument to workflow (-w). Defined workflows are: rrna_operon"
   echo "$USAGE"
   exit 1
@@ -112,7 +112,16 @@ if [ -z ${MEDAKA_JOBS+x} ]; then echo "-T is missing. Medaka jobs set to 1."; ME
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
-mkdir $OUT_DIR
+
+if [ -d $OUT_DIR ]; then
+  echo ""
+  echo "$OUT_DIR exists. Remove existing directory or rename desired output directory."
+  echo "Analysis aborted ..."
+  echo ""
+  exit 1 
+else
+  mkdir $OUT_DIR
+fi
 
 ### Pipeline -----------------------------------------------------------
 # Logging

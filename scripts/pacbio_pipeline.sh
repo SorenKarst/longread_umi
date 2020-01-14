@@ -35,7 +35,7 @@ where:
     -c  Number of iterative rounds of consensus calling with Racon.
     -w  Use predefined workflow with settings for s, e, m, M, f, F, r, R, c.
         rrna_operon [70, 80, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
-        AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC, 3]
+        AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC, 2]
     -n  Process n number of bins. If not defined all bins are processed.
         Pratical for testing large datasets.
     -u  Directory with UMI binned reads.
@@ -80,8 +80,13 @@ if [ "$WORKFLOW" == rrna_operon ]; then
   FW2=AGRGTTYGATYMTGGCTCAG
   RV1=AATGATACGGCGACCACCGAGATC
   RV2=CGACATCGAGGTGCCAAAC
-  CON_N=3
+  CON_N=2
+elif [ "$WORKFLOW" != rrna_operon && ! -z ${WORKFLOW+x} ]; then
+  echo "Unknown argument to workflow (-w). Defined workflows are: rrna_operon"
+  echo "$USAGE"
+  exit 1
 fi
+
 if [ -z ${INPUT_READS+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
 if [ -z ${UMI_COVERAGE_MIN+x} ]; then echo "-v $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${OUT_DIR+x} ]; then echo "-o $MISSING"; echo "$USAGE"; exit 1; fi;
@@ -98,7 +103,15 @@ if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THRE
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
-mkdir $OUT_DIR
+if [ -d $OUT_DIR ]; then
+  echo ""
+  echo "$OUT_DIR exists. Remove existing directory or rename desired output directory."
+  echo "Analysis aborted ..."
+  echo ""
+  exit 1 
+else
+  mkdir $OUT_DIR
+fi
 
 ### Pipeline -----------------------------------------------------------
 # Logging

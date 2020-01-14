@@ -3,29 +3,32 @@
 #    Install longread_umi as conda environment.
 #
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
+#    author	SÃ¸ren Karst (sorenkarst@gmail.com)
 #           Ryan Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 
+# Terminal input
+BRANCH=${1:-master} # Default to master branch
 
 # Check conda installation ----------------------------------------------------
 if [[ -z $(which conda) ]]; then
   # Ask to install
+  read -t 1 -n 10000 discard # Clears stdin before read
   read \
     -n 1 \
     -p "Conda not found. Install miniconda3 (y/n)? " \
     ASK_CONDA_INSTALL    
   
-  if [ "$ASK_CONDA_INSTALL" != "y" ]; then
-    echo ""
-    echo "Quitting installation script..."
-    echo ""
-    exit 1 
-  else
+  if [ "$ASK_CONDA_INSTALL" == "y" ]; then
     # Install conda
     [ -f Miniconda3-latest-Linux-x86_64.sh ] ||\
       wget "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
     bash ./Miniconda3-latest-Linux-x86_64.sh   
+  else
+    echo ""
+	echo "Installation aborted..."
+    echo ""
+    exit 1 
   fi
 else
   echo ""
@@ -67,17 +70,12 @@ eval "$(conda shell.bash hook)"
 conda activate longread_umi
 
 # Install porechop
-WDIR=$PWD
-git clone \
-  https://github.com/rrwick/Porechop.git \
-  $CONDA_PREFIX/Porechop
-
-cd $CONDA_PREFIX/Porechop
-python3 setup.py install
-cd $WDIR  
+$CONDA_PREFIX/bin/pip install \
+  git+https://github.com/rrwick/Porechop.git  
 
 # Download longread-UMI from git
 git clone \
+  --branch "$BRANCH" \
   https://github.com/SorenKarst/longread-UMI-pipeline.git \
   $CONDA_PREFIX/longread_umi
 
@@ -98,14 +96,35 @@ ln -s \
   
   
 # Create link to usearch installation
+read -t 1 -n 10000 discard
 read \
   -p "Type path to usearch excutable and press enter:  " \
   USEARCH_PATH
-  
-chmod +x $USEARCH_PATH
+
+USEARCH_PATH_F=$(sed -e 's/^"//' -e 's/"$//' <<< "$USEARCH_PATH")
+unset USEARCH_PATH
+
+if [[ ! -x "$USEARCH_PATH_F" ]]; then
+  echo "File '$USEARCH_PATH_F' is not executable or found."
+  read -t 1 -n 10000 discard
+  read \
+    -n 1 \
+    -p "Attempt to make '$USEARCH_PATH_F' excutable (y/n)? " \
+    ASK_USEARCH_X    
+    echo ""
+  if [ "$ASK_USEARCH_X" == "y" ]; then
+    chmod +x "$USEARCH_PATH_F"
+  else
+    echo ""
+    echo "Installation aborted ..."
+    echo ""
+    exit 1 
+  fi
+fi
+
 
 ln -s \
-  $USEARCH_PATH \
+  "$USEARCH_PATH_F" \
   $CONDA_PREFIX/bin/usearch  
   
 # Check installation
@@ -121,8 +140,10 @@ else
   echo "Path to conda environment: $CONDA_PREFIX"
   echo "Path to pipeline files: $CONDA_PREFIX/longread_umi"
   echo ""
-  echo "Run pipeline test:"
+  echo "Refresh terminal to enable conda links:"
+  echo "source ~/.bashrc"
   echo ""
+  echo "Run pipeline test:"
   echo "conda activate longread_umi" 
   echo "longread_umi nanopore_pipeline \
 -d $CONDA_PREFIX/longread_umi/test_data/test_reads.fq \
@@ -130,7 +151,9 @@ else
 -v 30 \
 -w rrna_operon \
 -t 1 \
--q r941_min_high_g330"
+-q r941_min_high_g330 \
+-c 2 \
+-p 1"
   echo "conda deactivate"  
   echo ""  
 fi
@@ -138,12 +161,21 @@ fi
 conda deactivate
 
 # Cleanup
-if [ -f Miniconda3-latest-Linux-x86_64.sh  ]; then 
-  rm -f ./Miniconda3-latest-Linux-x86_64.sh
-fi
-if [ -f install_conda.sh  ]; then 
-  rm -f ./install_conda.sh
-fi
-if [ -f longread_umi.yml  ]; then 
-  rm -f ./longread_umi.yml
+read -t 1 -n 10000 discard
+read \
+  -n 1 \
+  -p "Cleanup install files (y/n)? " \
+  CLEAN_INSTALL
+  echo ""
+  
+if [ "$CLEAN_INSTALL" == "y" ]; then
+  if [ -f Miniconda3-latest-Linux-x86_64.sh  ]; then 
+    rm -f ./Miniconda3-latest-Linux-x86_64.sh
+  fi
+  if [ -f install_conda.sh  ]; then 
+    rm -f ./install_conda.sh
+  fi
+  if [ -f longread_umi.yml  ]; then 
+    rm -f ./longread_umi.yml
+  fi
 fi
