@@ -140,22 +140,9 @@ else
   echo "Path to conda environment: $CONDA_PREFIX"
   echo "Path to pipeline files: $CONDA_PREFIX/longread_umi"
   echo ""
-  echo "Refresh terminal to enable conda links:"
-  echo "source ~/.bashrc"
+  echo "Initiate conda and refresh terminal:"
+  echo "conda init; source ~/.bashrc"
   echo ""
-  echo "Run pipeline test:"
-  echo "conda activate longread_umi" 
-  echo "longread_umi nanopore_pipeline \
--d $CONDA_PREFIX/longread_umi/test_data/test_reads.fq \
--o test \
--v 30 \
--w rrna_operon \
--t 1 \
--q r941_min_high_g330 \
--c 2 \
--p 1"
-  echo "conda deactivate"  
-  echo ""  
 fi
 
 conda deactivate
