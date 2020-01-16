@@ -13,7 +13,7 @@ https://www.biorxiv.org/content/10.1101/645903v3
    OS tested (Linux 3.10.0, Ubuntu 14.04, Ubuntu 16.04) \
   `usearch` >=10
 2. Download installer script from terminal \
-   `wget https://raw.githubusercontent.com/SorenKarst/longread-UMI-pipeline/master/scripts/install_conda.sh`
+   `wget https://raw.githubusercontent.com/SorenKarst/longread_umi/master/scripts/install_conda.sh`
 3. Run installation script from terminal and follow instructions \
    `bash ./install_conda.sh` 
 
@@ -23,15 +23,15 @@ https://www.biorxiv.org/content/10.1101/645903v3
    OS tested (Linux 3.10.0, Ubuntu 14.04, Ubuntu 16.04) \
    See `scripts/longread-UMI-pipeline_version_dump.txt`
 2. Clone from github in terminal \
-   `git clone https://github.com/SorenKarst/longread-UMI-pipeline.git`
+   `git clone https://github.com/SorenKarst/longread_umi.git`
 3. Make bash scripts executable \
-   `find ./longread-UMI-pipeline -name "*.sh" -exec chmod +x {} \;`
+   `find ./longread_umi -name "*.sh" -exec chmod +x {} \;`
 4. Install dependencies \
-   See `./longread-UMI-pipeline/scripts/install_dependencies.sh` for inspiration.
+   See `./longread_umi/scripts/install_dependencies.sh` for inspiration.
 5. Change paths to dependencies \
-   Modify `./longread-UMI-pipeline/scripts/dependencies.sh` in a texteditor.
+   Modify `./longread_umi/scripts/dependencies.sh` in a texteditor.
 6. Customize porechop adaptors.py to be able to detect custom primers \
-   Replace current `adapters.py` with `./longread-UMI-pipeline/scripts/adapters.py`
+   Replace current `adapters.py` with `./longread_umi/scripts/adapters.py`
 
 ## Usage
 
