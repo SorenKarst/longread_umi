@@ -16,6 +16,8 @@ https://www.biorxiv.org/content/10.1101/645903v3
    `wget https://raw.githubusercontent.com/SorenKarst/longread_umi/master/scripts/install_conda.sh`
 3. Run installation script from terminal and follow instructions \
    `bash ./install_conda.sh` 
+4. Initiate conda and refresh terminal before using pipeline. \
+   `conda init; source ~/.bashrc`  
 
 ### Manual
 
