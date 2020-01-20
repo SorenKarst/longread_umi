@@ -5,5 +5,5 @@ relative_links:
   enabled: true
   collections: true
 include:
-  - DATA.md
-  - INTRO.md
+  - data.md
+  - index.md
