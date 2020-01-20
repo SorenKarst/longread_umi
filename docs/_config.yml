@@ -1,1 +1,9 @@
 theme: jekyll-theme-slate
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: true
+include:
+  - DATA.md
+  - INTRO.md
