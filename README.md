@@ -3,12 +3,14 @@
 A collection of scripts for processing longread UMI data.
 
 **Table of contents**
-
 - [Installation](#installation)
 - [Quick start](#quick-start)
 - [Usage](#usage)
 - [Data and examples](#data-and-examples)
-- [Citation](#citation)
+
+**Citation**  
+SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, & M Albertsen. (2019). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers with Nanopore or PacBio sequencing. bioRxiv, 645903.
+https://www.biorxiv.org/content/10.1101/645903v3
 
 ## Installation
 
@@ -43,9 +45,9 @@ A collection of scripts for processing longread UMI data.
 ## Quick start
 
 ### Test data
-1. Test the initialization command  
+1. Test the initialization command in terminal  
   `longread_umi -h` or `/path/to/longread_umi.sh -h`
-2. Test the nanopore_pipeline in terminal:  
+2. Test the nanopore_pipeline in terminal  
   `longread_umi nanopore_pipeline -h` or `/path/to/longread_umi.sh nanopore_pipeline -h`
 3. Test longread_umi nanopore_pipeline and qc_pipeline on test data:  
    Go to /path/to/longread-UMI-pipeline/test_data and open a terminal in the directory.
@@ -78,7 +80,7 @@ A collection of scripts for processing longread UMI data.
      -o test/qc
    ```
 
-### Zymomock rRNA UMI amplicons
+### Zymomock rRNA operon data
 1. Download the Zymo mock Nanopore R9.4.1 fastq data and decompress
    ```
    wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963_1.fastq.gz 
@@ -119,7 +121,3 @@ A collection of scripts for processing longread UMI data.
 ## Data and examples
 
 - [Example data](docs/DATA.md)
-
-## Citation
-SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, & M Albertsen. (2019). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers with Nanopore or PacBio sequencing. bioRxiv, 645903.
-https://www.biorxiv.org/content/10.1101/645903v3
