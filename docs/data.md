@@ -4,9 +4,9 @@ Example data generated for different types of amplicons using Oxford Nanopore an
 
 #### Oxford Nanopore
 
- Sample | Target | Instrument | Flowcell | Basecalling | fastq data | fast5 data 
----|---|---|---|---|---|---
-ZymoBIOMICS Microbial Community DNA Standard (D6306, lot no. ZRC190811) | Bacterial rRNA operon | MinION | R10 | guppy3.4.4 | [ERR3813594](ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR381/ERR3813594/smkj412_zymo_D6306_rrna_umi_ont_min_r10_g344hac.fq.gz) | [ERR3813597](https://www.ebi.ac.uk/ena/data/view/ERR3813597)
+Sample | Target | Sequencing setup | UMI consensus | Raw yield (Gbp) | Raw reads (M) | UMI reads (K)| Mean Length (bp) | Raw data fastq | Raw data fast5 | UMI data fasta | Reference
+---|---|---|---|---|---|---|---|---|---|---|---
+ZymoBIOMICS Microbial Community DNA Standard (D6306, lot no. ZRC190811) | Bacterial rRNA operon | MinION, R10, guppy3.4.4 | raconx2, medakax2 | 18.9 | 4.4 | 23.4 | 4280 | [ERR3813594](https://www.ebi.ac.uk/ena/data/view/ERR3813594) | [ERR3813597](https://www.ebi.ac.uk/ena/data/view/ERR3813597) | [ERZ1284833](https://www.ebi.ac.uk/ena/data/view/ERZ1284833) | [Karst *et al*, 2020](https://www.biorxiv.org/content/10.1101/645903v3)
 
 #### PacBio
 
