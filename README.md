@@ -29,7 +29,7 @@ https://www.biorxiv.org/content/10.1101/645903v3
    ```
    conda activate longread_umi
    ...
-   conda deactivat
+   conda deactivate
    
    ```
 
