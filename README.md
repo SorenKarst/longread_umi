@@ -25,6 +25,13 @@ https://www.biorxiv.org/content/10.1101/645903v3
    `bash ./install_conda.sh` 
 4. Initiate conda and refresh terminal before using pipeline. \
    `conda init; source ~/.bashrc`  
+5. Activate and deactivate conda environment
+   ```
+   conda activate longread_umi
+   ...
+   conda deactivat
+   
+   ```
 
 ### Manual
 
@@ -53,30 +60,30 @@ https://www.biorxiv.org/content/10.1101/645903v3
    Go to /path/to/longread-UMI-pipeline/test_data and open a terminal in the directory.
 4. Run nanopore pipeline
    ```
-   longread_umi nanopore_pipeline \  
-     -d test_reads.fq \  
-     -v 30 \  
-     -o test \  
-     -s 90 \  
-     -e 90 \  
-     -m 3500 \  
-     -M 6000 \  
-     -f CAAGCAGAAGACGGCATACGAGAT \  
-     -F AGRGTTYGATYMTGGCTCAG \  
-     -r AATGATACGGCGACCACCGAGATC \  
-     -R CGACATCGAGGTGCCAAAC \  
-     -c 3 \  
-     -p 1 \  
-     -q r941_min_high_g330 \  
+   longread_umi nanopore_pipeline \
+     -d test_reads.fq \
+     -v 30 \
+     -o test \
+     -s 90 \
+     -e 90 \
+     -m 3500 \
+     -M 6000 \
+     -f CAAGCAGAAGACGGCATACGAGAT \
+     -F AGRGTTYGATYMTGGCTCAG \
+     -r AATGATACGGCGACCACCGAGATC \
+     -R CGACATCGAGGTGCCAAAC \
+     -c 3 \
+     -p 1 \
+     -q r941_min_high_g330 \
      -t 1
    ```
 5. Run qc pipeline
    ```
-   longread_umi qc_pipeline \  
-     -d test_reads.fq \  
-     -c test/consensus_raconx3_medakax1.fa \  
-     -r zymo_curated \  
-     -t 1 \  
+   longread_umi qc_pipeline \
+     -d test_reads.fq \
+     -c test/consensus_raconx3_medakax1.fa \
+     -r zymo_curated \
+     -t 1 \
      -o test/qc
    ```
 
@@ -89,28 +96,28 @@ https://www.biorxiv.org/content/10.1101/645903v3
 2. Run nanopore pipeline
    ```
    longread_umi nanopore_pipeline \  
-     -d reads.fq \  
-     -o . \  
-     -v 30  \  
-     -s 90 \  
-     -e 90 \  
-     -m 3500 \  
-     -M 6000 \  
-     -f CAAGCAGAAGACGGCATACGAGAT \  
-     -F AGRGTTYGATYMTGGCTCAG \  
-     -r AATGATACGGCGACCACCGAGATC \  
-     -R CGACATCGAGGTGCCAAAC \  
-     -c 3 \  
-     -p 1 \   
+     -d reads.fq \
+     -o analysis \
+     -v 30  \
+     -s 90 \
+     -e 90 \
+     -m 3500 \
+     -M 6000 \
+     -f CAAGCAGAAGACGGCATACGAGAT \
+     -F AGRGTTYGATYMTGGCTCAG \
+     -r AATGATACGGCGACCACCGAGATC \
+     -R CGACATCGAGGTGCCAAAC \
+     -c 3 \
+     -p 1 \
      -q r941_min_high_330  \
-     -t <Number-of-threads>  
+     -t <Number-of-threads>
    ```
 5. Open a terminal in the directory and run
    ```
-   longread_umi qc_pipeline \  
-     -d "umi_binning/trim/reads_tf.fq;reads.fq" \  
-     -c "consensus_raconx3_medakax1.fa;variants.fa" \  
-     -r "zymo_curated;zymo_vendor;variants.fa" \  
+   longread_umi qc_pipeline \
+     -d "umi_binning/trim/reads_tf.fq;reads.fq" \
+     -c "consensus_raconx3_medakax1.fa;variants.fa" \
+     -r "zymo_curated;zymo_vendor;variants.fa" \
      -t <Number-of-threads> 
    ```
 
