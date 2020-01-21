@@ -95,10 +95,10 @@ https://www.biorxiv.org/content/10.1101/645903v3
    ```
 2. Run nanopore pipeline
    ```
-   longread_umi nanopore_pipeline \  
+   longread_umi nanopore_pipeline \
      -d reads.fq \
      -o analysis \
-     -v 30  \
+     -v 30 \
      -s 90 \
      -e 90 \
      -m 3500 \
@@ -115,9 +115,9 @@ https://www.biorxiv.org/content/10.1101/645903v3
 5. Open a terminal in the directory and run
    ```
    longread_umi qc_pipeline \
-     -d "umi_binning/trim/reads_tf.fq;reads.fq" \
-     -c "consensus_raconx3_medakax1.fa;variants.fa" \
-     -r "zymo_curated;zymo_vendor;variants.fa" \
+     -d "analysis/umi_binning/trim/reads_tf.fq;reads.fq" \
+     -c "analysis/consensus_raconx3_medakax1.fa;analysis/variants.fa" \
+     -r "zymo_curated" \
      -t <Number-of-threads> 
    ```
 
