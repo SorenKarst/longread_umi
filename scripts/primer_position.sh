@@ -7,9 +7,9 @@
 #    any adaptors and/or use of Nanopore barcoding kits. 
 #   
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
-#    license	GNU General Public License
+#    author   Søren Karst (sorenkarst@gmail.com)
+#             Ryan Ziels (ziels@mail.ubc.ca)
+#    license  GNU General Public License
 #
 
 ### Terminal input ------------------------------------------------------------

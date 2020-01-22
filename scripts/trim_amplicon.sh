@@ -4,9 +4,9 @@
 #    This script is a part of the longread-UMI-pipeline.
 #    
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
-#    license	GNU General Public License
+#    author   Søren Karst (sorenkarst@gmail.com)
+#             Ryan Ziels (ziels@mail.ubc.ca)
+#    license  GNU General Public License
 
 ### Terminal input ------------------------------------------------------------
 IN_DIR=$1
@@ -79,6 +79,7 @@ mkdir -p $OUT_DIR
 FIND_CMD="find $IN_DIR_F -mindepth 1 -maxdepth 1 -type f \( $IN_REGEX_F \)"
 eval $FIND_CMD |\
   $GNUPARALLEL \
+    --env cutadapt_wrapper \
     -j $THREADS \
     cutadapt_wrapper \
       {} \

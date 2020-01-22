@@ -3,9 +3,9 @@
 #    longread_umi pacbio_pipeline script. 
 #    
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
-#    license	GNU General Public License
+#    author     Søren Karst (sorenkarst@gmail.com)
+#               Ryan Ziels (ziels@mail.ubc.ca)
+#    license    GNU General Public License
 #
 # To-do:
 # - Fix logging

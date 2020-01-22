@@ -3,9 +3,9 @@
 #    Install longread_umi as conda environment.
 #
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
-#           Ryan Ziels (ziels@mail.ubc.ca)
-#    license	GNU General Public License
+#    author   Søren Karst (sorenkarst@gmail.com)
+#             Ryan Ziels (ziels@mail.ubc.ca)
+#    license  GNU General Public License
 
 # Terminal input
 BRANCH=${1:-master} # Default to master branch
