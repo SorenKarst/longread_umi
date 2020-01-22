@@ -21,7 +21,7 @@ https://www.biorxiv.org/content/10.1101/645903v3
   `usearch` >=10
 2. Download installer script from terminal \
    `wget https://raw.githubusercontent.com/SorenKarst/longread_umi/master/scripts/install_conda.sh`
-3. Run installation script from terminal and follow instructions \
+3. Run installation script from terminal and follow instructions (< 10 min on desktop)\
    `bash ./install_conda.sh` 
 4. Initiate conda and refresh terminal before using pipeline. \
    `conda init; source ~/.bashrc`  
@@ -58,7 +58,7 @@ https://www.biorxiv.org/content/10.1101/645903v3
   `longread_umi nanopore_pipeline -h` or `/path/to/longread_umi.sh nanopore_pipeline -h`
 3. Test longread_umi nanopore_pipeline and qc_pipeline on test data:  
    Go to /path/to/longread-UMI-pipeline/test_data and open a terminal in the directory.
-4. Run nanopore pipeline
+4. Run nanopore pipeline (< 10 min on desktop)
    ```
    longread_umi nanopore_pipeline \
      -d test_reads.fq \
@@ -77,7 +77,12 @@ https://www.biorxiv.org/content/10.1101/645903v3
      -q r941_min_high_g330 \
      -t 1
    ```
-5. Run qc pipeline
+   
+   Expected output
+   - `consensus_raconx3_medakax1.fa` containing 8 UMI consensus sequences
+   - `variants.fa` containing 2 variant consensus sequences
+
+7. Run qc pipeline (< 5 min on desktop)
    ```
    longread_umi qc_pipeline \
      -d test_reads.fq \
@@ -86,6 +91,9 @@ https://www.biorxiv.org/content/10.1101/645903v3
      -t 1 \
      -o test/qc
    ```
+   Expected output
+   - ...
+
 
 ### Zymomock rRNA operon data
 1. Download the Zymo mock Nanopore R9.4.1 fastq data and decompress
@@ -93,7 +101,7 @@ https://www.biorxiv.org/content/10.1101/645903v3
    wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963_1.fastq.gz 
    gunzip -c ERR3336963_1.fastq.gz > reads.fq
    ```
-2. Run nanopore pipeline
+2. Run nanopore pipeline (~ 500 CPU hours)
    ```
    longread_umi nanopore_pipeline \
      -d reads.fq \
@@ -109,10 +117,10 @@ https://www.biorxiv.org/content/10.1101/645903v3
      -R CGACATCGAGGTGCCAAAC \
      -c 3 \
      -p 1 \
-     -q r941_min_high_330  \
+     -q r941_min_high_g330 \
      -t <Number-of-threads>
    ```
-5. Open a terminal in the directory and run
+5. Run qc pipeline
    ```
    longread_umi qc_pipeline \
      -d "analysis/umi_binning/trim/reads_tf.fq;reads.fq" \
@@ -128,3 +136,6 @@ https://www.biorxiv.org/content/10.1101/645903v3
 ## Data and examples
 
 - [Example data](docs/DATA.md)
+
+## License
+[GNU General Public License, version 3](LICENSE)
