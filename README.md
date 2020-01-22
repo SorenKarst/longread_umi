@@ -1,7 +1,14 @@
 # longread_umi 
+
 A collection of scripts for processing longread UMI data.
 
-<b> Pipeline version reference: </b> \
+**Table of contents**
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Usage](#usage)
+- [Data and examples](#data-and-examples)
+
+**Citation**  
 SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, & M Albertsen. (2019). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers with Nanopore or PacBio sequencing. bioRxiv, 645903.
 https://www.biorxiv.org/content/10.1101/645903v3
 
@@ -14,10 +21,17 @@ https://www.biorxiv.org/content/10.1101/645903v3
   `usearch` >=10
 2. Download installer script from terminal \
    `wget https://raw.githubusercontent.com/SorenKarst/longread_umi/master/scripts/install_conda.sh`
-3. Run installation script from terminal and follow instructions \
+3. Run installation script from terminal and follow instructions (< 10 min on desktop)\
    `bash ./install_conda.sh` 
 4. Initiate conda and refresh terminal before using pipeline. \
    `conda init; source ~/.bashrc`  
+5. Activate and deactivate conda environment
+   ```
+   conda activate longread_umi
+   ...
+   conda deactivate
+   
+   ```
 
 ### Manual
 
@@ -35,70 +49,93 @@ https://www.biorxiv.org/content/10.1101/645903v3
 6. Customize porechop adaptors.py to be able to detect custom primers \
    Replace current `adapters.py` with `./longread_umi/scripts/adapters.py`
 
-## Usage
+## Quick start
 
 ### Test data
-1. Test the initialization command in terminal:  
+1. Test the initialization command in terminal  
   `longread_umi -h` or `/path/to/longread_umi.sh -h`
-2. Test the nanopore_pipeline in terminal:  
+2. Test the nanopore_pipeline in terminal  
   `longread_umi nanopore_pipeline -h` or `/path/to/longread_umi.sh nanopore_pipeline -h`
 3. Test longread_umi nanopore_pipeline and qc_pipeline on test data:  
    Go to /path/to/longread-UMI-pipeline/test_data and open a terminal in the directory.
-4. Run nanopore pipeline:  
-   `longread_umi nanopore_pipeline \`  
-     `-d test_reads.fq \`  
-     `-o test \`  
-     `-v 30 \`  
-     `-w rrna_operon \`  
-     `-t 1 \`  
-     `-c 3 \`  
-     `-p 1 \`  
-     `-q r941_min_high_g330`  
-   or  
-   `longread_umi nanopore_pipeline \`  
-     `-d test_reads.fq \`  
-     `-v 30 \`  
-     `-o test \`  
-     `-s 90 \`  
-     `-e 90 \`  
-     `-m 3500 \`  
-     `-M 6000 \`  
-     `-f CAAGCAGAAGACGGCATACGAGAT \`  
-     `-F AGRGTTYGATYMTGGCTCAG \`  
-     `-r AATGATACGGCGACCACCGAGATC \`  
-     `-R CGACATCGAGGTGCCAAAC \`  
-     `-c 3 \`  
-     `-p 1 \`  
-     `-q r941_min_high_g330 \`  
-     `-t 1`
-5. Run qc pipeline:  
-   `longread_umi qc_pipeline \`  
-     `-d test_reads.fq \`  
-     `-c test/consensus_raconx3_medakax1.fa \`  
-     `-r zymo_curated \`  
-     `-t 1 \`  
-	 `-o test/qc \`  
-	 
-### Run pipeline on Zymo mock Nanopore data and perform qc
-1. Create a working directory and open a terminal
-2. Download the Zymo mock Nanopore R9.4.1 fastq data and decompress:  
-   `wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963_1.fastq.gz`  
-   `gunzip -c ERR3336963_1.fastq.gz > reads.fq`
-3. Download the SILVA database and decompress:  
-   `wget https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz`  
-   `gunzip -c SILVA_132_SSURef_Nr99_tax_silva.fasta.gz | sed '/^>/! s/U/T/g' >  silva_db.fasta` 
-4. Open a terminal in the directory and run:  
-   `longread_umi nanopore_pipeline \`  
-     `-d reads.fq \`  
-     `-o . \`  
-     `-v 30  \`  
-     `-w rrna_operon \`  
-     `-t <Number-of-threads> \`  
-     `-q r941_min_high_330`  
-5. Open a terminal in the directory and run:  
-   `longread_umi qc_pipeline \`  
-     `-d "umi_binning/trim/reads_tf.fq;reads.fq" \`  
-     `-c "consensus_racon_medaka_medaka.fa;variants.fa" \`  
-     `-r "zymo_curated;zymo_vendor;variants.fa" \`  
-     `-s silva_db.fasta \`  
-     `-t <Number-of-threads>`  
+4. Run nanopore pipeline (< 10 min on desktop)
+   ```
+   longread_umi nanopore_pipeline \
+     -d test_reads.fq \
+     -v 30 \
+     -o test \
+     -s 90 \
+     -e 90 \
+     -m 3500 \
+     -M 6000 \
+     -f CAAGCAGAAGACGGCATACGAGAT \
+     -F AGRGTTYGATYMTGGCTCAG \
+     -r AATGATACGGCGACCACCGAGATC \
+     -R CGACATCGAGGTGCCAAAC \
+     -c 3 \
+     -p 1 \
+     -q r941_min_high_g330 \
+     -t 1
+   ```
+   
+   Expected output
+   - `consensus_raconx3_medakax1.fa` containing 8 UMI consensus sequences
+   - `variants.fa` containing 2 variant consensus sequences
+
+7. Run qc pipeline (< 5 min on desktop)
+   ```
+   longread_umi qc_pipeline \
+     -d test_reads.fq \
+     -c test/consensus_raconx3_medakax1.fa \
+     -r zymo_curated \
+     -t 1 \
+     -o test/qc
+   ```
+   Expected output
+   - ...
+
+
+### Zymomock rRNA operon data
+1. Download the Zymo mock Nanopore R9.4.1 fastq data and decompress
+   ```
+   wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR333/003/ERR3336963/ERR3336963_1.fastq.gz 
+   gunzip -c ERR3336963_1.fastq.gz > reads.fq
+   ```
+2. Run nanopore pipeline (~ 500 CPU hours)
+   ```
+   longread_umi nanopore_pipeline \
+     -d reads.fq \
+     -o analysis \
+     -v 30 \
+     -s 90 \
+     -e 90 \
+     -m 3500 \
+     -M 6000 \
+     -f CAAGCAGAAGACGGCATACGAGAT \
+     -F AGRGTTYGATYMTGGCTCAG \
+     -r AATGATACGGCGACCACCGAGATC \
+     -R CGACATCGAGGTGCCAAAC \
+     -c 3 \
+     -p 1 \
+     -q r941_min_high_g330 \
+     -t <Number-of-threads>
+   ```
+5. Run qc pipeline
+   ```
+   longread_umi qc_pipeline \
+     -d "analysis/umi_binning/trim/reads_tf.fq;reads.fq" \
+     -c "analysis/consensus_raconx3_medakax1.fa;analysis/variants.fa" \
+     -r "zymo_curated" \
+     -t <Number-of-threads> 
+   ```
+
+## Usage
+
+...
+
+## Data and examples
+
+- [Example data](docs/DATA.md)
+
+## License
+[GNU General Public License, version 3](LICENSE)
