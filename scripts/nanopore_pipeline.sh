@@ -88,9 +88,9 @@ if [ "$WORKFLOW" == rrna_operon ]; then
   FW2=AGRGTTYGATYMTGGCTCAG
   RV1=AATGATACGGCGACCACCGAGATC
   RV2=CGACATCGAGGTGCCAAAC
-elif [ "$WORKFLOW" != rrna_operon && ! -z ${WORKFLOW+x} ]; then
-  echo "Unknown argument to workflow (-w). Defined workflows are: rrna_operon"
-  echo "$USAGE"
+elif [[ "$WORKFLOW" != rrna_operon && (! -z "$WORKFLOW") ]]; then
+  echo "Unknown argument to workflow (-w). Defined workflows are: rrna_operon";
+  echo "$USAGE";
   exit 1
 fi
 if [ -z ${INPUT_READS+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
