@@ -3,11 +3,52 @@
 #    longread_umi: pipelines and tools for longread UMI processing.
 #    
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryan Ziels (ziels@mail.ubc.ca)
-#    license	GNU General Public License
+#    author   Søren Karst (sorenkarst@gmail.com)
+#             Ryan Ziels (ziels@mail.ubc.ca)
+#    license  GNU General Public License
 #
 
+### List tools ----------------------------------------------------------------
+export LONGREAD_UMI_PATH="$(dirname "$(readlink -f "$0")")"
+
+SCRIPT_LIST=$(
+  find \
+    $LONGREAD_UMI_PATH/scripts/ \
+	-name '*.sh' \
+	-print |\
+  sed \
+    -e '/install/d' \
+	-e '/dependen/d' \
+	-e 's|^.*/||' \
+	-e 's/.sh$//' |\
+  sort
+  )
+
+PIPES=$(
+  echo "$SCRIPT_LIST" |\
+  gawk '
+    $0 ~ /pipeline/{print "  " $0}
+  '
+)
+
+TOOLS=$(
+  echo "$SCRIPT_LIST" |\
+  gawk '
+    $0 !~ /pipeline/{ print "  " $0}
+  '
+)
+
+# Generate docs
+
+if [ "$1" == "compile_docs" ]; then
+  for SCRIPT in $SCRIPT_LIST; do
+    DOC_OUT="$LONGREAD_UMI_PATH/docs/USAGE_${SCRIPT}.md"
+    echo '```' > $DOC_OUT
+    $LONGREAD_UMI_PATH/scripts/${SCRIPT}.sh -h >> $DOC_OUT
+    echo '```' >> $DOC_OUT
+  done
+  exit 1
+fi
 
 ### Description ----------------------------------------------------------------
 
@@ -17,25 +58,22 @@ USAGE="$(basename "$0") [-h] [ name ...]
 
 where:
     -h   Show this help text.
-    name Name of tool.
-    ...  Commands for tool.
+    name Name of tool or pipeline.
+    ...  Commands for tool or pipeline.
 
 Pipelines:
-* nanopore_pipeline:           Generate UMI consensus sequences from raw nanopore data with
-                               terminal UMIs.
-* qc_pipeline:                 Compare UMI consensus sequences with refence sequences.
+
+$(echo "$PIPES")
 
 Tools:
-* check_primer:                Check primer positions in raw longread data. Important
-                               input for UMI binning script.
-* demultiplex_nb:              Post UMI consensus demultiplexing of using Nanopore 
-                               native barcodes
 
-For help with a specific tool type: longread_UMI <name> -h
+$(echo "$TOOLS")
+
+For help with a specific tool or pipeline:
+longread_umi <name> -h
 "
 
 ### Terminal Arguments ---------------------------------------------------------
-
 
 # Import user arguments
 while getopts ':hz' OPTION; do
@@ -55,10 +93,6 @@ if [ -z "${TOOL_ARG}" ]; then
   TOOL_ARG="-h"
 fi
 
-# Paths
-export LONGREAD_UMI_PATH="$(dirname "$(readlink -f "$0")")"
-
-
-### Call tool or command ---------------------------------------------------------------
+### Call tool or pipeline ---------------------------------------------------------------
 
 $LONGREAD_UMI_PATH/scripts/${TOOL}.sh $TOOL_ARG

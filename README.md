@@ -9,7 +9,7 @@ A collection of scripts for processing longread UMI data.
 - [Data and examples](#data-and-examples)
 
 **Citation**  
-SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, & M Albertsen. (2019). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers with Nanopore or PacBio sequencing. [bioRxiv, 6459039](https://www.biorxiv.org/content/10.1101/645903v3).
+SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, & M Albertsen. (2020). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers with Nanopore or PacBio sequencing. [bioRxiv, 6459039](https://www.biorxiv.org/content/10.1101/645903v3).
 
 ## Installation
 
@@ -56,7 +56,7 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
     `longread_umi nanopore_pipeline -h` or `/path/to/longread_umi.sh nanopore_pipeline -h`
 3. Test longread_umi nanopore_pipeline and qc_pipeline on test data:  
    Go to /path/to/longread-UMI-pipeline/test_data and open a terminal in the directory.
-4. Run nanopore pipeline (< 10 min on desktop)
+4. Run nanopore pipeline (< 10 minutes on desktop)
    ```
    longread_umi nanopore_pipeline \
      -d test_reads.fq \
@@ -80,7 +80,7 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
    - `consensus_raconx3_medakax1.fa` containing 8 UMI consensus sequences
    - `variants.fa` containing 2 variant consensus sequences
 
-7. Run qc pipeline (< 5 min on desktop)
+7. Run qc pipeline (< 5 minutes on desktop)
    ```
    longread_umi qc_pipeline \
      -d test_reads.fq \
