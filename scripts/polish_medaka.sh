@@ -76,7 +76,7 @@ cat $CONSENSUS_FILE |\
   $GNUPARALLEL \
     --env medaka_align \
     --progress  \
-    -j $(( THREADS * 5 )) \
+    -j $THREADS \
     --recstart ">" \
     -N 1 \
     --pipe \
