@@ -12,11 +12,12 @@
 
 ### Description ----------------------------------------------------------------
 
-USAGE="$(basename "$0" .sh) [-h] [-d file -v value -o dir -s value -e value 
--m value -M value -f string -F string -r string -R string -c value -p value 
--w string -n value -u dir -t value -T value ] 
--- longread_umi nanopore_pipeline: Generates UMI consensus sequences from
-   raw Nanopore fastq reads with UMIs in both terminals.
+USAGE="
+-- longread_umi nanopore_pipeline: Generate UMI consensus sequences from Nanopore data
+   
+usage: $(basename "$0" .sh) [-h] [-w string] (-d file -v value -o dir -s value) 
+(-e value -m value -M value -f string -F string -r string -R string )
+( -c value -p value -n value -u dir -t value -T value ) 
 
 where:
     -h  Show this help text.
@@ -44,7 +45,7 @@ where:
     -u  Directory with UMI binned reads.
     -t  Number of threads to use.
     -T  Number of medaka jobs to start. Threads pr. job is threads/jobs.
-        Default is 1 job.
+        [Default = 1].
 "
 
 ### Terminal Arguments ---------------------------------------------------------
@@ -184,11 +185,11 @@ fi
 CON_NAME=raconx${CON_N}
 CON_DIR=$OUT_DIR/$CON_NAME
 longread_umi consensus_racon \
-  $UMI_DIR/read_binning/bins           `# Path to UMI bins`\
-  ${CON_DIR}                           `# Output folder`\
-  $CON_N                               `# Number of racon polishing times`\
-  $THREADS                             `# Number of threads`\
-  $OUT_DIR/sample$UMI_SUBSET_N.txt     `# List of bins to process`
+  -d $UMI_DIR/read_binning/bins           `# Path to UMI bins`\
+  -o ${CON_DIR}                           `# Output folder`\
+  -r $CON_N                               `# Number of racon polishing times`\
+  -t $THREADS                             `# Number of threads`\
+  -n $OUT_DIR/sample$UMI_SUBSET_N.txt     `# List of bins to process`
 
 # Polishing
 CON=${CON_DIR}/consensus_${CON_NAME}.fa
@@ -196,29 +197,29 @@ for j in `seq 1 $POL_N`; do
   POLISH_NAME=medakax${j}
   POLISH_DIR=${CON_DIR}_${POLISH_NAME}
   longread_umi polish_medaka \
-    $CON                              `# Path to consensus data`\
-    $MEDAKA_MODEL                     `# Path to consensus data`\
-    $MAX_LENGTH                       `# Sensible chunk size`\
-    $UMI_DIR                          `# Path to UMI bins`\
-    $POLISH_DIR                       `# Output folder`\
-    $THREADS                          `# Number of threads`\
-    $OUT_DIR/sample$UMI_SUBSET_N.txt  `# List of bins to process` \
-    $MEDAKA_JOBS                      `# Uses ALL threads with medaka`
+    -c $CON                              `# Path to consensus data`\
+    -m $MEDAKA_MODEL                     `# Path to consensus data`\
+    -l $MAX_LENGTH                       `# Sensible chunk size`\
+    -d $UMI_DIR                          `# Path to UMI bins`\
+    -o $POLISH_DIR                       `# Output folder`\
+    -t $THREADS                          `# Number of threads`\
+    -n $OUT_DIR/sample$UMI_SUBSET_N.txt  `# List of bins to process` \
+    -T $MEDAKA_JOBS                      `# Uses ALL threads with medaka`
   CON=$POLISH_DIR/consensus_${CON_NAME}_${POLISH_NAME}.fa
 done
   
 
 # Trim UMI consensus data
 longread_umi trim_amplicon \
-  $POLISH_DIR          `# Path to consensus data`\
-  '"consensus*fa"'     `# Consensus file pattern. Regex must be flanked by '"..."'`\
-  $OUT_DIR             `# Output folder`\
-  $FW2                 `# Forward primer sequence`\
-  $RV2                 `# Reverse primer sequence`\
-  $MIN_LENGTH          `# Min read length`\
-  $MAX_LENGTH          `# Max read length` \
-  $THREADS             `# Number of threads` \
-  $LOG_DIR
+  -d $POLISH_DIR          `# Path to consensus data`\
+  -p '"consensus*fa"'     `# Consensus file pattern. Regex must be flanked by '"..."'`\
+  -o $OUT_DIR             `# Output folder`\
+  -F $FW2                 `# Forward primer sequence`\
+  -R $RV2                 `# Reverse primer sequence`\
+  -m $MIN_LENGTH          `# Min read length`\
+  -M $MAX_LENGTH          `# Max read length` \
+  -t $THREADS             `# Number of threads` \
+  -l $LOG_DIR
 
 # Generate variants
 
@@ -237,9 +238,9 @@ $GAWK -v UBS="$UMI_COVERAGE_MIN" '
 
 ## Variant calling of from UMI consensus sequences
 longread_umi variants \
-  $OUT_DIR/consensus_${CON_NAME}_${POLISH_NAME}_${UMI_COVERAGE_MIN}.fa `# Path to consensus data`\
-  $OUT_DIR/variants `# Output folder`\
-  $THREADS `# Number of threads`
+  -c $OUT_DIR/consensus_${CON_NAME}_${POLISH_NAME}_${UMI_COVERAGE_MIN}.fa `# Path to consensus data`\
+  -o $OUT_DIR/variants `# Output folder`\
+  -t $THREADS `# Number of threads`
 
 ## Copy variants
 cp $OUT_DIR/variants/variants.fa $OUT_DIR

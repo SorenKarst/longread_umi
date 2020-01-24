@@ -12,11 +12,48 @@
 #   of samtools mpileup which references the positions in the reads
 #   already.
 
-### Terminal input ------------------------------------------------------------
-CONSENSUS_FILE=$1 #Consensus file path name
-OUT_DIR=$2 #output folder name
-THREADS=$3 #Number of threads
-DEBUG=${4:-NO} # Print temp files for cluster assignment
+### Description ----------------------------------------------------------------
+
+USAGE="
+-- longread_umi variants: Phase and call variants from UMI consensus sequences.
+   This is a naive variant caller, which phases UMI consensus sequences
+   based on SNPs and calls a variant with >=3x coverage. Reads are initially 
+   grouped by read clustering at 99.5% identity and a centroid sequence is picked.
+   The centroid sequence is used as a mapping reference for all reads in the cluster
+   to detect SNPs for phasing and variant calling. Before read clustering homopolymers
+   are masked and then reintroduced before variant calling.
+   
+usage: $(basename "$0" .sh) [-h -b] (-c file -o dir -t value ) 
+
+where:
+    -h  Show this help text.
+    -c  UMI consensus file.
+    -o  Output directory.
+    -t  Number of threads to use. [Default = 1]
+    -b  Debug flag. Keep temp files. [Default = NO]
+"
+
+### Terminal Arguments ---------------------------------------------------------
+
+# Import user arguments
+while getopts ':hzc:o:t:b' OPTION; do
+  case $OPTION in
+    h) echo "$USAGE"; exit 1;;
+    c) CONSENSUS_FILE=$OPTARG;;
+    o) OUT_DIR=$OPTARG;;
+    t) THREADS=$OPTARG;;
+    b) DEBUG="YES";;
+    :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
+    \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
+  esac
+done
+
+# Check missing arguments
+MISSING="is missing but required. Exiting."
+if [ -z ${CONSENSUS_FILE+x} ]; then echo "-c $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${OUT_DIR+x} ]; then echo "-o $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
+if [ -z ${DEBUG+x} ]; then DEBUG="NO"; fi;
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script

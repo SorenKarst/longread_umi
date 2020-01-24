@@ -8,44 +8,48 @@
 #             Ryan Ziels (ziels@mail.ubc.ca)
 #    license  GNU General Public License
 
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
+
 ### Description ----------------------------------------------------------------
 
-USAGE="$(basename "$0" .sh) [-h] [-d files -c files -r files -s file -u dir -o dir -t value] 
--- longread_umi qc_pipeline: Mapping of read data and UMI consensus sequences to
-   reference sequences to allow for error profiling in R. Detects chimeras using
-   uchime2_ref. Detects contamination by comparing mapping results to known references
-   and the SILVA database - only works if all the correct references are known.
-   Calculates data statistics.
+USAGE="
+-- longread_umi qc_pipeline: UMI consensus data statistics and compare to references
+   Calculates data statistics (UMI bins size, UMI cluster size, yield, read length etc.).
+   Mapping of read data and UMI consensus sequences to reference sequences to allow for 
+   error profiling. Detects chimeras using uchime2_ref. Detects contamination by
+   comparing mapping results to known references and the SILVA database - only works
+   if reference database contains all expected sequences. Alternatively, use variants.fa
+   as reference database.
+   
+usage: $(basename "$0" .sh) [-h] (-d files -c files -r files -s file -u dir -o dir -t value) 
 
 where:
     -h  Show this help text.
-    -d  List of read files seperated by \';\'
-        i.e. \'reads.fq;trim/reads_tf.fq\'
+    -d  List of read files seperated by ';'
+        i.e. 'reads.fq;trim/reads_tf.fq'
         First read file used for read classification. 'reads_tf.fq' recommended.
-    -c  List of consensus files seperated by \';\'
-        i.e. \'consensus_medaka_medaka.fa;racon/consensus_racon.fa\'
+    -c  List of consensus files seperated by ';'
+        i.e. 'consensus_medaka_medaka.fa;racon/consensus_racon.fa'
         First consensus file used for comparison to alternative refs
         and for chimera checking. Subsequent consensus sequences only mapped to
         first reference.
-    -r  List of reference files seperated by \';\'.
+    -r  List of reference files seperated by ';'.
         First reference is used for all mappings. Subsequent references
         only used for mapping first consensus file.
-        'zymo_curated' links to scripts/zymo-ref-uniq_2019-03-15.fa
-        'zymo_vendor' links to scripts/zymo-ref-uniq_vendor.fa
-    -s  SILVA reference database used for detecting contamination.
+        'zymo_curated' refers to:
+        "$REF_CURATED"
+        'zymo_vendor' refers to:
+        "$REF_VENDOR"
+    -s  SILVA reference database in fasta format used for detecting contamination.
     -u  UMI binning folder. Default 'umi_binning'.
     -o  Output folder. Default 'qc'.
     -t  Number of threads to use.
 
-Download SILVA database:
-wget https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
+Example of SILVA database download:
+wget https://www.arb-silva.de/fileadmin/silva_databases/
+release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
-
-Test command:
-longread_umi qc_pipeline \
-  -d \"test_reads.fq;umi_binning/trim/reads_tf.fq\" \
-  -c \"consensus_racon_medaka_medaka.fa;variants_all.fa\" \
-  -r \"zymo_curated;zymo_vendor;variants_all.fa\"
 "
 
 ### Terminal Arguments ---------------------------------------------------------
@@ -75,9 +79,6 @@ if [ -z ${OUT+x} ]; then
   OUT=qc
 fi
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
-
-### Source commands and subscripts -------------------------------------
-. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
 
 ### Data processing -----------------------------------------------------
 

@@ -12,14 +12,16 @@
 # TO DO
 #    Add terminal messages.
 #    Optimize trimming and filtering for speed.
-#    Add bin size limit to 200 x
+#    Add bin size limit
 #    Add mapping against adaptors to remove UMI artifacts
 
-USAGE="$(basename "$0" .sh) [-h] [-d file -o dir -m value -M value 
--s value -e value -f string -F string -r string -R string -p -t value] 
+USAGE="
 -- longread_umi umi_binning: Longread UMI detection and read binning.
    Tool requires UMIs in both ends of the read flanked by defined
    adaptor regions.
+
+usage: $(basename "$0" .sh) [-h] (-d file -o dir -m value -M value )
+(-s value -e value -f string -F string -r string -R string -p -t value) 
 
 where:
     -h  Show this help text.
