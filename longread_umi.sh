@@ -11,6 +11,7 @@
 ### List tools ----------------------------------------------------------------
 export LONGREAD_UMI_PATH="$(dirname "$(readlink -f "$0")")"
 
+# Format list of scripts
 SCRIPT_LIST=$(
   find \
     $LONGREAD_UMI_PATH/scripts/ \
@@ -24,37 +25,68 @@ SCRIPT_LIST=$(
   sort
   )
 
+# Call -h for all scripts
+for SCRIPT in $SCRIPT_LIST; do
+DOCS="${DOCS}
+\`\`\`
+$($LONGREAD_UMI_PATH/scripts/${SCRIPT}.sh -h | sed -e "s|$LONGREAD_UMI_PATH|longread_umi|")
+\`\`\`
+  
+  
+"
+done
+
+# List piplines
 PIPES=$(
-  echo "$SCRIPT_LIST" |\
+  echo "$DOCS" |\
   gawk '
-    $0 ~ /pipeline/{print "  " $0}
-  '
+    $0 ~ /--.*pipeline/{
+	gsub("-- longread_umi", "", $0)
+	print "  " $0
+	}' |\
+  column -t -s:
 )
 
+# List tools
 TOOLS=$(
-  echo "$SCRIPT_LIST" |\
+  echo "$DOCS" |\
   gawk '
-    $0 !~ /pipeline/{ print "  " $0}
-  '
+    gsub("-- longread_umi", "  ", $0)
+    $0 ~ /--/ && $0 !~ /pipeline/{ print "  " $0}
+  ' |\
+  column -t -s:
 )
 
 # Generate docs
-
 if [ "$1" == "compile_docs" ]; then
-  for SCRIPT in $SCRIPT_LIST; do
-    DOC_OUT="$LONGREAD_UMI_PATH/docs/USAGE_${SCRIPT}.md"
-    echo '```' > $DOC_OUT
-    $LONGREAD_UMI_PATH/scripts/${SCRIPT}.sh -h >> $DOC_OUT
-    echo '```' >> $DOC_OUT
-  done
+  # Add docs for initiation script
+  DOCS="
+\`\`\`
+$($LONGREAD_UMI_PATH/longread_umi.sh -h)
+\`\`\`
+  
+  
+${DOCS}
+"
+  
+  # Define location in README.md
+  LEAD='^## Usage$'
+  TAIL='^## License$'
+  
+  echo "$DOCS" > $LONGREAD_UMI_PATH/docs/tmp.md
+  sed -i \
+  -e "/$LEAD/,/$TAIL/{ /$LEAD/{p; r $LONGREAD_UMI_PATH/docs/tmp.md
+        }; /$TAIL/p; d }"  $LONGREAD_UMI_PATH/README.md
+  rm $LONGREAD_UMI_PATH/docs/tmp.md
   exit 1
 fi
 
 ### Description ----------------------------------------------------------------
 
-USAGE="$(basename "$0") [-h] [ name ...]
-
+USAGE="
 -- longread_umi: pipelines and tools for longread UMI processing.
+
+usage: $(basename "$0" .sh) [-h] [ name ...]
 
 where:
     -h   Show this help text.
