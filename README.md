@@ -137,6 +137,8 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
 
 - [Example data](docs/DATA.md)
   
+- [ONT R10 Zymomock rRNA - generate UMI consensus sequences and validate data](docs/ONT_R10_ZYMO_rRNA.html)
+  
   
   
 
@@ -177,7 +179,7 @@ Tools:
 For help with a specific tool or pipeline:
 longread_umi <name> -h
 ```
-  
+
   
 
 ```
@@ -198,7 +200,7 @@ where:
     -n  Process n number of bins. If not defined all bins
         are processed.
 ```
-  
+
   
 
 ```
@@ -228,7 +230,7 @@ where:
     -n  Barcode numbers used. [Default  = '1-120'].
     -t  Number of threads used.
 ```
-  
+
   
 
 ```
@@ -263,7 +265,7 @@ where:
         sequences. Default 2.
     -t  Number of threads used.
 ```
-  
+
   
 
 ```
@@ -302,7 +304,7 @@ where:
     -T  Number of medaka jobs to start. Threads pr. job is threads/jobs.
         [Default = 1].
 ```
-  
+
   
 
 ```
@@ -350,7 +352,7 @@ longread_umi nanopore_settings_test
   -y 3 
   -n 1000
 ```
-  
+
   
 
 ```
@@ -384,7 +386,7 @@ where:
     -u  Directory with UMI binned reads.
     -t  Number of threads to use.
 ```
-  
+
   
 
 ```
@@ -407,7 +409,7 @@ where:
         are processed.
     -t  Number of Medaka jobs to run. [Default = 1].
 ```
-  
+
   
 
 ```
@@ -432,7 +434,7 @@ where:
     -e  Length of terminal end to search for primers. [Default = 500]
     -n  Subset reads before search. [Default = 100000]
 ```
-  
+
   
 
 ```
@@ -474,7 +476,7 @@ wget https://www.arb-silva.de/fileadmin/silva_databases/
 release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 ```
-  
+
   
 
 ```
@@ -498,7 +500,7 @@ where:
     -t  Number of threads to use.
     -l  Log directory
 ```
-  
+
   
 
 ```
@@ -525,7 +527,7 @@ where:
     -p  Flag to disable Nanopore trimming and filtering. Use with PacBio reads.
     -t  Number of threads to use.
 ```
-  
+
   
 
 ```
@@ -547,7 +549,7 @@ where:
     -t  Number of threads to use. [Default = 1]
     -b  Debug flag. Keep temp files. [Default = NO]
 ```
-  
+
   
 
 
