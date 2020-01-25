@@ -42,7 +42,7 @@ where:
         'zymo_vendor' refers to:
         "$REF_VENDOR"
     -s  SILVA reference database in fasta format used for detecting contamination.
-    -u  UMI binning folder. Default 'umi_binning'.
+    -u  UMI consensus output folder.
     -o  Output folder. Default 'qc'.
     -t  Number of threads to use.
 
@@ -100,9 +100,36 @@ CON1_NAME=${CON1_NAME##*/}
 
 # Prepare binning statistics
 if [ ! -z ${UMI_DIR+x} ]; then
- cp $UMI_DIR/read_binning/umi_bin_map.txt $OUT/
- cp $UMI_DIR/umi_ref/umi_ref.txt $OUT/
+ cp $UMI_DIR/umi_binning/read_binning/umi_bin_map.txt $OUT/
+ cp $UMI_DIR/umi_binning/umi_ref/umi_ref.txt $OUT/
 fi
+
+# Determine forward/reverse read counts for each bin
+$GAWK '
+  {
+    # Initialize arrays for every new filename
+    if(!(FILENAME in PLUS)){
+      PLUS[FILENAME]=0
+      MINUS[FILENAME]=0
+      UNKNOWN[FILENAME]=0
+    }
+    # Check read orientation
+    if($5 == "+"){PLUS[FILENAME]++}
+    if($5 == "-"){MINUS[FILENAME]++}
+    if($5 != "+" && $5 != "-"){UNKNOWN[FILENAME]++}
+  }
+  END{
+    for (i in PLUS){
+      UMI=i
+      sub(".*umi", "umi", UMI)
+      sub("bins.*", "bins", UMI)
+      print UMI, PLUS[i], MINUS[i], UNKNOWN[i]
+    }
+  }
+' \
+$UMI_DIR/raconx*/umi*/*.paf \
+> $OUT/read_orientation.txt
+
 # Process read data
 if [ ! -z ${READ_LIST+x} ]; then
   # Format read list

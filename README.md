@@ -5,8 +5,8 @@ A collection of scripts for processing longread UMI data.
 **Table of contents**
 - [Installation](#installation)
 - [Quick start](#quick-start)
-- [Usage](#usage)
 - [Data and examples](#data-and-examples)
+- [Usage](#usage)
 
 **Citation**  
 SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, & M Albertsen. (2020). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers with Nanopore or PacBio sequencing. [bioRxiv, 6459039](https://www.biorxiv.org/content/10.1101/645903v3).
@@ -89,6 +89,7 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
      -c test/consensus_raconx3_medakax1.fa \
      -r zymo_curated \
      -t 1 \
+     -u test \
      -o test/qc
    ```
    Expected output
@@ -106,7 +107,7 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
    ```
    longread_umi nanopore_pipeline \
      -d reads.fq \
-     -o analysis \
+     -o umi_out \
      -v 30 \
      -s 90 \
      -e 90 \
@@ -127,6 +128,8 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
      -d "analysis/umi_binning/trim/reads_tf.fq;reads.fq" \
      -c "analysis/consensus_raconx3_medakax1.fa;analysis/variants.fa" \
      -r "zymo_curated" \
+     -u umi_out \
+     -o umi_out/qc \
      -t <Number-of-threads> 
    ```
 
@@ -462,7 +465,7 @@ where:
         'zymo_vendor' refers to:
         longread_umi/scripts/zymo-ref-uniq_vendor.fa
     -s  SILVA reference database in fasta format used for detecting contamination.
-    -u  UMI binning folder. Default 'umi_binning'.
+    -u  UMI consensus output folder.
     -o  Output folder. Default 'qc'.
     -t  Number of threads to use.
 
