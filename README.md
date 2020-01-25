@@ -125,8 +125,8 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
 5. Run qc pipeline
    ```
    longread_umi qc_pipeline \
-     -d "analysis/umi_binning/trim/reads_tf.fq;reads.fq" \
-     -c "analysis/consensus_raconx3_medakax1.fa;analysis/variants.fa" \
+     -d "umi_out/umi_binning/trim/reads_tf.fq;reads.fq" \
+     -c "umi_out/consensus_raconx3_medakax1.fa;umi_out/variants.fa" \
      -r "zymo_curated" \
      -u umi_out \
      -o umi_out/qc \
