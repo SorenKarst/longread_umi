@@ -8,11 +8,11 @@
 #    optimizing yield. The script expects dual barcodes in a barcode file.
 #    If the same barcode is used in both ends simply repeat barcode. This
 #    version of the script only looks for barcodes in the 3' end. This is
-#    if the raw data is truncated in the 5' end. Dualo barcoding is still used.
+#    if the raw data is truncated in the 5' end. Dual barcoding is still used.
 #    
 # IMPLEMENTATION
 #    author  Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
+#            Ryan Ziels (ziels@mail.ubc.ca)
 #    license  GNU General Public License
 #
 # TO DO
@@ -20,16 +20,84 @@
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
 
-### Terminal input ------------------------------------------------------------
-CONSENSUS_IN=$1
-THREADS=$2
-RAW_IN=${3:-reads.fq}
-UMI_BIN_RESULTS=${4:-umi_binning/read_binning/umi_bin_map.txt}
-OUT_DIR=${5:-demultiplexing}
-BARCODE_FILE=${6:-$BARCODES}
-BARCODE_PREFIX=${7:-"barcode"}
-BARCODE_RANGES=${8:-"1-120"}
-MIN_BARCODE_COUNT=${9:-2}
+### Description ----------------------------------------------------------------
+
+USAGE="
+-- longread_umi demultiplex_3end: 3'-end dual barcode demultiplexing
+
+    Script for demultiplexing UMI consensus sequences based on 
+    custom barcodes. The script demultiplexes raw read data
+    and assigns the consensus sequences to a sample by majority vote
+    of the raw read assignments. Post processing demultiplxing optimizes 
+    consensus yield. The script expects dual barcodes in a barcode file.
+    If the same barcode is used in both ends simply repeat barcode. This
+    version of the script only looks for barcodes in the 3' end. This demultiplexing
+    is for data types which are truncated in the 5' end. Dual barcoding is
+    still used.
+	
+usage: $(basename "$0" .sh) [-h] (-c file -r file -u file -o dir -b file -p string)
+(-n range -m value -t value) 
+
+where:
+    -h  Show this help text.
+    -c  UMI consensus sequences that need demultiplexing.
+    -r  Raw read sequences that were used to generate
+        the consensus sequences.
+    -u  List of raw read names and UMI bin assignments.
+    -o  Output directory.
+    -b  File containing barcodes.
+        Default is "$BARCODES"
+    -p  Barcode name prefix. [Default = 'barcode'].
+    -n  Barcode numbers used. [Default = '1-120'].
+    -m  Minimum number of barcodes found to demultiplex
+        sequences. Default 2.
+    -t  Number of threads used.
+
+"
+
+### Terminal Arguments ---------------------------------------------------------
+
+# Import user arguments
+while getopts ':hzd:c:r:u:o:b:p:n:m:t:' OPTION; do
+  case $OPTION in
+    h) echo "$USAGE"; exit 1;;
+    c) CONSENSUS_IN=$OPTARG;;
+	r) RAW_IN=$OPTARG;;
+	u) UMI_BIN_RESULTS=$OPTARG;;
+	o) OUT_DIR=$OPTARG;;
+	b) BARCODE_FILE=$OPTARG;;
+	p) BARCODE_PREFIX=$OPTARG;;
+	n) BARCODE_RANGES=$OPTARG;;
+	m) MIN_BARCODE_COUNT=$OPTARG;;
+    t) THREADS==$OPTARG;;
+    :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
+    \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
+  esac
+done
+
+# Check missing arguments
+MISSING="is missing but required. Exiting."
+if [ -z ${CONSENSUS_IN+x} ]; then echo "-c $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${RAW_IN+x} ]; then echo "-r $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${UMI_BIN_RESULTS+x} ]; then echo "-u $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${OUT_DIR+x} ]; then echo "-o $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${BARCODE_FILE+x} ]; then
+  echo "-b missing. Defaulting to $BARCODES."
+  BARCODE_FILE="$BARCODES"
+fi;
+if [ -z ${BARCODE_PREFIX+x} ]; then
+  echo "-p missing. Defaulting to 'barcode'."
+  BARCODE_PREFIX='barcode'
+fi;
+if [ -z ${BARCODE_RANGES+x} ]; then
+  echo "-n missing. Defaulting to barcode numbers '1-120'."
+  BARCODE_RANGES='1-120'
+fi
+if [ -z ${MIN_BARCODE_COUNT+x} ]; then
+  echo "-m missing. Defaulting to minimum barcode count of 2."
+  MIN_BARCODE_COUNT=2
+fi
+if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 
 # Demultiplexing of UMI consensus sequences sequenced with Nanopore barcodes
 mkdir $OUT_DIR
@@ -141,6 +209,7 @@ export -f demultiplex_cutadapt_3
 # Find 5' barcodes
 cat $RAW_IN |\
 $GNUPARALLEL \
+  --env demultiplex_cutadapt_5 \
   --progress \
   -j $THREADS \
   -L4 \
@@ -156,6 +225,7 @@ $GNUPARALLEL \
 # Find 3' barcodes
 cat $RAW_IN |\
 $GNUPARALLEL \
+  --env demultiplex_cutadapt_3 \
   --progress \
   -j $THREADS \
   -L4 \

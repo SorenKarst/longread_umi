@@ -4,21 +4,62 @@
 #    This script is a part of the longread-UMI-pipeline.
 #    
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
-#    license	GNU General Public License
+#    author   Søren Karst (sorenkarst@gmail.com)
+#             Ryan Ziels (ziels@mail.ubc.ca)
+#    license  GNU General Public License
 # TODO
 #
 
-### Terminal input ------------------------------------------------------------
-CONSENSUS_FILE=$1 #Consensus file path name
-MEDAKA_MODEL=$2 #Medaka model to use.
-CHUNK_SIZE=$3 # Sensible chunk size for amplicon type
-BINNING_DIR=$4 #Raw read bins file path name
-OUT_DIR=$5 #output folder name
-THREADS=$6 #Number of threads
-SAMPLE=$7 # List of bins to process
-MEDAKA_JOBS=${8:-1} # Number medaka jobs to start
+### Description ----------------------------------------------------------------
+
+USAGE="
+-- longread_umi polish_medaka: Nanopore UMI consensus polishing with Medaka
+   
+usage: $(basename "$0" .sh) [-h] [-l value T value] 
+(-c file -m string -d dir -o dir -t value -n file -T value)
+
+where:
+    -h  Show this help text.
+    -c  File containing consensus sequences.
+    -m  Medaka model.
+    -l  Expected minimum chunk size. [Default = 6000]
+    -d  Directory containing UMI read bins in the format
+        'umi*bins.fastq'. Recursive search.
+    -o  Output directory.
+    -t  Number of threads to use.
+    -n  Process n number of bins. If not defined all bins
+        are processed.
+    -t  Number of Medaka jobs to run. [Default = 1].
+"
+
+### Terminal Arguments ---------------------------------------------------------
+
+# Import user arguments
+while getopts ':hzc:m:l:d:o:t:n:T:' OPTION; do
+  case $OPTION in
+    h) echo "$USAGE"; exit 1;;
+    c) CONSENSUS_FILE=$OPTARG;;
+    m) MEDAKA_MODEL=$OPTARG;;
+    l) CHUNK_SIZE=$OPTARG;;
+    d) BINNING_DIR=$OPTARG;;
+    o) OUT_DIR=$OPTARG;;
+    t) THREADS=$OPTARG;;
+    n) SAMPLE=$OPTARG;;
+    T) MEDAKA_JOBS=$OPTARG;;
+    :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
+    \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
+  esac
+done
+
+# Check missing arguments
+MISSING="is missing but required. Exiting."
+if [ -z ${CONSENSUS_FILE+x} ]; then echo "-c $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${MEDAKA_MODEL+x} ]; then echo "-m $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${CHUNK_SIZE+x} ]; then echo "-l missing. Defaulting to 6000."; CHUNK_SIZE=6000; fi;
+if [ -z ${BINNING_DIR+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${OUT_DIR+x} ]; then echo "-o $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${THREADS+x} ]; then echo "-t $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${MEDAKA_JOBS+x} ]; then echo "-T is missing. Defaulting to 1 Medaka job."; MEDAKA_JOBS=1; fi;
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -74,8 +115,9 @@ cat $CONSENSUS_FILE |\
   $SEQTK seq -l0 - |\
   ( [[ -f "${SAMPLE}" ]] && grep -A1 -Ff $SAMPLE | sed '/^--$/d' || cat ) |\
   $GNUPARALLEL \
+    --env medaka_align \
     --progress  \
-    -j $(( THREADS * 5 )) \
+    -j $THREADS \
     --recstart ">" \
     -N 1 \
     --pipe \
@@ -117,6 +159,7 @@ consensus_wrapper() {
   ### View bam files in parallel and pipe into merge function
   cat |\
     $GNUPARALLEL \
+      --env bam_merge \
       -j $MEDAKA_THREADS \
       $SAMTOOLS view -h {} |\
       bam_merge $OUT_DIR $JOB_NR
@@ -147,6 +190,7 @@ find $OUT_DIR/mapping/ \
   -type f \
   -name "umi*bins.bam" |\
 $GNUPARALLEL \
+  --env consensus_wrapper \
   --progress \
   -j $MEDAKA_JOBS \
   -N1 \

@@ -3,20 +3,21 @@
 #    Testing settings for racon consensus and medaka polishing.
 #    
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
-#    license	GNU General Public License
+#    author   Søren Karst (sorenkarst@gmail.com)
+#             Ryan Ziels (ziels@mail.ubc.ca)
+#    license  GNU General Public License
 #
 # To-do:
 # - Fix logging
 
 ### Description ----------------------------------------------------------------
 
-USAGE="$(basename "$0" .sh) [-h] [-d file -n value -c value -o dir -s value -e value 
--m value -M value -f string -F string -r string -R string -t value -T value 
--x value -y value -q string -p -u dir ] 
--- longread_umi nanopore_settings_test: Testing settings for racon consensus and
-   medaka polishing.
+USAGE="
+-- longread_umi nanopore_settings_test: Test impact of polishing rounds on UMI consensus.
+
+usage: $(basename "$0" .sh) [-h] (-d file -n value -c value -o dir -s value -e value) 
+(-m value -M value -f string -F string -r string -R string -t value -T value) 
+(-x value -y value -q string -p -u dir ) 
 
 where:
     -h  Show this help text.
@@ -37,22 +38,22 @@ where:
         AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC]
     -t  Number of threads to use.
     -T  Number of medaka jobs to start. Threads pr. job is threads/jobs.
-		Default is 1 job.
+        [Default = 1].
     -x  Test Racon consensus rounds from 1 to <value>.
     -y  Test Medaka polishing rounds from 1 to <value>.
     -q  Medaka model used for polishing. r941_min_high, r10_min_high etc.
     -p  Flag to disable Nanopore trimming and filtering.
-	-u  Directory with UMI binned reads.
+    -u  Directory with UMI binned reads.
 
 Test run:
-longread_umi nanopore_settings_test \
-  -d test_reads.fq \
-  -o settings_test \
-  -w rrna_operon \
-  -t 100 \
-  -T 20 \
-  -x 4 \
-  -y 3 \
+longread_umi nanopore_settings_test 
+  -d test_reads.fq 
+  -o settings_test 
+  -w rrna_operon 
+  -t 100 
+  -T 20 
+  -x 4 
+  -y 3 
   -n 1000
 "
 
@@ -181,39 +182,39 @@ for i in `seq 1 $RACON_ROUNDS`; do
   # Racon consensus
   CON_NAME=raconx$i
   longread_umi consensus_racon \
-    $UMI_DIR/read_binning/bins          `# Path to UMI bins`\
-    $OUT_DIR/$CON_NAME                   `# Output folder`\
-    $i                                  `# Number of racon polishing times`\
-    $THREADS                            `# Number of threads`\
-    $OUT_DIR/sample$UMI_SUBSET_N.txt    `# List of bins to process`
+    -d $UMI_DIR/read_binning/bins          `# Path to UMI bins`\
+    -o $OUT_DIR/$CON_NAME                   `# Output folder`\
+    -r $i                                  `# Number of racon polishing times`\
+    -t $THREADS                            `# Number of threads`\
+    -n $OUT_DIR/sample$UMI_SUBSET_N.txt    `# List of bins to process`
   CON=$OUT_DIR/$CON_NAME/consensus_${CON_NAME}.fa
   # Medaka polishing
   for j in `seq 1 $MEDAKA_ROUNDS`; do
     POLISH_NAME=${CON_NAME}_medakax$j
     longread_umi polish_medaka \
-      $CON                              `# Path to consensus data`\
-      $MEDAKA_MODEL                     `# Path to consensus data`\
-      $MAX_LENGTH                       `# Sensible chunk size`\
-      $UMI_DIR                          `# Path to UMI bins`\
-      $OUT_DIR/${POLISH_NAME}   `# Output folder`\
-      $THREADS                          `# Number of threads`\
-      $OUT_DIR/sample$UMI_SUBSET_N.txt  `# List of bins to process` \
-      $MEDAKA_JOBS                      `# Uses ALL threads with medaka`
+      -c $CON                              `# Path to consensus data`\
+      -m $MEDAKA_MODEL                     `# Path to consensus data`\
+      -l $MAX_LENGTH                       `# Sensible chunk size`\
+      -d $UMI_DIR                          `# Path to UMI bins`\
+      -o $OUT_DIR/${POLISH_NAME}   `# Output folder`\
+      -t $THREADS                          `# Number of threads`\
+      -n $OUT_DIR/sample$UMI_SUBSET_N.txt  `# List of bins to process` \
+      -T $MEDAKA_JOBS                      `# Uses ALL threads with medaka`
     CON=$OUT_DIR/${POLISH_NAME}/consensus_${POLISH_NAME}.fa
   done
 done
 
 # Trim UMI consensus data
 longread_umi trim_amplicon \
-  '$OUT_DIR/racon*'      `# Path to consensus data`\
-  '"consensus*fa"'     `# Consensus file pattern. Regex must be flanked by '"..."'`\
-  $OUT_DIR             `# Output folder`\
-  $FW2                 `# Forward primer sequence`\
-  $RV2                 `# Reverse primer sequence`\
-  $MIN_LENGTH          `# Min read length`\
-  $MAX_LENGTH          `# Max read length` \
-  $THREADS             `# Number of threads` \
-  $LOG_DIR
+  -d '$OUT_DIR/racon*'      `# Path to consensus data`\
+  -p '"consensus*fa"'     `# Consensus file pattern. Regex must be flanked by '"..."'`\
+  -o $OUT_DIR             `# Output folder`\
+  -F $FW2                 `# Forward primer sequence`\
+  -R $RV2                 `# Reverse primer sequence`\
+  -m $MIN_LENGTH          `# Min read length`\
+  -M $MAX_LENGTH          `# Max read length` \
+  -t $THREADS             `# Number of threads` \
+  -l $LOG_DIR
 
 # Perform qc
 CON_LIST=$(echo $OUT_DIR/consensus* | sed 's/ /;/g')

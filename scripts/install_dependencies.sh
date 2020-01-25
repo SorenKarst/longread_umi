@@ -11,9 +11,9 @@
 #    Run in terminal bash install_dependencies.sh
 #
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
-#    license	GNU General Public License
+#    author   Søren Karst (sorenkarst@gmail.com)
+#             Ryans Ziels (ziels@mail.ubc.ca)
+#    license  GNU General Public License
 
 ### Terminal input
 BRANCH=${1:-master}

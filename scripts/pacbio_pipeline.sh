@@ -3,20 +3,21 @@
 #    longread_umi pacbio_pipeline script. 
 #    
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
-#    license	GNU General Public License
+#    author     Søren Karst (sorenkarst@gmail.com)
+#               Ryan Ziels (ziels@mail.ubc.ca)
+#    license    GNU General Public License
 #
 # To-do:
 # - Fix logging
 
 ### Description ----------------------------------------------------------------
 
-USAGE="$(basename "$0" .sh) [-h] [-d file -v value -o dir -s value -e value 
--m value -M value -f string -F string -r string -R string -c value -w string
--n value -u dir -t value] 
--- longread_umi pacbio_pipeline: Generates UMI consensus sequences from
-   PacBio CCS fastq reads with UMIs in both terminals.
+USAGE="
+-- longread_umi pacbio_pipeline: Generates UMI consensus sequences from PacBio CCS data.
+   
+usage: $(basename "$0" .sh) [-h] (-d file -v value -o dir -s value -e value) 
+(-m value -M value -f string -F string -r string -R string -c value -w string)
+(-n value -u dir -t value) 
 
 where:
     -h  Show this help text.
@@ -103,6 +104,7 @@ if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THRE
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
+
 if [ -d $OUT_DIR ]; then
   echo ""
   echo "$OUT_DIR exists. Remove existing directory or rename desired output directory."
@@ -172,23 +174,23 @@ fi
 CON_NAME=raconx${CON_N}
 CON_DIR=$OUT_DIR/$CON_NAME
 longread_umi consensus_racon \
-  $UMI_DIR/read_binning/bins           `# Path to UMI bins`\
-  ${CON_DIR}                           `# Output folder`\
-  $CON_N                               `# Number of racon polishing times`\
-  $THREADS                             `# Number of threads`\
-  $OUT_DIR/sample$UMI_SUBSET_N.txt     `# List of bins to process`
+  -d $UMI_DIR/read_binning/bins           `# Path to UMI bins`\
+  -o ${CON_DIR}                           `# Output folder`\
+  -r $CON_N                               `# Number of racon polishing times`\
+  -t $THREADS                             `# Number of threads`\
+  -n $OUT_DIR/sample$UMI_SUBSET_N.txt     `# List of bins to process`
 
 # Trim UMI consensus data
 longread_umi trim_amplicon \
-  $CON_DIR          `# Path to consensus data`\
-  '"consensus*fa"'     `# Consensus file pattern. Regex must be flanked by '"..."'`\
-  $OUT_DIR             `# Output folder`\
-  $FW2                 `# Forward primer sequence`\
-  $RV2                 `# Reverse primer sequence`\
-  $MIN_LENGTH          `# Min read length`\
-  $MAX_LENGTH          `# Max read length` \
-  $THREADS             `# Number of threads` \
-  $LOG_DIR
+  -d $CON_DIR          `# Path to consensus data`\
+  -p '"consensus*fa"'     `# Consensus file pattern. Regex must be flanked by '"..."'`\
+  -o $OUT_DIR             `# Output folder`\
+  -F $FW2                 `# Forward primer sequence`\
+  -R $RV2                 `# Reverse primer sequence`\
+  -m $MIN_LENGTH          `# Min read length`\
+  -M $MAX_LENGTH          `# Max read length` \
+  -t $THREADS             `# Number of threads` \
+  -l $LOG_DIR
 
 # Generate variants
 
@@ -207,9 +209,9 @@ $GAWK -v UBS="$UMI_COVERAGE_MIN" '
 
 ## Variant calling of from UMI consensus sequences
 longread_umi variants \
-  $OUT_DIR/consensus_${CON_NAME}_${UMI_COVERAGE_MIN}.fa `# Path to consensus data`\
-  $OUT_DIR/variants `# Output folder`\
-  $THREADS `# Number of threads`
+  -c $OUT_DIR/consensus_${CON_NAME}_${UMI_COVERAGE_MIN}.fa `# Path to consensus data`\
+  -o $OUT_DIR/variants `# Output folder`\
+  -t $THREADS `# Number of threads`
 
 ## Copy variants
 cp $OUT_DIR/variants/variants.fa $OUT_DIR

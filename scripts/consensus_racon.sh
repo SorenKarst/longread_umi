@@ -1,6 +1,6 @@
 #!/bin/bash
 # DESCRIPTION
-#    Script for finding consensus from UMI binned Nanopore reads. 
+#    Script for finding consensus from UMI read bins. 
 #    Raw read centroid found with usearch and used as seed for
 #    <ROUNDS> x times racon polishing.
 #
@@ -8,15 +8,51 @@
 #
 # IMPLEMENTATION
 #    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
+#               Ryan Ziels (ziels@mail.ubc.ca)
 #    license	GNU General Public License
 
-### Terminal input ------------------------------------------------------------
-IN=$1 #input folder name with bins (IN=read_binning/bins/)
-OUT=$2 #output folder name
-ROUNDS=$3 #number of racon polishing rounds.
-THREADS=$4 #number of threads
-SAMPLE=$5 # List of bins to process
+### Description ----------------------------------------------------------------
+
+USAGE="
+-- longread_umi consensus_racon: Generate UMI consensus sequence with racon
+   Raw read centroid found with usearch and used as seed for
+   (r) x times racon polishing.
+
+usage: $(basename "$0" .sh) [-h] (-d dir -o dir -r value -t value -n file) 
+
+where:
+    -h  Show this help text.
+    -d  Directory containing UMI read bins in the format
+        'umi*bins.fastq'. Recursive search.
+    -o  Output directory.
+    -r  Number of racon polishing rounds.
+    -t  Number of threads to use.
+    -n  Process n number of bins. If not defined all bins
+        are processed.
+"
+
+### Terminal Arguments ---------------------------------------------------------
+
+# Import user arguments
+while getopts ':hzd:o:r:t:n:' OPTION; do
+  case $OPTION in
+    h) echo "$USAGE"; exit 1;;
+    d) IN=$OPTARG;;
+    o) OUT=$OPTARG;;
+    r) ROUNDS=$OPTARG;;
+    t) THREADS=$OPTARG;;
+    n) SAMPLE=$OPTARG;;
+    :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
+    \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
+  esac
+done
+
+# Check missing arguments
+MISSING="is missing but required. Exiting."
+if [ -z ${IN+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${OUT+x} ]; then echo "-o $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${ROUNDS+x} ]; then echo "-r $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -83,7 +119,7 @@ export -f seed_racon
 # Perform assembly in parallel
 find $IN -name 'umi*bins.fastq'  |\
   ( [[ -f "${SAMPLE}" ]] && grep -Ff $SAMPLE || cat ) |\
-  $GNUPARALLEL --progress -j $THREADS "seed_racon {} $OUT $ROUNDS"
+  $GNUPARALLEL --env seed_racon --progress -j $THREADS "seed_racon {} $OUT $ROUNDS"
 
 #Collect seed-racon consensus sequences
 OUT_NAME=${OUT##*/}

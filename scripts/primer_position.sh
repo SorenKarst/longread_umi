@@ -7,21 +7,65 @@
 #    any adaptors and/or use of Nanopore barcoding kits. 
 #   
 # IMPLEMENTATION
-#    author	Søren Karst (sorenkarst@gmail.com)
-#               Ryans Ziels (ziels@mail.ubc.ca)
-#    license	GNU General Public License
+#    author   Søren Karst (sorenkarst@gmail.com)
+#             Ryan Ziels (ziels@mail.ubc.ca)
+#    license  GNU General Public License
 #
+### Description ----------------------------------------------------------------
 
-### Terminal input ------------------------------------------------------------
-READ_IN=${1:-reads.fq}
-OUT_DIR=${2:-primer_position}
-THREADS=${3:-60}
-FW2=${4:-AGRGTTYGATYMTGGCTCAG} #RC: CTGAGCCAKRATCRAACYCT
-RV2=${5:-CGACATCGAGGTGCCAAAC} #RC: GTTTGGCACCTCGATGTCG
-TERMINAL_LENGTH=${6:-500}
-SUBSET=${7:-10000000}
-FW1=${8:-CAAGCAGAAGACGGCATACGAGAT}
-RV1=${9:-AATGATACGGCGACCACCGAGATC}
+USAGE="
+-- longread_umi primer_position: Locate adapter and primer positions in read data
+    Script for checking position of adapters and gene specific primers flanking
+    UMI sequences in read terminals. Relevant if using custom UMI adapters/primers,
+    sample barcoding or if basecalling/processing truncates reads.
+   
+usage: $(basename "$0" .sh) [-h] [-e value -n value ] (-d value -o dir -t value)
+(-f string -F string -r string -R string ) 
+
+where:
+    -h  Show this help text.
+    -d  Raw fastq reads.
+    -o  Output directory
+    -t  Number of threads to use.
+    -f  Forward adaptor sequence. 
+    -F  Forward primer sequence.
+    -r  Reverse adaptor sequence.
+    -R  Reverse primer sequence.
+    -e  Length of terminal end to search for primers. [Default = 500]
+    -n  Subset reads before search. [Default = 100000]
+"
+
+### Terminal Arguments ---------------------------------------------------------
+
+# Import user arguments
+while getopts ':hzd:o:t:f:F:r:R:e:n:' OPTION; do
+  case $OPTION in
+    h) echo "$USAGE"; exit 1;;
+    d) READ_IN=$OPTARG;;
+    o) OUT_DIR=$OPTARG;;
+    t) THREADS=$OPTARG;;
+    f) FW1=$OPTARG;;
+    F) FW2=$OPTARG;;
+    r) RV1=$OPTARG;;
+    R) RV2=$OPTARG;;
+    e) TERMINAL_LENGTH=$OPTARG;;
+    n) SUBSET=$OPTARG;;
+    :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
+    \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
+  esac
+done
+
+# Check missing arguments
+MISSING="is missing but required. Exiting."
+if [ -z ${READ_IN+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${OUT_DIR+x} ]; then echo "-o $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
+if [ -z ${FW1+x} ]; then echo "-f $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${FW2+x} ]; then echo "-F $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${RV1+x} ]; then echo "-r $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${RV2+x} ]; then echo "-R $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${TERMINAL_LENGTH+x} ]; then echo "-e missing. Defaulting to 500 bp."; TERMINAL_LENGTH=500; fi;
+if [ -z ${SUBSET+x} ]; then echo "-n missing. Defaulting to 100,000 sequences"; SUBSET=100000; fi;
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -32,7 +76,7 @@ RV1=${9:-AATGATACGGCGACCACCGAGATC}
 mkdir $OUT_DIR
 
 # Extract adaptor region
-head -n $SUBSET $READ_IN |\
+head -n $(( SUBSET*4 )) $READ_IN |\
 $GAWK -v BD="$OUT_DIR" -v TL="$TERMINAL_LENGTH" '
     NR%4==1{
        print ">" substr($1,2) > BD"/reads_t1.fa";
