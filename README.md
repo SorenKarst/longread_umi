@@ -137,7 +137,7 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
 
 - [Example data](docs/DATA.md)
   
-- [ONT R10 Zymomock rRNA - generate UMI consensus sequences and validate data](docs/ONT_R10_ZYMO_rRNA.html)
+- [ONT R10 Zymomock rRNA - generate UMI consensus sequences and validate data](https://htmlpreview.github.io/?https://github.com/SorenKarst/longread_umi/blob/master/docs/ONT_R10_ZYMO_rRNA.html)
   
   
   
