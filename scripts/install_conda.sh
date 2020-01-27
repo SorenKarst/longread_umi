@@ -51,7 +51,7 @@ channels:
 dependencies:
 - seqtk=1.3
 - parallel=20191122
-- racon=1.4.3
+- racon=1.4.10
 - minimap2=2.17
 - medaka=0.11.2
 - gawk=4.1.3

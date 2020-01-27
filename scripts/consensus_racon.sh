@@ -104,6 +104,7 @@ seed_racon () {
       -x -6 \
       -g -8 \
       -w 500 \
+	  --no-trimming \
       $RB \
       $OUT/ovlp.paf \
       $OUT/${UMINO}_sr.fa > $OUT/${UMINO}_tmp.fa
