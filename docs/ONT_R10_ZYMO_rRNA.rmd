@@ -1,0 +1,307 @@
+## Process ONT UMI data from Zymomock rRNA amplicons
+
+**Reference**
+
+* SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, & M Albertsen. (2020). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers with Nanopore or PacBio sequencing. [bioRxiv, 6459039](https://www.biorxiv.org/content/10.1101/645903v3).
+
+**Sample**
+
+* ZymoBIOMICS Microbial Community DNA Standard (D6306, lot no. ZRC190811, Zymo Research)
+* 8 bacterial species: Bacillus subtilis, Enterococcus faecalis, Escherichia coli, Lactobacillus fermentum, Listeria monocytogenes, Pseudomonas aeruginosa, Salmonella enterica, Staphylococcus aureus.
+
+**Library**
+
+* [UMI amplicon protocol at Protocols.io](https://www.protocols.io/private/F5C5FE21305911EAAC0B0242AC110003)
+* rRNA PCR primers: [8F] 5'-AGRGTTYGATYMTGGCTCAG and [1391R] 5'-GACGGGCGGTGWGTRCA
+* Library: 1D amplicon/cDNA by ligation (SQK-LSK109)
+
+**Sequencing**
+
+* Flowcell: R10
+* Instrument: MinION
+* Basecalling: guppy v3.4.4
+
+### Generate UMI consensus sequences
+
+Download and decompress data
+```{bash eval=FALSE}
+wget "ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR381/ERR3813594/smkj412_zymo_D6306_rrna_umi_ont_min_r10_g344hac.fq.gz"
+gunzip -c smkj412_zymo_D6306_rrna_umi_ont_min_r10_g344hac.fq.gz > reads.fq
+```
+
+Generate UMI consensus sequences from raw read data
+```{bash eval=FALSE}
+longread_umi nanopore_pipeline \
+  -d reads.fq \
+  -o umi_out \
+  -v 25 \
+  -q r10_min_high_g340 \
+  -m 3500 \
+  -M 6000 \
+  -s 90 \
+  -e 90 \
+  -f CAAGCAGAAGACGGCATACGAGAT \
+  -F AGRGTTYGATYMTGGCTCAG \
+  -r AATGATACGGCGACCACCGAGATC \
+  -R CGACATCGAGGTGCCAAAC \
+  -c 2 \
+  -p 2 \
+  -t 40 \
+  -T 1
+```
+
+Generate validation data from UMI consensus sequences
+```{bash eval=FALSE}
+longread_umi qc_pipeline \
+-d "reads.fq" \
+-c "umi_out/consensus_raconx2_medakax2.fa;umi_out/variants.fa" \
+-r "zymo_curated" \
+-u umi_out \
+-o umi_out/qc \
+-t 40
+```
+
+## Validate UMI consensus sequences
+
+Load longread_umi functions and create working directory
+```{r eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+source("longread_umi/scripts/validation_functions.R")
+# Conda path: $CONDA_PREFIX/longread_umi/scripts/validation_functions.R"
+dir.create("./validation")
+```
+
+Compile validation data and generate error profile
+```{r eval=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+lu_compile_qc(
+  data_dir = "umi_out/qc",
+  umi_consensus = "consensus_raconx2_medakax2.fa",
+  reference = "zymo-ref-uniq_2019-10-28.fa",
+  read_orientation = "read_orientation.txt", 
+  silva = NULL,
+  out_path = "validation/ONT_R10_ZYMO_rRNA_qc.Rdata"
+)
+load("validation/ONT_R10_ZYMO_rRNA_qc.Rdata")
+
+ep <- lu_error_profile(
+  refs = "umi_out/qc/zymo-ref-uniq_2019-10-28.fa",
+  sam = "umi_out/qc/consensus_raconx2_medakax2.sam"
+)
+save(ep, file = "validation/ONT_R10_ZYMO_rRNA_ep.Rdata")
+```
+
+
+Or load pregenerated data (e.g. longread_umi/docs/rdata/)
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+load("validation/ONT_R10_ZYMO_rRNA_qc.Rdata")
+load("validation/ONT_R10_ZYMO_rRNA_ep.Rdata")
+```
+
+
+Perform UMI bin post-processing filtering (will be incoporated in pipeline in the future)
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+qc <- filter(
+  qc,
+  ror > 10^-0.6, # remove bins with extreme read orientation ratios
+  ror < 10^0.6,
+  umi_bin_size/umi_cluster_size < 10, # remove bins with extreme bin to cluster size
+  umi_match_error < 3.5, # remove bins with high mismatch between UMI reference and reads
+  !is.na(length) # remove umi bins where >=1 gene specific primers was not found in consensus sequence.
+)
+
+ep <- filter(
+  ep,
+  sub(";.*","", qname) %in% qc$umi
+)
+```
+
+
+### Basic data characteristics
+
+Plot read size distribution.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_plot_hist(
+  value = read_lengths, 
+  bin_width = 100
+  ) +
+  xlab(label = "Read lenght (bp)")
+```
+
+Plot UMI cluster size distribution.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_plot_hist(qc$umi_cluster_size, 1) +
+  xlab(label = "UMI cluster size (n reads)")
+```
+
+Plot UMI bin size distribution
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_plot_hist(
+  qc$umi_bin_size,
+  1
+) + 
+  xlab(label = "UMI bin size (n reads)")
+```
+
+UMI Bin size statistics.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+summary(qc$umi_bin_size)
+```
+
+Ratio between UMI cluster size and UMI bin size. Media around 4.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_plot_hist(
+  qc$umi_bin_size/qc$umi_cluster_size,
+  1
+)
+```
+
+### Error profiling
+
+Error rate versus UMI bin size of unfiltered data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_artefact_plot(
+  qc,
+  breaks = c(seq(1,60,3), Inf)
+  ) +
+  ylab("Error rate (%)") +
+  xlab("UMI Consensus read coverage")
+```
+
+Flag contamination and chimeras. Flagged chimeras and contamination below match example data, for de novo processed data correct UMI names have to be inserted.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+cont <- tibble(
+  umi = c(
+    "umi47838bins",
+    "umi177241bins",
+    "umi13630bins",
+    "umi173605bins",
+    "umi159967bins",
+    "umi185039bins",
+    "umi181256bins",
+    "umi6705bins",
+    "umi42968bins",
+    "umi238547bins",
+    "umi199820bins",
+    "umi151265bins",
+    "umi6094bins",
+    "umi193827bins",
+    "umi181472bins",
+    "umi198347bins",
+    "umi234765bins",
+    "umi180359bins",
+    "umi180080bins",
+    "umi17145bins",
+    "umi189949bins"
+),
+  flag = "contamination"
+)
+
+chi <- tibble(
+  umi = c(
+    "umi176051bins",
+    "umi12507bins",
+    "umi183450bins",
+    "umi146629bins"
+),
+  flag = "chimera"
+)
+```
+
+Inspect chimeras and contamination. Sequences with "Y" have been flagged as chimeras by uchime2_ref.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_errorpos_plot(
+  ep,
+  filter(qc, umi %in% c(cont$umi, chi$umi)),
+  species = "",
+  flag = "chimera"
+)
+```
+
+Plot contamination and chimeras for Bacillus
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_errorpos_plot(
+  ep,
+  filter(qc, umi %in% c(cont$umi, chi$umi)),
+  species = "Bacillus",
+  flag= "chimera"
+)
+```
+
+Filter data to remove chimeras and contamination
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+qcf <- filter(
+  qc,
+  !(umi %in% cont$umi),
+  !(umi %in% chi$umi)
+)
+epf <- filter(
+  ep,
+  !(sub(";.*", "", qname) %in% cont$umi),
+  !(sub(";.*", "", qname)  %in% chi$umi)
+)
+```
+
+Error rate versus UMI bin size of filtered data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_error_plot(
+  qcf
+  ) +
+  ylab("Error rate (%)") +
+  xlab("UMI Consensus read coverage")
+```
+
+Plot UMI bin size versus error types of filtered data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_errortype_plot(
+  epf,
+  ref_hp
+  ) +
+  ylab("Error rate (%)") +
+  xlab("UMI Consensus read coverage")
+```
+
+Error rate versus UMI bin size intervals of filtered data
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_error_plot_tbl(qcf) 
+```
+
+Filter data < 25x UMI bin size.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+qcff <- filter(
+  qcf,
+  umi_bin_size >= 25
+)
+epff <- filter(
+  epf,
+  sub(";.*", "", qname) %in% qcff$umi,
+)
+```
+
+Error type summary for >=25x data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_errortype_summary(
+  profile = epff,
+  digits = 4,
+  title = NULL
+)
+```
+
+Plot error frequency pr position of Salmonella operon 7 for >=25x data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_ref_error_frequency(
+  profile= epff,
+  species = "Salmonella_7",
+  lower_cut_off = 0.01,
+  label_cut_off = 0.02,
+  label_col = "type",
+  ylim = c(0,1)
+)
+```
+
+Error rate divided by operon for >=25x data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_ref_error_plot(
+  profile = epff
+) +
+  ylim(0,10)
+```
+
