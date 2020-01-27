@@ -41,8 +41,8 @@ PIPES=$(
   echo "$DOCS" |\
   gawk '
     $0 ~ /--.*pipeline/{
-	gsub("-- longread_umi", "", $0)
-	print "  " $0
+	    gsub("-- longread_umi", "  ", $0)
+	    print $0
 	}' |\
   column -t -s:
 )
@@ -51,8 +51,10 @@ PIPES=$(
 TOOLS=$(
   echo "$DOCS" |\
   gawk '
-    gsub("-- longread_umi", "  ", $0)
-    $0 ~ /--/ && $0 !~ /pipeline/{ print "  " $0}
+    $0 ~ /--/ && $0 !~ /pipeline/{
+      gsub("-- longread_umi", "  ", $0)
+      print $0
+    }
   ' |\
   column -t -s:
 )
