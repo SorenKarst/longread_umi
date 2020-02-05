@@ -554,6 +554,10 @@ $GAWK \
     }
 
     # Print filtering stats
+    print "umi_name", "read_n_raw", "read_n_filt", "read_n_plus", "read_n_neg", \
+      "read_max_plus", "read_max_neg", "read_orientation_ratio", "ror_filter", \
+      "umi_match_error_mean", "umi_match_error_sd", "ume_filter", "bin_cluster_ratio", \
+      "bcr_filter" > BD"/umi_binning_stats.txt"
     for (u in umi_n){
       print u, umi_n_raw[u], umi_n[u], umi_ro_plus[u], umi_ro_neg[u], \
         rof_sub_pos_n[u] + umi_ro_plus[u], rof_sub_neg_n[u] + umi_ro_neg[u], rof_check[u], \
