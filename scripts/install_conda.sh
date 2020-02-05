@@ -53,7 +53,7 @@ dependencies:
 - parallel=20191122
 - racon=1.4.10
 - minimap2=2.17
-- medaka=0.11.2
+- medaka=0.11.5
 - gawk=4.1.3
 - cutadapt=2.7
 - filtlong=0.2.0
