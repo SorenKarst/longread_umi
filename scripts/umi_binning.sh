@@ -555,9 +555,9 @@ $GAWK \
 
     # Print filtering stats
     for (u in umi_n){
-      print u, umi_n_raw[u], umi_ro_plus[u], umi_ro_neg[u], rof_check[u], \
-        rof_sub_pos_n[u] + umi_ro_plus[u], rof_sub_neg_n[u] + umi_ro_neg[u], \
-        umi_n[u], UME_MEAN[u], UME_SD[u], ume_check[u], bcr[u], bcr_check[u]\
+      print u, umi_n_raw[u], umi_n[u], umi_ro_plus[u], umi_ro_neg[u], \
+        rof_sub_pos_n[u] + umi_ro_plus[u], rof_sub_neg_n[u] + umi_ro_neg[u], rof_check[u], \
+        UME_MEAN[u], UME_SD[u], ume_check[u], bcr[u], bcr_check[u]\
         > BD"/umi_binning_stats.txt"
     }
 	
