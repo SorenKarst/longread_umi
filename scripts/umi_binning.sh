@@ -485,12 +485,12 @@ $GAWK \
     # Calculate read orientation fraction
     for (u in umi_ro_plus){
       # Check read orientation fraction
-      if (umi_ro_plus[u] != 0 && umi_ro_neg[u] != 0){
-        if (umi_ro_plus[u]/(umi_ro_neg[u]+umi_ro_plus[u]) < RO_FRAC && umi_ro_plus[u] < 3){
+      if (umi_ro_plus[u] > 1 && umi_ro_neg[u] > 1){
+        if (umi_ro_plus[u]/(umi_ro_neg[u]+umi_ro_plus[u]) < RO_FRAC ){
           rof_check[u]="rof_subset"
           rof_sub_neg_n[u] = umi_ro_plus[u]*(1/RO_FRAC-1)
           rof_sub_pos_n[u] = rof_sub_neg_n[u]
-        } else if (umi_ro_neg[u]/(umi_ro_neg[u]+umi_ro_plus[u]) < RO_FRAC && umi_ro_neg[u] < 3){
+        } else if (umi_ro_neg[u]/(umi_ro_neg[u]+umi_ro_plus[u]) < RO_FRAC ){
           rof_check[u]="rof_subset"
           rof_sub_neg_n[u]=umi_ro_neg[u]*(1/RO_FRAC-1)
           rof_sub_pos_n[u]=rof_sub_neg_n[u]
