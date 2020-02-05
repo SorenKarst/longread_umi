@@ -80,8 +80,8 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
    ```
    
    Expected output
-   - `consensus_raconx3_medakax1.fa` containing 8 UMI consensus sequences
-   - `variants.fa` containing 2 variant consensus sequences
+   - `consensus_raconx3_medakax1.fa` containing 9 UMI consensus sequences
+   - `variants.fa` containing 3 variant consensus sequences
 
 7. Run qc pipeline (< 5 minutes on desktop)
    ```

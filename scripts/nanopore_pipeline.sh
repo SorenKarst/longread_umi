@@ -171,6 +171,10 @@ if [ -z ${UMI_DIR+x} ]; then
     -F $FW2              `# Forward primer sequence` \
     -r $RV1              `# Reverse adaptor sequence` \
     -R $RV2              `# Reverse primer sequence` \
+    -u 3.5               `# UMI match error filter` \
+    -U 30                `# UMI match error SD filter` \
+    -O 0.20              `# Min read orientation fraction` \
+    -N 10000             `# Maximum number of reads +/-` \
     -t $THREADS          `# Number of threads`
 fi
 

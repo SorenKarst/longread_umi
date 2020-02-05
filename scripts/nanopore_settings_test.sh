@@ -9,6 +9,7 @@
 #
 # To-do:
 # - Fix logging
+# - Broken due to missing settings for UMI binning
 
 ### Description ----------------------------------------------------------------
 
