@@ -51,9 +51,9 @@ channels:
 dependencies:
 - seqtk=1.3
 - parallel=20191122
-- racon=1.4.3
+- racon=1.4.10
 - minimap2=2.17
-- medaka=0.11.2
+- medaka=0.11.5
 - gawk=4.1.3
 - cutadapt=2.7
 - filtlong=0.2.0
@@ -67,7 +67,7 @@ dependencies:
 conda env create -f ./longread_umi.yml
 
 eval "$(conda shell.bash hook)"
-conda activate longread_umi
+conda activate longread_umi || source activate longread_umi
 
 # Install porechop
 $CONDA_PREFIX/bin/pip install \

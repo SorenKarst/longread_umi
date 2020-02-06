@@ -21,7 +21,8 @@ USAGE="
    adaptor regions.
 
 usage: $(basename "$0" .sh) [-h] (-d file -o dir -m value -M value )
-(-s value -e value -f string -F string -r string -R string -p -t value) 
+(-s value -e value -f string -F string -r string -R string -p )
+(-u value -U value -O value -S value -t value) 
 
 where:
     -h  Show this help text.
@@ -35,14 +36,22 @@ where:
     -F  Forward primer sequence.
     -r  Reverse adaptor sequence.
     -R  Reverse primer sequence.
-    -p  Flag to disable Nanopore trimming and filtering. Use with PacBio reads.
+    -p  Flag to disable Nanopore trimming and filtering.
+        Use with PacBio reads.
+    -u  Discard bins with a mean UMI match error above u.
+    -U  Discard bins with a UMI match error standard
+        deviation above U.
+    -O  Normalize read orientation fraction to 'O' if < 'O' reads are
+        either +/- strand orientation.
+    -N  Max number of reads with +/- orientation. [Default = 10000]
+    -S  UMI bin size/UMI cluster size cutoff. [Default = 10]
     -t  Number of threads to use.
 "
 
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:o:m:M:s:e:f:F:r:R:pt:' OPTION; do
+while getopts ':hzd:o:m:M:s:e:f:F:r:R:pt:u:U:O:N:S:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) READ_IN=$OPTARG;;
@@ -56,6 +65,11 @@ while getopts ':hzd:o:m:M:s:e:f:F:r:R:pt:' OPTION; do
     r) RV1=$OPTARG;;
     R) RV2=$OPTARG;;
     p) TRIM_FLAG=YES;;
+    u) UMI_MATCH_ERROR=$OPTARG;;
+    U) UMI_MATCH_ERROR_SD=$OPTARG;;
+    O) RO_FRAC=$OPTARG;;
+    N) MAX_BIN_SIZE=$OPTARG;;
+    S) BIN_CLUSTER_RATIO=$OPTARG;;
     t) THREADS=$OPTARG;;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
     \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
@@ -74,7 +88,13 @@ if [ -z ${FW1+x} ]; then echo "-f $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
 if [ -z ${FW2+x} ]; then echo "-F $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
 if [ -z ${RV1+x} ]; then echo "-r $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
 if [ -z ${RV2+x} ]; then echo "-R $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${UMI_MATCH_ERROR+x} ]; then echo "-u $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${UMI_MATCH_ERROR_SD+x} ]; then echo "-U $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${RO_FRAC+x} ]; then echo "-O $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
+if [ -z ${MAX_BIN_SIZE+x} ]; then echo "-N is missing. Defaulting to 10000 +/- reads ."; MAX_BIN_SIZE=10000; fi;
+if [ -z ${BIN_CLUSTER_RATIO+x} ]; then echo "-S is missing. Defaulting to 10 ."; BIN_CLUSTER_RATIO=10; fi;
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
+
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -224,7 +244,7 @@ $BWA samse \
   $UMI_DIR/umi12c.fa \
   $UMI_DIR/umi12p_map.sai \
   $UMI_DIR/umi12p.fa|\
-  $SAMTOOLS view -F 20 - \
+  $SAMTOOLS view -F 4 - \
   > $UMI_DIR/umi12p_map.sam
 
 $GAWK \
@@ -302,9 +322,6 @@ paste <(cat $UMI_DIR/umi12cf.fa | paste - - ) \
       }  
     }' > $UMI_DIR/umi_ref.txt
 
-# Checks: grep -c "no" umi_ref/umi_ref.txt; grep -c "yes" umi_ref/umi_ref.txt;
-# $GAWK -F";" 'FNR==NR{T+=$2}END{print T}' umi_ref/umi_ref.fa
-
 ### Bin reads based on UMIs ----------------------------------------------------
 mkdir $OUT_DIR/read_binning
 mkdir $OUT_DIR/read_binning/bins
@@ -361,10 +378,16 @@ $BWA aln $BINNING_DIR/reads_tf_umi2.fa $BINNING_DIR/umi_ref_b2.fa \
 $BWA samse -n 10000000 $BINNING_DIR/reads_tf_umi2.fa $BINNING_DIR/umi2_map.sai\
   $BINNING_DIR/umi_ref_b2.fa | $SAMTOOLS view -F 20 - > $BINNING_DIR/umi2_map.sam
 
-# Merge umi1 and 2 mappings
+# UMI binning and filtering
 
-$GAWK -v BD="$BINNING_DIR" '
-  # Print to terminal
+$GAWK \
+  -v BD="$BINNING_DIR" \
+  -v UME_MATCH_ERROR="$UMI_MATCH_ERROR" \
+  -v UME_MATCH_ERROR_SD="$UMI_MATCH_ERROR_SD" \
+  -v RO_FRAC="$RO_FRAC" \
+  -v MAX_BIN_SIZE="$MAX_BIN_SIZE"  \
+  -v BIN_CLUSTER_RATIO="$BIN_CLUSTER_RATIO" \
+  '
   NR==1 {
     print "[" strftime("%T") "] ### Read-UMI match filtering ###" > "/dev/stderr";
     print "[" strftime("%T") "] Reading UMI1 match file..." > "/dev/stderr";
@@ -392,7 +415,6 @@ $GAWK -v BD="$BINNING_DIR" '
     }
     next;
   }
-  # Print to terminal (NB: Require next in above statement)
   FNR==1 {
    print "[" strftime("%T") "] Reading UMI2 match file..." > "/dev/stderr";
   }
@@ -419,9 +441,8 @@ $GAWK -v BD="$BINNING_DIR" '
       }
     }
   } END {
-    # Print to terminal
     print "[" strftime("%T") "] UMI match filtering..." > "/dev/stderr"; 
-    # Loop over UMIs and reads
+    # Filter reads based on UMI match error
     for (umi in err1){    
       for (read in err1[umi]){
         # Define vars
@@ -443,16 +464,116 @@ $GAWK -v BD="$BINNING_DIR" '
         }
       }
     }
-    # Print to terminal 
-    print "[" strftime("%T") "] Print UMI matches..." > "/dev/stderr"; 
-    # Print binned reads
+    print "[" strftime("%T") "] Read orientation filtering..." > "/dev/stderr";
+    # Count +/- strand reads
     for (s in match_umi){
-      sub("_rc", "", match_umi[s]);
-      umi_n[match_umi[s]]++;
-      print match_umi[s], s, match_err[s]
+      UM=match_umi[s]
+      sub("_rc", "", UM)
+      # Read orientation stats
+      ROC=match(match_umi[s], /_rc/)
+      if (ROC != 0){
+        umi_ro_plus[UM]++
+        roc[s]="+"
+      } else {
+        umi_ro_neg[UM]++
+        roc[s]="-"
+      }
+      # Count reads per UMI bin
+      umi_n_raw[UM]++;
     }
-    # Print stats
-    for (u in umi_n) print u, umi_n[u] > BD"/umi_binning_stats.txt";    
+    
+    # Calculate read orientation fraction
+    for (u in umi_ro_plus){
+      # Check read orientation fraction
+      if (umi_ro_plus[u] > 1 && umi_ro_neg[u] > 1){
+        if (umi_ro_plus[u]/(umi_ro_neg[u]+umi_ro_plus[u]) < RO_FRAC ){
+          rof_check[u]="rof_subset"
+          rof_sub_neg_n[u] = umi_ro_plus[u]*(1/RO_FRAC-1)
+          rof_sub_pos_n[u] = rof_sub_neg_n[u]
+        } else if (umi_ro_neg[u]/(umi_ro_neg[u]+umi_ro_plus[u]) < RO_FRAC ){
+          rof_check[u]="rof_subset"
+          rof_sub_neg_n[u]=umi_ro_neg[u]*(1/RO_FRAC-1)
+          rof_sub_pos_n[u]=rof_sub_neg_n[u]
+        } else {
+          rof_check[u]="rof_ok"
+          rof_sub_neg_n[u]=MAX_BIN_SIZE
+          rof_sub_pos_n[u]=MAX_BIN_SIZE
+        }
+      } else {
+        rof_check[u]="rof_fail"
+      }
+    }
+    
+    # Subset reads
+    for (s in match_umi){
+      UMI_NAME=match_umi[s]
+      sub("_rc", "", UMI_NAME)
+      if(roc[s] == "+"){
+        if(rof_sub_pos_n[UMI_NAME]-- > 0){
+          ror_filt[s]=UMI_NAME
+        }
+      } else if (roc[s] == "-"){
+        if(rof_sub_neg_n[UMI_NAME]-- > 0){
+          ror_filt[s]=UMI_NAME
+        }
+      }
+    }
+
+    print "[" strftime("%T") "] UMI match error filtering..." > "/dev/stderr";
+    # Calculate UME stats
+    for (s in ror_filt){
+      UM=ror_filt[s]
+      # Count matching reads
+      umi_n[UM]++;
+      # UMI match error stats
+      umi_me_sum[UM] += match_err[s]
+      umi_me_sq[UM] += (match_err[s])^2
+    }
+
+    # Check UMI match error
+    for (u in umi_n){
+      UME_MEAN[u] = umi_me_sum[u]/umi_n[u]
+      UME_SD[u] = sqrt((umi_me_sq[u]-umi_me_sum[u]^2/umi_n[u])/umi_n[u])
+      if (UME_MEAN[u] > UME_MATCH_ERROR || UME_SD[u] > UME_MATCH_ERROR_SD){
+        ume_check[u] = "ume_fail"
+      } else {
+        ume_check[u] = "ume_ok"
+      }
+    }
+
+    print "[" strftime("%T") "] UMI bin/cluster size ratio filtering..." > "/dev/stderr";
+    for (u in umi_n){
+      CLUSTER_SIZE=u
+      sub(".*;", "", CLUSTER_SIZE)
+      bcr[u]=umi_n_raw[u]/CLUSTER_SIZE
+      if (bcr[u] > BIN_CLUSTER_RATIO){
+        bcr_check[u] = "bcr_fail"
+      } else {
+        bcr_check[u] = "bcr_ok"
+      }
+    }
+
+    # Print filtering stats
+    print "umi_name", "read_n_raw", "read_n_filt", "read_n_plus", "read_n_neg", \
+      "read_max_plus", "read_max_neg", "read_orientation_ratio", "ror_filter", \
+      "umi_match_error_mean", "umi_match_error_sd", "ume_filter", "bin_cluster_ratio", \
+      "bcr_filter" > BD"/umi_binning_stats.txt"
+    for (u in umi_n){
+      print u, umi_n_raw[u], umi_n[u], umi_ro_plus[u], umi_ro_neg[u], \
+        rof_sub_pos_n[u] + umi_ro_plus[u], rof_sub_neg_n[u] + umi_ro_neg[u], rof_check[u], \
+        UME_MEAN[u], UME_SD[u], ume_check[u], bcr[u], bcr_check[u]\
+        > BD"/umi_binning_stats.txt"
+    }
+	
+    print "[" strftime("%T") "] Print UMI matches..." > "/dev/stderr"; 
+    for (s in ror_filt){
+      UMI_NAME=ror_filt[s]
+      if( \
+          ume_check[UMI_NAME] == "ume_ok" && \
+          rof_check[UMI_NAME] == "rof_ok" && \
+          bcr_check[UMI_NAME] == "bcr_ok" \
+      ){print UMI_NAME, s, match_err[s]}
+    }
     # Print to terminal
     print "[" strftime("%T") "] Done." > "/dev/stderr"; 
   }

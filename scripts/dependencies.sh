@@ -52,4 +52,4 @@ longread_umi_version_dump (){
 
 ### Version dump
 # source dependencies.sh
-# ncec_version_dump
+# longread_umi_version_dump
