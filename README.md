@@ -19,26 +19,41 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
 1. Requirements/Dependencies  
    OS tested (Linux 3.10.0, Ubuntu 14.04, Ubuntu 16.04)  
     `usearch` >=10
+   
 2. Download installer script from terminal  
    ```
    wget https://raw.githubusercontent.com/SorenKarst/longread_umi/master/scripts/install_conda.sh
    ```
+   
 3. Run installation script from terminal and follow instructions (< 10 min on desktop)  
    `bash ./install_conda.sh` 
-4. Initiate conda and refresh terminal before using pipeline.  
+   
+4. If miniconda was installed along with the pipeline, initiate conda and refresh terminal before using pipeline.  
    `conda init; source ~/.bashrc`  
+   
 5. Activate and deactivate conda environment
+   
    ```
    conda activate longread_umi
    ...
    conda deactivate
    ```
+   
+6. The longread_umi installation directory can be found by typing. 
+
+   ```
+   conda activate longread_umi
+   echo "$CONDA_PREFIX/longread_umi"
+   conda deactivate
+   ```
+
+   This can be useful if you want to edit the usearch path in `longread_umi/scripts/dependencies.sh` or use the pipeline test data in `longread_umi/test_data/test_reads.fq`.
 
 ### Manual
 
 1. Requirements/Dependencies  
    OS tested (Linux 3.10.0, Ubuntu 14.04, Ubuntu 16.04)  
-   See `scripts/longread-UMI-pipeline_version_dump.txt`
+   See `scripts/longread_umi_version_dump.txt`
 2. Clone from github in terminal  
    `git clone https://github.com/SorenKarst/longread_umi.git`
 3. Make bash scripts executable  
@@ -53,12 +68,12 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
 ## Quick start
 
 ### Test data
-1. Test the initialization command in terminal  
+1. Test the longread_umi initialization command in terminal  
     `longread_umi -h` or `/path/to/longread_umi.sh -h`
 2. Test the nanopore_pipeline in terminal  
     `longread_umi nanopore_pipeline -h` or `/path/to/longread_umi.sh nanopore_pipeline -h`
 3. Test longread_umi nanopore_pipeline and qc_pipeline on test data:  
-   Go to /path/to/longread-UMI-pipeline/test_data and open a terminal in the directory.
+   Go to /path/to/longread_umi/test_data and open a terminal in the directory.
 4. Run nanopore pipeline (< 10 minutes on desktop)
    ```
    longread_umi nanopore_pipeline \
@@ -153,7 +168,7 @@ Target | Sample | Sequencing setup | UMI consensus | Raw yield (Gbp) | Raw reads
 Bacterial rRNA operon (~4300 bp) | ZymoBIOMICS Microbial Community DNA Standard (D6306, lot no. ZRC190811) | Sequel II, SMRT cell 8M, Sequencing Kit 1.0, CCS (v3.4.1) | 2 x racon (v1.4.3) | 161.4 | 36.6 | 1.9 | 39.7 | 4376 | [ERR3813247](https://www.ebi.ac.uk/ena/data/view/ERR3813247) | [ERR3813246](https://www.ebi.ac.uk/ena/data/view/ERR3813246) | [ERZ1284840](https://www.ebi.ac.uk/ena/data/view/ERZ1284840) | [Karst *et al*, 2020](https://www.biorxiv.org/content/10.1101/645903v3)
 
 ## Example analysis
-  
+
 - [ONT R10 Zymomock rRNA - generate UMI consensus sequences and validate data](https://htmlpreview.github.io/?https://github.com/SorenKarst/longread_umi/blob/master/docs/ONT_R10_ZYMO_rRNA.html)  
   
 
@@ -191,7 +206,7 @@ Tools:
 For help with a specific tool or pipeline:
 longread_umi <name> -h
 ```
-  
+
   
 
 ```
@@ -212,7 +227,7 @@ where:
     -n  Process n number of bins. If not defined all bins
         are processed.
 ```
-  
+
   
 
 ```
@@ -242,7 +257,7 @@ where:
     -n  Barcode numbers used. [Default  = '1-120'].
     -t  Number of threads used.
 ```
-  
+
   
 
 ```
@@ -277,7 +292,7 @@ where:
         sequences. Default 2.
     -t  Number of threads used.
 ```
-  
+
   
 
 ```
@@ -316,7 +331,7 @@ where:
     -T  Number of medaka jobs to start. Threads pr. job is threads/jobs.
         [Default = 1].
 ```
-  
+
   
 
 ```
@@ -364,7 +379,7 @@ longread_umi nanopore_settings_test
   -y 3 
   -n 1000
 ```
-  
+
   
 
 ```
@@ -398,7 +413,7 @@ where:
     -u  Directory with UMI binned reads.
     -t  Number of threads to use.
 ```
-  
+
   
 
 ```
@@ -421,7 +436,7 @@ where:
         are processed.
     -t  Number of Medaka jobs to run. [Default = 1].
 ```
-  
+
   
 
 ```
@@ -446,7 +461,7 @@ where:
     -e  Length of terminal end to search for primers. [Default = 500]
     -n  Subset reads before search. [Default = 100000]
 ```
-  
+
   
 
 ```
@@ -488,7 +503,7 @@ wget https://www.arb-silva.de/fileadmin/silva_databases/
 release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 ```
-  
+
   
 
 ```
@@ -512,7 +527,7 @@ where:
     -t  Number of threads to use.
     -l  Log directory
 ```
-  
+
   
 
 ```
@@ -539,7 +554,7 @@ where:
     -p  Flag to disable Nanopore trimming and filtering. Use with PacBio reads.
     -t  Number of threads to use.
 ```
-  
+
   
 
 ```
@@ -561,7 +576,7 @@ where:
     -t  Number of threads to use. [Default = 1]
     -b  Debug flag. Keep temp files. [Default = NO]
 ```
-  
+
   
 
 

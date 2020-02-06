@@ -67,7 +67,7 @@ dependencies:
 conda env create -f ./longread_umi.yml
 
 eval "$(conda shell.bash hook)"
-conda activate longread_umi
+conda activate longread_umi || source activate longread_umi
 
 # Install porechop
 $CONDA_PREFIX/bin/pip install \
