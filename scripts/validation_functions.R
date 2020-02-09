@@ -161,8 +161,8 @@ lu_compile_qc <- function(
     dplyr::transmute(umi = gsub(";.*", "", umi),
                      ref_error = error,
                      ref_tax = target)
-
-  if(!is.null(ref_ssu_sam)){  
+  
+  if(!is.null(silva)){
     ref_ssu_error <- readr::read_delim(
       file = paste(data_dir, "/", ref_ssu_sam, sep = ""),
       delim = "\t",
@@ -171,9 +171,7 @@ lu_compile_qc <- function(
       dplyr::transmute(umi = gsub(";.*", "", umi),
                        ref_ssu_error = error,
                        ref_ssu_tax = target)
-  }
-  
-  if(!is.null(silva)){
+    
     silva_error <- readr::read_delim(
       file = paste(data_dir, "/", silva_ssu_sam, sep = ""),
       delim = "\t",
@@ -248,7 +246,7 @@ lu_compile_qc <- function(
   qc <-  umi_stats %>%
     left_join(con_length, by = "umi") %>%
     left_join(ref_error, by = "umi") %>%
-    {if(!is.null(ref_ssu_sam))left_join(., ref_ssu_error, by = "umi") else .} %>%
+    {if(!is.null(silva))left_join(., ref_ssu_error, by = "umi") else .} %>%
     left_join(chimera, by = "umi") %>%
     {if(!is.null(silva))left_join(., silva, by = "umi") else .} %>%
     {if(!is.null(read_orientation))left_join(., ror, by = "umi") else .}
@@ -1103,6 +1101,7 @@ lu_errortype_plot <- function(
 lu_errortype_plot_tbl <- function(
                               profile,
                               break_size = 5,
+                              digits = 3,
                               title){
   
   # Summarise based on error type
@@ -1143,7 +1142,7 @@ lu_errortype_plot_tbl <- function(
     # Format decimals
     mutate_at(
       vars(all_err:del_err),
-      ~round(., 3)
+      ~round(., digits)
     )
     colnames(errortype_tbl) <- c(
       "UMI bin size",
