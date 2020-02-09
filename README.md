@@ -206,7 +206,7 @@ Tools:
 For help with a specific tool or pipeline:
 longread_umi <name> -h
 ```
-
+  
   
 
 ```
@@ -227,7 +227,7 @@ where:
     -n  Process n number of bins. If not defined all bins
         are processed.
 ```
-
+  
   
 
 ```
@@ -257,7 +257,7 @@ where:
     -n  Barcode numbers used. [Default  = '1-120'].
     -t  Number of threads used.
 ```
-
+  
   
 
 ```
@@ -292,7 +292,7 @@ where:
         sequences. Default 2.
     -t  Number of threads used.
 ```
-
+  
   
 
 ```
@@ -331,7 +331,7 @@ where:
     -T  Number of medaka jobs to start. Threads pr. job is threads/jobs.
         [Default = 1].
 ```
-
+  
   
 
 ```
@@ -379,7 +379,7 @@ longread_umi nanopore_settings_test
   -y 3 
   -n 1000
 ```
-
+  
   
 
 ```
@@ -413,7 +413,7 @@ where:
     -u  Directory with UMI binned reads.
     -t  Number of threads to use.
 ```
-
+  
   
 
 ```
@@ -436,7 +436,7 @@ where:
         are processed.
     -t  Number of Medaka jobs to run. [Default = 1].
 ```
-
+  
   
 
 ```
@@ -461,7 +461,7 @@ where:
     -e  Length of terminal end to search for primers. [Default = 500]
     -n  Subset reads before search. [Default = 100000]
 ```
-
+  
   
 
 ```
@@ -503,7 +503,7 @@ wget https://www.arb-silva.de/fileadmin/silva_databases/
 release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 ```
-
+  
   
 
 ```
@@ -527,7 +527,7 @@ where:
     -t  Number of threads to use.
     -l  Log directory
 ```
-
+  
   
 
 ```
@@ -537,7 +537,8 @@ where:
    adaptor regions.
 
 usage: umi_binning [-h] (-d file -o dir -m value -M value )
-(-s value -e value -f string -F string -r string -R string -p -t value) 
+(-s value -e value -f string -F string -r string -R string -p )
+(-u value -U value -O value -S value -t value) 
 
 where:
     -h  Show this help text.
@@ -551,10 +552,18 @@ where:
     -F  Forward primer sequence.
     -r  Reverse adaptor sequence.
     -R  Reverse primer sequence.
-    -p  Flag to disable Nanopore trimming and filtering. Use with PacBio reads.
+    -p  Flag to disable Nanopore trimming and filtering.
+        Use with PacBio reads.
+    -u  Discard bins with a mean UMI match error above u.
+    -U  Discard bins with a UMI match error standard
+        deviation above U.
+    -O  Normalize read orientation fraction to 'O' if < 'O' reads are
+        either +/- strand orientation.
+    -N  Max number of reads with +/- orientation. [Default = 10000]
+    -S  UMI bin size/UMI cluster size cutoff. [Default = 10]
     -t  Number of threads to use.
 ```
-
+  
   
 
 ```
@@ -576,7 +585,7 @@ where:
     -t  Number of threads to use. [Default = 1]
     -b  Debug flag. Keep temp files. [Default = NO]
 ```
-
+  
   
 
 
