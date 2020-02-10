@@ -82,12 +82,11 @@ if [ "$WORKFLOW" == rrna_operon ]; then
   RV1=AATGATACGGCGACCACCGAGATC
   RV2=CGACATCGAGGTGCCAAAC
   CON_N=2
-elif [ "$WORKFLOW" != rrna_operon && ! -z ${WORKFLOW+x} ]; then
-  echo "Unknown argument to workflow (-w). Defined workflows are: rrna_operon"
-  echo "$USAGE"
+elif [[ "$WORKFLOW" != rrna_operon && (! -z "$WORKFLOW") ]]; then
+  echo "Unknown argument to workflow (-w). Defined workflows are: rrna_operon";
+  echo "$USAGE";
   exit 1
 fi
-
 if [ -z ${INPUT_READS+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
 if [ -z ${UMI_COVERAGE_MIN+x} ]; then echo "-v $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${OUT_DIR+x} ]; then echo "-o $MISSING"; echo "$USAGE"; exit 1; fi;
