@@ -158,7 +158,7 @@ Example data generated for different types of amplicons using Oxford Nanopore or
 Target | Sample | Sequencing setup | UMI consensus | Raw yield (Gbp) | Raw reads (M) | UMI reads (K)| Mean Length (bp) | Raw data (fastq) | Raw data (fast5) | UMI data (fasta) | Reference
 ---|---|---|---|---|---|---|---|---|---|---|---
 Bacterial rRNA operon (~4300 bp) | ZymoBIOMICS Microbial Community DNA Standard (D6306, lot no. ZRC190811) | MinION, R10, guppy3.4.4-hac | 2 x racon (v1.4.3), 2 x medaka (v0.11.2) | 18.9 | 4.4 | 23.4 | 4381 | [ERR3813594](https://www.ebi.ac.uk/ena/data/view/ERR3813594) | [ERR3813597](https://www.ebi.ac.uk/ena/data/view/ERR3813597) | [ERZ1284843](https://www.ebi.ac.uk/ena/data/view/ERZ1284843) | [Karst *et al*, 2020](https://www.biorxiv.org/content/10.1101/645903v3)
-Genomic DNA (mean fragment size ~4500 bp) | Escherichia coli str. K-12 substr. MG1655 (DSM 18039) | MinION, R10, guppy3.2.4-hac | 2 x racon (v1.4.3), 1 x medaka (v0.8.1) | 10.4 | 2.7 | 3.7 | 4476 | [ERR3813593](https://www.ebi.ac.uk/ena/data/view/ERR3813593) | [ERR3813596](https://www.ebi.ac.uk/ena/data/view/ERR3813596) | [ERZ1284839](https://www.ebi.ac.uk/ena/data/view/ERZ1284839) or [figshare](https://figshare.com/articles/easoj011_ecoli_genomic_umi_ont_r10_g324hac/11733336)| [Karst *et al*, 2020](https://www.biorxiv.org/content/10.1101/645903v3)
+Genomic DNA (mean fragment size ~4500 bp) | Escherichia coli str. K-12 substr. MG1655 (DSM 18039) | MinION, R10, guppy3.2.4-hac | 2 x racon (v1.4.3), 1 x medaka (v0.8.1) | 10.4 | 2.7 | 3.7 | 4476 | [ERR3813593](https://www.ebi.ac.uk/ena/data/view/ERR3813593) | [ERR3813596](https://www.ebi.ac.uk/ena/data/view/ERR3813596) | [CACVBX020000000.2](https://www.ebi.ac.uk/ena/browser/view/CACVBX02) | [Karst *et al*, 2020](https://www.biorxiv.org/content/10.1101/645903v3)
 
 
 #### PacBio
@@ -206,7 +206,7 @@ Tools:
 For help with a specific tool or pipeline:
 longread_umi <name> -h
 ```
-  
+
   
 
 ```
@@ -227,7 +227,7 @@ where:
     -n  Process n number of bins. If not defined all bins
         are processed.
 ```
-  
+
   
 
 ```
@@ -257,7 +257,7 @@ where:
     -n  Barcode numbers used. [Default  = '1-120'].
     -t  Number of threads used.
 ```
-  
+
   
 
 ```
@@ -292,7 +292,7 @@ where:
         sequences. Default 2.
     -t  Number of threads used.
 ```
-  
+
   
 
 ```
@@ -331,7 +331,7 @@ where:
     -T  Number of medaka jobs to start. Threads pr. job is threads/jobs.
         [Default = 1].
 ```
-  
+
   
 
 ```
@@ -379,7 +379,7 @@ longread_umi nanopore_settings_test
   -y 3 
   -n 1000
 ```
-  
+
   
 
 ```
@@ -413,7 +413,7 @@ where:
     -u  Directory with UMI binned reads.
     -t  Number of threads to use.
 ```
-  
+
   
 
 ```
@@ -436,7 +436,7 @@ where:
         are processed.
     -t  Number of Medaka jobs to run. [Default = 1].
 ```
-  
+
   
 
 ```
@@ -461,7 +461,7 @@ where:
     -e  Length of terminal end to search for primers. [Default = 500]
     -n  Subset reads before search. [Default = 100000]
 ```
-  
+
   
 
 ```
@@ -503,7 +503,7 @@ wget https://www.arb-silva.de/fileadmin/silva_databases/
 release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 ```
-  
+
   
 
 ```
@@ -527,7 +527,7 @@ where:
     -t  Number of threads to use.
     -l  Log directory
 ```
-  
+
   
 
 ```
@@ -563,7 +563,7 @@ where:
     -S  UMI bin size/UMI cluster size cutoff. [Default = 10]
     -t  Number of threads to use.
 ```
-  
+
   
 
 ```
@@ -585,7 +585,7 @@ where:
     -t  Number of threads to use. [Default = 1]
     -b  Debug flag. Keep temp files. [Default = NO]
 ```
-  
+
   
 
 
