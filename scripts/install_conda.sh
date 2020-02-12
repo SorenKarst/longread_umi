@@ -80,7 +80,7 @@ git clone \
   $CONDA_PREFIX/longread_umi
 
 # Modify adapters.py
-\cp \
+cp \
   $CONDA_PREFIX/longread_umi/scripts/adapters.py \
   $CONDA_PREFIX/lib/python3.6/site-packages/porechop/adapters.py
 
