@@ -416,6 +416,7 @@ export -f subsample_phasing
 # Threads handling
 CLUSTER_JOBS=10
 CLUSTER_THREADS=$(( $THREADS/$CLUSTER_JOBS ))
+[ "$CLUSTER_THREADS" -gt 1 ] || CLUSTER_THREADS=1
 
 # Format names
 CONSENSUS_NAME=${CONSENSUS_FILE##*/}
