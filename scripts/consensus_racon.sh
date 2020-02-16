@@ -18,13 +18,14 @@ USAGE="
    Raw read centroid found with usearch and used as seed for
    (r) x times racon polishing.
 
-usage: $(basename "$0" .sh) [-h] (-d dir -o dir -r value -t value -n file) 
+usage: $(basename "$0" .sh) [-h] (-d dir -o dir -p string -r value -t value -n file) 
 
 where:
     -h  Show this help text.
     -d  Directory containing UMI read bins in the format
         'umi*bins.fastq'. Recursive search.
     -o  Output directory.
+    -p  Minimap2 preset. 'map-ont' for Nanopore and 'asm5' for PacBio CCS.
     -r  Number of racon polishing rounds.
     -t  Number of threads to use.
     -n  Process n number of bins. If not defined all bins
@@ -34,11 +35,12 @@ where:
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:o:r:t:n:' OPTION; do
+while getopts ':hzd:o:p:r:t:n:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) IN=$OPTARG;;
     o) OUT=$OPTARG;;
+    p) PRESET=$OPTARG;;
     r) ROUNDS=$OPTARG;;
     t) THREADS=$OPTARG;;
     n) SAMPLE=$OPTARG;;
@@ -51,6 +53,7 @@ done
 MISSING="is missing but required. Exiting."
 if [ -z ${IN+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
 if [ -z ${OUT+x} ]; then echo "-o $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${PRESET+x} ]; then echo "-p $MISSING"; echo "$USAGE"; exit 1; fi; 
 if [ -z ${ROUNDS+x} ]; then echo "-r $MISSING"; echo "$USAGE"; exit 1; fi; 
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 
@@ -94,7 +97,7 @@ seed_racon () {
   for i in `seq 1 $ROUNDS`; do
     $MINIMAP2 \
       -t 1 \
-      -x map-ont \
+      -x $PRESET \
       $OUT/${UMINO}_sr.fa \
       $RB > $OUT/ovlp.paf
 
@@ -104,7 +107,7 @@ seed_racon () {
       -x -6 \
       -g -8 \
       -w 500 \
-	  --no-trimming \
+      --no-trimming \
       $RB \
       $OUT/ovlp.paf \
       $OUT/${UMINO}_sr.fa > $OUT/${UMINO}_tmp.fa

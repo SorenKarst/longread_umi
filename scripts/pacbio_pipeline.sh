@@ -180,6 +180,7 @@ CON_DIR=$OUT_DIR/$CON_NAME
 longread_umi consensus_racon \
   -d $UMI_DIR/read_binning/bins           `# Path to UMI bins`\
   -o ${CON_DIR}                           `# Output folder`\
+  -p asm5                                 `# Minimap preset`\
   -r $CON_N                               `# Number of racon polishing times`\
   -t $THREADS                             `# Number of threads`\
   -n $OUT_DIR/sample$UMI_SUBSET_N.txt     `# List of bins to process`
