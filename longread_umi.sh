@@ -18,7 +18,7 @@ SCRIPT_LIST=$(
 	-name '*.sh' \
 	-print |\
   sed \
-    -e '/install/d' \
+  -e '/install/d' \
 	-e '/dependen/d' \
 	-e 's|^.*/||' \
 	-e 's/.sh$//' |\
@@ -88,10 +88,11 @@ fi
 USAGE="
 -- longread_umi: pipelines and tools for longread UMI processing.
 
-usage: $(basename "$0" .sh) [-h] [ name ...]
+usage: $(basename "$0" .sh) [-h -v] ( name ...)
 
 where:
     -h   Show this help text.
+    -v   Show git version.
     name Name of tool or pipeline.
     ...  Commands for tool or pipeline.
 
@@ -110,9 +111,10 @@ longread_umi <name> -h
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hz' OPTION; do
+while getopts ':hzv' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
+    v) echo "$(git --git-dir ${LONGREAD_UMI_PATH}/.git describe --tag)"; exit 1;;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
     \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
   esac
