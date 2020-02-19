@@ -70,16 +70,22 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
 ### Test data
 1. Test the longread_umi initialization command in terminal  
     `longread_umi -h` or `/path/to/longread_umi.sh -h`
+    
 2. Test the nanopore_pipeline in terminal  
     `longread_umi nanopore_pipeline -h` or `/path/to/longread_umi.sh nanopore_pipeline -h`
+    
 3. Test longread_umi nanopore_pipeline and qc_pipeline on test data:  
    Go to /path/to/longread_umi/test_data and open a terminal in the directory.
-4. Run nanopore pipeline (< 10 minutes on desktop)
+   
+4. Run pipeline tests 
+   
+   *Nanopore R9.4.1 data (< 5 minutes on desktop)*
+   
    ```
    longread_umi nanopore_pipeline \
      -d test_reads.fq \
      -v 30 \
-     -o test \
+     -o test_r941 \
      -s 90 \
      -e 90 \
      -m 3500 \
@@ -92,25 +98,93 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
      -p 1 \
      -q r941_min_high_g330 \
      -t 1
+     
+   longread_umi qc_pipeline \
+  -d test_reads.fq \
+     -c test_r941/consensus_raconx3_medakax1.fa \
+     -r zymo_curated \
+     -t 1 \
+     -u test_r941 \
+     -o test_r941/qc
    ```
    
    Expected output
    - `consensus_raconx3_medakax1.fa` containing 9 UMI consensus sequences
    - `variants.fa` containing 3 variant consensus sequences
-
-7. Run qc pipeline (< 5 minutes on desktop)
+   
+   *Nanopore R10 data (< 25 minutes on desktop)*
+   
    ```
+   gunzip \
+     -c ont_r10_zymo_rrna.fq.gz > ont_r10_zymo_rrna.fq
+   
+   longread_umi nanopore_pipeline \
+     -d ont_r10_zymo_rrna.fq \
+     -o test_r10 \
+     -v 25 \
+     -q r10_min_high_g340 \
+     -m 3500 \
+     -M 6000 \
+     -s 90 \
+     -e 90 \
+     -f CAAGCAGAAGACGGCATACGAGAT \
+     -F AGRGTTYGATYMTGGCTCAG \
+     -r AATGATACGGCGACCACCGAGATC \
+     -R CGACATCGAGGTGCCAAAC \
+     -c 2 \
+     -p 2 \
+     -t 1
+     
    longread_umi qc_pipeline \
-     -d test_reads.fq \
-     -c test/consensus_raconx3_medakax1.fa \
+     -d <(gunzip -c ont_r10_zymo_rrna.fq.gz)\
+     -c test_r10/consensus_raconx2_medakax2.fa \
      -r zymo_curated \
      -t 1 \
-     -u test \
-     -o test/qc
+     -u test_r10 \
+     -o test_r10/qc
    ```
+   
    Expected output
    
-   - ...
+   - `consensus_raconx2_medakax2.fa` containing  98 UMI consensus sequences
+   - `variants.fa` containing 13 variant consensus sequences
+   
+   *PacBio SequelII CCS data (< 15 minutes on desktop)* 
+   
+   ```
+   gunzip \
+   -c pb_ccs_zymo_rrna.fq.gz > pb_ccs_zymo_rrna.fq
+   
+   longread_umi pacbio_pipeline \
+     -d pb_ccs_zymo_rrna.fq \
+     -o test_pb_ccs \
+     -v 3 \
+     -m 3500 \
+     -M 6000 \
+     -s 60 \
+     -e 60 \
+     -f CAAGCAGAAGACGGCATACGAGAT \
+     -F AGRGTTYGATYMTGGCTCAG \
+     -r AATGATACGGCGACCACCGAGATC \
+     -R CGACATCGAGGTGCCAAAC \
+     -c 2 \
+     -t 1
+     
+   longread_umi qc_pipeline \
+     -d pb_ccs_zymo_rrna.fq \
+     -c test_pb_ccs/consensus_raconx2.fa \
+     -r zymo_curated \
+     -t 1 \
+     -u test_pb_ccs \
+     -o test_pb_ccs/qc
+   ```
+   
+   Expected output
+   
+   - `consensus_raconx2.fa` containing 99 UMI consensus sequences
+   - `variants.fa` containing  13 variant consensus sequences
+   
+   
 
 
 ### Zymomock rRNA operon data
