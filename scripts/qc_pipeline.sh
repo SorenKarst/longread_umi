@@ -230,10 +230,8 @@ if [ ! -z ${SILVA+x} ]; then
     $CON1 > $OUT/${CON1_NAME}_ssu.fa
 
   # Map to SILVA database
-  $MINIMAP2 -a \
-    -k 15 \
-    -w 1 \
-    -K 100M \
+  $MINIMAP2 \
+    -ax map-ont \
     $SILVA \
     $OUT/${CON1_NAME}_ssu.fa \
     -t $THREADS --cs |\
@@ -243,9 +241,8 @@ if [ ! -z ${SILVA+x} ]; then
 	
 
   # Map to ref database
-  $MINIMAP2 -a \
-    -k 15 \
-    -w 1 \
+  $MINIMAP2 \
+    -ax map-ont \
     $REF1 \
     $OUT/${CON1_NAME}_ssu.fa \
     -t $THREADS --cs |\

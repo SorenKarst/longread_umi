@@ -419,7 +419,8 @@ lu_error_plot_tbl <- function(qc,
                               x = "umi_bin_size",
                               y = "ref_error",
                               breaks = c(seq(0,100,5), Inf),
-                              min_bin_size = 0){
+                              min_bin_size = 0,
+                              digits = 4){
   # Filter sequences
   qcf <- filter(qc,
                 umi_bin_size >= min_bin_size,
@@ -430,7 +431,7 @@ lu_error_plot_tbl <- function(qc,
                         y = qcf[,y] %>% unlist()) %>%
     mutate(grp = cut(x, breaks)) %>%
     group_by(grp) %>%
-    summarise(y = round(mean(y), 3), n = n())
+    summarise(y = round(mean(y), digits), n = n())
   colnames(qcf_tbl) <- c(paste(x, "grp", sep ="_"), y, "n")
   
   # Plot
@@ -441,7 +442,8 @@ lu_error_plot_tbl <- function(qc,
 lu_variant_error_tbl <- function(
   profile,
   title,
-  min_bin_size = 0
+  min_bin_size = 0,
+  digits = 4
 ){
   # Format data
   pf <- profile %>%
@@ -480,7 +482,7 @@ lu_variant_error_tbl <- function(
       )
     ) %>%
     mutate_at(vars(mm, ins, perfect, del), ~if_else(is.na(.), as.numeric(0), .)) %>%
-    mutate(error = round((del+ins+mm)/ref_alnlen*100, 4)) %>%
+    mutate(error = round((del+ins+mm)/ref_alnlen*100, digits)) %>%
     arrange(gsub("_.*", "", rname), as.integer(gsub(".*_|;.*", "", rname)), error) %>%
     select(rname, qname, del, ins, mm, error, cluster_size) %>%
     group_by(rname) %>%

@@ -1,8 +1,11 @@
 ## Process ONT UMI data from Zymomock rRNA amplicons
 
+Last updated `r Sys.Date()` 
+
 **Reference**
 
 * SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, & M Albertsen. (2020). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers with Nanopore or PacBio sequencing. [bioRxiv, 6459039](https://www.biorxiv.org/content/10.1101/645903v3).
+* Important: The longread_umi pipeline has been updated since the data was generated for the bioRxiv paper. The updates produces more UMI sequences from the same raw data, which has a small impact on the reported error and chimera rates. However, it does not impact the overall conclusions. 
 
 **Sample**
 
@@ -12,7 +15,7 @@
 **Library**
 
 * [UMI amplicon protocol at Protocols.io](https://www.protocols.io/private/F5C5FE21305911EAAC0B0242AC110003)
-* rRNA PCR primers: [8F] 5'-AGRGTTYGATYMTGGCTCAG and [1391R] 5'-GACGGGCGGTGWGTRCA
+* rRNA PCR primers: [8F] 5'-AGRGTTYGATYMTGGCTCAG and [2490R] 5'-CGACATCGAGGTGCCAAAC
 * Library: 1D amplicon/cDNA by ligation (SQK-LSK109)
 
 **Sequencing**
@@ -21,12 +24,16 @@
 * Instrument: MinION
 * Basecalling: guppy v3.4.4 with HAC model
 
-### Generate UMI consensus sequences
+### Generate UMI consensus sequences in BASH terminal
 
 Download and decompress data
 ```{bash eval=FALSE}
 wget "ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR381/ERR3813594/smkj412_zymo_D6306_rrna_umi_ont_min_r10_g344hac.fq.gz"
 gunzip -c smkj412_zymo_D6306_rrna_umi_ont_min_r10_g344hac.fq.gz > reads.fq
+
+wget "https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz"
+gunzip -c SILVA_132_SSURef_Nr99_tax_silva.fasta.gz | sed '/^>/! s/U/T/g' > silva_db.fasta
+rm SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 ```
 
 Generate UMI consensus sequences from raw read data
@@ -56,12 +63,13 @@ longread_umi qc_pipeline \
 -d "reads.fq" \
 -c "umi_out/consensus_raconx2_medakax2.fa;umi_out/variants.fa" \
 -r "zymo_curated" \
+-s silva_db.fasta \
 -u umi_out \
 -o umi_out/qc \
 -t 10
 ```
 
-## Validate UMI consensus sequences
+## Validate UMI consensus sequences in R-terminal
 
 Load longread_umi functions and create working directory
 ```{r eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
@@ -77,7 +85,7 @@ lu_compile_qc(
   umi_consensus = "consensus_raconx2_medakax2.fa",
   reference = "zymo-ref-uniq_2019-10-28.fa",
   read_orientation = "read_orientation.txt", 
-  silva = NULL,
+  silva = "ssu_silva_db.fa",
   out_path = "validation/ONT_R10_ZYMO_rRNA_qc.Rdata"
 )
 load("validation/ONT_R10_ZYMO_rRNA_qc.Rdata")
@@ -142,7 +150,7 @@ UMI Bin size statistics.
 summary(qc$umi_bin_size)
 ```
 
-Ratio between UMI cluster size and UMI bin size. Media around 4.
+Ratio between UMI cluster size and UMI bin size. Median around 2.4.
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 lu_plot_hist(
   qc$umi_bin_size/qc$umi_cluster_size,
@@ -152,7 +160,7 @@ lu_plot_hist(
 
 ### Error profiling
 
-Error rate versus UMI bin size of unfiltered data.
+Error rate versus UMI bin size of unfiltered data. Blue points are flagged as outliers and should be inspected to classify them as `contamination`, `chimeras` or `unknown`. 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 lu_artefact_plot(
   qc,
@@ -162,64 +170,72 @@ lu_artefact_plot(
   xlab("UMI Consensus read coverage")
 ```
 
-Flag contamination and chimeras. Flagged chimeras and contamination below match example data, for de novo processed data correct UMI names have to be inserted.
-```{r echo=TRUE, message=FALSE, warning=FALSE}
-cont <- tibble(
-  umi = c(
-    "umi191103bins",
-    "umi111976bins",
-    "umi217947bins",
-    "umi185324bins",
-    "umi191976bins",
-    "umi44490bins",
-    "umi14613bins",
-    "umi181378bins",
-    "umi6637bins",
-    "umi151082bins",
-    "umi35088bins",
-    "umi173219bins",
-    "umi163928bins",
-    "umi181158bins",
-    "umi6090bins",
-    "umi233806bins",
-    "umi19568bins",
-    "umi187615bins",
-    "umi185965bins",
-    "umi171705bins",
-    "umi171734bins"
-  ),
-  flag = "contamination"
-)
+The `contamination` in this data originates from the PCR reagents and should be removed before calculating error rates. UMI sequences are classified as contamination if the errors are evenly distributed and if a better match for the SSU part of the operon is found in the Silva database compared to the Zymo reference. `Chimeras` originate from the PCR it self, and these are removed from the data and reported seperately. Chimeras are classified if called by uchime2_ref and if errors are concentrated in either end of the sequence. `Unknown` can't be classified as either contamination or chimeras and are therefore kept in the dataset.
 
-chi <- tibble(
-  umi = c(
-    "umi12455bins",
-    "umi178211bins",
-    "umi158224bins",
-    "umi176163bins"
-  ),
-  flag = "chimera"
-)
+Extract outlier data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+outlier <- lu_artefact_plot(
+  qc,
+  breaks = c(seq(1,60,3), Inf)
+  ) %>% 
+  .$data %>%
+  filter(
+    aflag == "lightblue"
+  )
 ```
 
-Inspect chimeras and contamination. Sequences with "Y" have been flagged as chimeras by uchime2_ref.
+Detect contamination sequences. Compare error rates for the SSU part of the operon as calculated based on the Zymo references and the Silva database for the flagged UMI sequences.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+cont <- outlier %>%
+  select(umi, ref_ssu_error, silva_ssu_error) %>%
+  filter(silva_ssu_error < ref_ssu_error &  0.1 < ref_ssu_error - silva_ssu_error) %>%
+  arrange(desc(ref_ssu_error - silva_ssu_error)) %>%
+  mutate(flag = "cont")
+
+cont %>%
+  select(umi, ref_ssu_error, silva_ssu_error)
+```
+
+Detect chimeras sequences. UMI sequences determined to be contamination above are subtracted from the list of chimeric sequences detected by uchime2_ref.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+chi <- outlier %>%
+  select(umi, chimera) %>%
+  filter(chimera == "Y" & !(umi %in% cont$umi)) %>%
+  mutate(flag = "chi")
+
+chi %>%
+  select(umi, chimera)
+```
+
+Inspect classified sequences and if necessary manually curate classifications.
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 lu_errorpos_plot(
   ep,
-  filter(qc, umi %in% c(cont$umi, chi$umi)),
+  left_join(bind_rows(cont[c("umi", "flag")], chi[c("umi", "flag")]), qc, by = "umi"),
   species = "",
-  flag = "chimera"
-)
+  flag = "flag"
+) +
+  xlab(label = "Reference position") +
+  ylab(label = "UMI sequence")
 ```
 
-Plot contamination and chimeras for Bacillus
+Plot contamination and chimeras for Bacillus only.
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 lu_errorpos_plot(
   ep,
-  filter(qc, umi %in% c(cont$umi, chi$umi)),
+  left_join(bind_rows(cont[c("umi", "flag")], chi[c("umi", "flag")]), qc, by = "umi"),
   species = "Bacillus",
-  flag= "chimera"
+  flag= "flag"
 )
+```
+
+Calculate chimera rate.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+qc %>%
+filter(
+  !(umi %in% cont$umi),
+) %>%
+  {nrow(chi)/nrow(.)*100}
 ```
 
 Filter data to remove chimeras and contamination
@@ -270,7 +286,14 @@ epff <- filter(
   epf,
   sub(";.*", "", qname) %in% qcff$umi,
 )
+
+qcff %>%
+  summarise(
+    `UMI sequences (n)` = n(),
+    `Mean error rate (%)` = sum(ref_error)/n()
+    )
 ```
+
 
 Error type summary for >=25x data.
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
@@ -293,7 +316,7 @@ lu_ref_error_frequency(
 )
 ```
 
-Error rate divided by operon for >=25x data.
+Error counts divided by operon for >=25x data.
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 lu_ref_error_plot(
   profile = epff

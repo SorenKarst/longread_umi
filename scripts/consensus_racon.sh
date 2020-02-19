@@ -18,13 +18,15 @@ USAGE="
    Raw read centroid found with usearch and used as seed for
    (r) x times racon polishing.
 
-usage: $(basename "$0" .sh) [-h] (-d dir -o dir -r value -t value -n file) 
+usage: $(basename "$0" .sh) [-h] (-d dir -o dir -p string -r value -t value -n file -a string) 
 
 where:
     -h  Show this help text.
     -d  Directory containing UMI read bins in the format
         'umi*bins.fastq'. Recursive search.
     -o  Output directory.
+    -p  Minimap2 preset. 'map-ont' for Nanopore and 'asm20' for PacBio CCS.
+    -a  Additional arguments for racon.
     -r  Number of racon polishing rounds.
     -t  Number of threads to use.
     -n  Process n number of bins. If not defined all bins
@@ -34,11 +36,13 @@ where:
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:o:r:t:n:' OPTION; do
+while getopts ':hzd:o:p:a:r:t:n:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) IN=$OPTARG;;
     o) OUT=$OPTARG;;
+    p) PRESET=$OPTARG;;
+    a) RACON_ARG=$OPTARG;;
     r) ROUNDS=$OPTARG;;
     t) THREADS=$OPTARG;;
     n) SAMPLE=$OPTARG;;
@@ -51,6 +55,8 @@ done
 MISSING="is missing but required. Exiting."
 if [ -z ${IN+x} ]; then echo "-d $MISSING"; echo "$USAGE"; exit 1; fi; 
 if [ -z ${OUT+x} ]; then echo "-o $MISSING"; echo "$USAGE"; exit 1; fi; 
+if [ -z ${PRESET+x} ]; then echo "-p $MISSING"; echo "$USAGE"; exit 1; fi;
+if [ -z ${RACON_ARG+x} ]; then RACON_ARG=""; fi; 
 if [ -z ${ROUNDS+x} ]; then echo "-r $MISSING"; echo "$USAGE"; exit 1; fi; 
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 
@@ -72,6 +78,8 @@ seed_racon () {
   local RB=$1
   local OUT=$2
   local ROUNDS=$3
+  local PRESET=$4
+  local RACON_ARG=$5
 
   # Name format
   local UMINO=${RB##*/}
@@ -94,7 +102,7 @@ seed_racon () {
   for i in `seq 1 $ROUNDS`; do
     $MINIMAP2 \
       -t 1 \
-      -x map-ont \
+      -x $PRESET \
       $OUT/${UMINO}_sr.fa \
       $RB > $OUT/ovlp.paf
 
@@ -104,7 +112,7 @@ seed_racon () {
       -x -6 \
       -g -8 \
       -w 500 \
-	  --no-trimming \
+      $RACON_ARG \
       $RB \
       $OUT/ovlp.paf \
       $OUT/${UMINO}_sr.fa > $OUT/${UMINO}_tmp.fa
@@ -120,7 +128,11 @@ export -f seed_racon
 # Perform assembly in parallel
 find $IN -name 'umi*bins.fastq'  |\
   ( [[ -f "${SAMPLE}" ]] && grep -Ff $SAMPLE || cat ) |\
-  $GNUPARALLEL --env seed_racon --progress -j $THREADS "seed_racon {} $OUT $ROUNDS"
+  $GNUPARALLEL \
+    --env seed_racon \
+    --progress \
+    -j $THREADS \
+    "seed_racon {} $OUT $ROUNDS $PRESET $RACON_ARG"
 
 #Collect seed-racon consensus sequences
 OUT_NAME=${OUT##*/}

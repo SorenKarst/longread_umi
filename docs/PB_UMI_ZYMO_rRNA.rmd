@@ -1,0 +1,340 @@
+## Process PB UMI data from Zymomock rRNA amplicons
+
+Last updated `r Sys.Date()` 
+
+**Reference**
+
+* SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, & M Albertsen. (2020). Enabling high-accuracy long-read amplicon sequences using unique molecular identifiers with Nanopore or PacBio sequencing. [bioRxiv, 6459039](https://www.biorxiv.org/content/10.1101/645903v3).
+* Important: The longread_umi pipeline has been updated since the data was generated for the bioRxiv paper. The updates produces more UMI sequences from the same raw data, which has a small impact on the reported error and chimera rates. However, it does not impact the overall conclusions. 
+
+**Sample**
+
+* ZymoBIOMICS Microbial Community DNA Standard (D6306, lot no. ZRC190811, Zymo Research)
+* 8 bacterial species: Bacillus subtilis, Enterococcus faecalis, Escherichia coli, Lactobacillus fermentum, Listeria monocytogenes, Pseudomonas aeruginosa, Salmonella enterica, Staphylococcus aureus.
+
+**Library**
+
+* [UMI amplicon protocol at Protocols.io](https://www.protocols.io/private/F5C5FE21305911EAAC0B0242AC110003)
+* rRNA PCR primers: [8F] 5'-AGRGTTYGATYMTGGCTCAG and [2490R] 5'-CGACATCGAGGTGCCAAAC
+* Library: SMRTbell Express Template Preparation Kit 1.0
+
+**Sequencing**
+
+* Flowcell: SMRT Cell 8M
+* Instrument: Sequel II
+* Circular consensus: CCS version 3.4.1
+
+### Generate UMI consensus sequences in BASH terminal
+
+Download and decompress data
+```{bash eval=FALSE}
+wget "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR381/006/ERR3813246/ERR3813246_subreads.fastq.gz"
+gunzip -c ERR3813246_subreads.fastq.gz > reads.fq
+
+wget "https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz"
+gunzip -c SILVA_132_SSURef_Nr99_tax_silva.fasta.gz | sed '/^>/! s/U/T/g' > silva_db.fasta
+rm SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
+```
+
+Generate UMI consensus sequences from raw read data
+```{bash eval=FALSE}
+longread_umi pacbio_pipeline \
+  -d reads.fq \
+  -o umi_out \
+  -v 3 \
+  -m 3500 \
+  -M 6000 \
+  -s 60 \
+  -e 60 \
+  -f CAAGCAGAAGACGGCATACGAGAT \
+  -F AGRGTTYGATYMTGGCTCAG \
+  -r AATGATACGGCGACCACCGAGATC \
+  -R CGACATCGAGGTGCCAAAC \
+  -c 2 \
+  -t 10
+```
+
+Generate validation data from UMI consensus sequences
+```{bash eval=FALSE}
+longread_umi qc_pipeline \
+-d "reads.fq" \
+-c "umi_out/consensus_raconx2.fa;umi_out/variants.fa" \
+-r "zymo_curated" \
+-s silva_db.fasta \
+-u umi_out \
+-o umi_out/qc \
+-t 10
+```
+
+## Validate UMI consensus sequences in R-terminal
+
+Load longread_umi functions and create working directory
+```{r eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+source("longread_umi/scripts/validation_functions.R")
+# Conda path: $CONDA_PREFIX/longread_umi/scripts/validation_functions.R"
+dir.create("./validation")
+```
+
+Compile validation data and generate error profile
+```{r eval=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+lu_compile_qc(
+  data_dir = "umi_out/qc",
+  umi_consensus = "consensus_raconx2.fa",
+  reference = "zymo-ref-uniq_2019-10-28.fa",
+  read_orientation = "read_orientation.txt", 
+  silva = "ssu_silva_db.fa",
+  out_path = "validation/PB_CCS_ZYMO_rRNA_qc.Rdata"
+)
+load("validation/PB_CCS_ZYMO_rRNA_qc.Rdata")
+
+ep <- lu_error_profile(
+  refs = "umi_out/qc/zymo-ref-uniq_2019-10-28.fa",
+  sam = "umi_out/qc/consensus_raconx2.sam"
+)
+save(ep, file = "validation/PB_CCS_ZYMO_rRNA_ep.Rdata")
+```
+
+
+Or load pregenerated data (e.g. longread_umi/docs/rdata/)
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+load("validation/PB_CCS_ZYMO_rRNA_qc.Rdata")
+load("validation/PB_CCS_ZYMO_rRNA_ep.Rdata")
+```
+
+
+Remove UMI sequences without primers in both ends
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+qc <- filter(
+  qc,
+  !is.na(length) # remove umi bins where one or both gene specific primers was not found in the consensus sequence.
+)
+
+ep <- filter(
+  ep,
+  sub(";.*","", qname) %in% qc$umi
+)
+```
+
+
+### Basic data characteristics
+
+Plot read size distribution.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_plot_hist(
+  value = read_lengths, 
+  bin_width = 100
+  ) +
+  xlab(label = "Read lenght (bp)")
+```
+
+Plot UMI cluster size distribution.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_plot_hist(qc$umi_cluster_size, 1) +
+  xlab(label = "UMI cluster size (n reads)")
+```
+
+Plot UMI bin size distribution
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_plot_hist(
+  qc$umi_bin_size,
+  1
+) + 
+  xlab(label = "UMI bin size (n reads)")
+```
+
+UMI Bin size statistics.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+summary(qc$umi_bin_size)
+```
+
+Ratio between UMI cluster size and UMI bin size. Median around 1.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_plot_hist(
+  qc$umi_bin_size/qc$umi_cluster_size,
+  1
+)
+```
+
+### Error profiling
+
+Error rate versus UMI bin size of unfiltered data. Blue points are flagged as outliers and should be inspected to classify them as `contamination`, `chimeras` or `unknown`. 
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_artefact_plot(
+  qc,
+  breaks = c(seq(1,60,3), Inf)
+  ) +
+  ylab("Error rate (%)") +
+  xlab("UMI Consensus read coverage")
+```
+
+The `contamination` in this data originates from the PCR reagents and should be removed before calculating error rates. UMI sequences are classified as contamination if the errors are evenly distributed and if a better match for the SSU part of the operon is found in the Silva database compared to the Zymo reference. `Chimeras` originate from the PCR it self, and these are removed from the data and reported seperately. Chimeras are classified if called by uchime2_ref and if errors are concentrated in either end of the sequence. `Unknown` can't be classified as either contamination or chimeras and are therefore kept in the dataset.
+
+Extract outlier data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+outlier <- lu_artefact_plot(
+  qc,
+  breaks = c(seq(1,60,3), Inf)
+  ) %>% 
+  .$data %>%
+  filter(
+    aflag == "lightblue"
+  )
+```
+
+Detect contamination sequences. Compare error rates for the SSU part of the operon as calculated based on the Zymo references and the Silva database for the flagged UMI sequences.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+cont <- outlier %>%
+  select(umi, ref_ssu_error, silva_ssu_error) %>%
+  filter(silva_ssu_error < ref_ssu_error &  0.1 < ref_ssu_error - silva_ssu_error) %>%
+  arrange(desc(ref_ssu_error - silva_ssu_error)) %>%
+  mutate(flag = "cont")
+
+cont %>%
+  select(umi, ref_ssu_error, silva_ssu_error)
+```
+
+Detect PacBio artefacts. PacBio artefacts contain artificial long stretches of homopolymer inserts. They occur in the raw CCS data and remain during polishing. These have to be manually detected and the UMI names will be different every time the data is generated.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+art_umi <- filter(ep, grepl("a{5,}|c{5,}|t{5,}|g{5,}", type)) %>% {gsub(";.*", "", unique(.$qname))}
+art <- outlier %>%
+  filter(umi %in% art_umi & !(umi %in% cont$umi)) %>%
+  mutate(flag = "art")
+
+art %>%
+  select(umi, flag)
+```
+
+Detect chimeras sequences. UMI sequences determined to be contamination above are subtracted from the list of chimeric sequences detected by uchime2_ref.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+chi <- outlier %>%
+  select(umi, chimera) %>%
+  filter(chimera == "Y" & !(umi %in% cont$umi) & !(umi %in% art$umi)) %>%
+  mutate(flag = "chi")
+
+chi %>%
+  select(umi, chimera)
+```
+
+Inspect classified sequences and if necessary manually curate classifications.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_errorpos_plot(
+  ep,
+  left_join(bind_rows(cont[c("umi", "flag")], chi[c("umi", "flag")], art[c("umi", "flag")]), qc, by = "umi"),
+  species = "",
+  flag = "flag"
+) +
+  xlab(label = "Reference position") +
+  ylab(label = "UMI sequence")
+```
+
+Plot contamination and chimeras for Bacillus only.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_errorpos_plot(
+  ep,
+  left_join(bind_rows(cont[c("umi", "flag")], chi[c("umi", "flag")], art[c("umi", "flag")]), qc, by = "umi"),
+  species = "Bacillus",
+  flag= "flag"
+)
+```
+
+Calculate chimera rate.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+qc %>%
+filter(
+  !(umi %in% cont$umi),
+  !(umi %in% art$umi)
+) %>%
+  {nrow(chi)/nrow(.)*100}
+```
+
+Filter data to remove chimeras and contamination
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+qcf <- filter(
+  qc,
+  !(umi %in% cont$umi),
+  !(umi %in% art$umi),
+  !(umi %in% chi$umi)
+)
+epf <- filter(
+  ep,
+  !(sub(";.*", "", qname) %in% cont$umi),
+  !(sub(";.*", "", qname)  %in% chi$umi),
+  !(sub(";.*", "", qname)  %in% art$umi),  
+)
+```
+
+Error rate versus UMI bin size of filtered data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_error_plot(
+  qcf
+  ) +
+  ylab("Error rate (%)") +
+  xlab("UMI Consensus read coverage") +
+  ylim(0,0.5)
+```
+
+Plot UMI bin size versus error types of filtered data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_errortype_plot(
+  epf,
+  ref_hp
+  ) +
+  ylab("Error rate (%)") +
+  xlab("UMI Consensus read coverage") +
+  ylim(0,0.5)
+```
+
+Error rate versus UMI bin size intervals of filtered data
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_error_plot_tbl(qcf, digits = 5) 
+```
+
+Filter data < 3x UMI bin size.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+qcff <- filter(
+  qcf,
+  umi_bin_size >= 3
+)
+epff <- filter(
+  epf,
+  sub(";.*", "", qname) %in% qcff$umi,
+)
+
+qcff %>%
+  summarise(
+    `UMI sequences (n)` = n(),
+    `Mean error rate (%)` = sum(ref_error)/n()
+    )
+```
+
+
+Error type summary for >=3x data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_errortype_summary(
+  profile = epff,
+  digits = 5,
+  title = NULL
+)
+```
+
+Plot error frequency pr position of Salmonella operon 7 for >=25x data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_ref_error_frequency(
+  profile= epff,
+  species = "Salmonella_7",
+  lower_cut_off = 0.01,
+  label_cut_off = 0.02,
+  label_col = "type",
+  ylim = c(0,1)
+)
+```
+
+Error counts divided by operon for >=25x data.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lu_ref_error_plot(
+  profile = epff
+) +
+  ylim(0,10)
+```
+
