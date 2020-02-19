@@ -100,7 +100,7 @@ SM Karst, RM Ziels, RH Kirkegaard, EA Sørensen, D. McDonald, Q Zhu, R Knight, &
      -t 1
      
    longread_umi qc_pipeline \
-  -d test_reads.fq \
+    -d test_reads.fq \
      -c test_r941/consensus_raconx3_medakax1.fa \
      -r zymo_curated \
      -t 1 \
@@ -243,8 +243,12 @@ Bacterial rRNA operon (~4300 bp) | ZymoBIOMICS Microbial Community DNA Standard 
 
 ## Example analysis
 
+
+
 - [ONT R10 Zymomock rRNA - generate UMI consensus sequences and validate data](https://htmlpreview.github.io/?https://github.com/SorenKarst/longread_umi/blob/master/docs/ONT_R10_ZYMO_rRNA.html)  
-  
+- [PB CCS Zymomock rRNA - generate UMI consensus sequences and validate data](https://htmlpreview.github.io/?https://github.com/SorenKarst/longread_umi/blob/master/docs/PB_UMI_ZYMO_rRNA.html)  
+
+
 
 ## Usage
 
