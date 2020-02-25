@@ -8,6 +8,9 @@
 #    license  GNU General Public License
 #
 
+### Error handling ------------------------------------------------------------
+#set -euo pipefail -o noclobber
+
 ### List tools ----------------------------------------------------------------
 export LONGREAD_UMI_PATH="$(dirname "$(readlink -f "$0")")"
 
@@ -26,6 +29,7 @@ SCRIPT_LIST=$(
   )
 
 # Call -h for all scripts
+DOCS=""
 for SCRIPT in $SCRIPT_LIST; do
 DOCS="${DOCS}
 \`\`\`

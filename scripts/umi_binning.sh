@@ -22,7 +22,7 @@ USAGE="
 
 usage: $(basename "$0" .sh) [-h] (-d file -o dir -m value -M value )
 (-s value -e value -f string -F string -r string -R string -p )
-(-u value -U value -O value -S value -t value) 
+(-u value -U value -O value -S value -t value -T value) 
 
 where:
     -h  Show this help text.
@@ -46,12 +46,13 @@ where:
     -N  Max number of reads with +/- orientation. [Default = 10000]
     -S  UMI bin size/UMI cluster size cutoff. [Default = 10]
     -t  Number of threads to use.
+    -T  Number of threads to use for splitting reads into UMI bins. [Default is same as -t]
 "
 
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:o:m:M:s:e:f:F:r:R:pt:u:U:O:N:S:' OPTION; do
+while getopts ':hzd:o:m:M:s:e:f:F:r:R:pt:u:U:O:N:S:T:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) READ_IN=$OPTARG;;
@@ -71,6 +72,7 @@ while getopts ':hzd:o:m:M:s:e:f:F:r:R:pt:u:U:O:N:S:' OPTION; do
     N) MAX_BIN_SIZE=$OPTARG;;
     S) BIN_CLUSTER_RATIO=$OPTARG;;
     t) THREADS=$OPTARG;;
+    T) BIN_THREADS=$OPTARG;;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
     \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
   esac
@@ -94,6 +96,7 @@ if [ -z ${RO_FRAC+x} ]; then echo "-O $MISSING"; echo ""; echo "$USAGE"; exit 1;
 if [ -z ${MAX_BIN_SIZE+x} ]; then echo "-N is missing. Defaulting to 10000 +/- reads ."; MAX_BIN_SIZE=10000; fi;
 if [ -z ${BIN_CLUSTER_RATIO+x} ]; then echo "-S is missing. Defaulting to 10 ."; BIN_CLUSTER_RATIO=10; fi;
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
+if [ -z ${BIN_THREADS+x} ]; then BIN_THREADS=$THREADS; fi;
 
 
 ### Source commands and subscripts -------------------------------------
@@ -150,7 +153,7 @@ if [ -z ${TRIM_FLAG+x} ]; then
   rm $TRIM_DIR/*.tmp
 else
 # Create symlink if already trimmed.
-  ln -s $PWD/$READ_IN $PWD/$TRIM_DIR/reads_tf.fq  
+  ln -s $(readlink -f $READ_IN) $(readlink -f $TRIM_DIR)/reads_tf.fq  
 fi
 
 ### Extract UMI references sequences ------------------------------------------- 
@@ -584,151 +587,58 @@ $GAWK \
 
 umi_binning() {
   # Input
-  local UMIMAP=$1
-  local OUT=$2
+  local READS=$1
+  local UMIMAP=$2
+  local OUT=$3
 
   # Binning
+  $GAWK '
+    NR==FNR{
+      UMI_SUBSET[$0]=""
+      next
+    }
+    {
+      if ($1 in UMI_SUBSET){
+        print $0
+      }
+    }
+  ' - $UMIMAP |\
   $GAWK -v out="$OUT" '
-    BEGIN {g=1; outsub="./"out"/"g; system("mkdir \047" outsub "\047");}
     NR==FNR {
       # Get read name
       sub(";.*", "", $1);
       # Associate read name and umi match
       bin[$2]=$1;
-      # Assign umi to a folder group if it has none
-      if (foldergrp[$1] == ""){
-        j++;
-        if (j <= 4000){
-          foldergrp[$1]=g;
-        } else {
-          j = 0;
-          g++;
-          foldergrp[$1]=g;
-          outsub="./"out"/"g;
-          system("mkdir \047" outsub "\047");
-        }
-      }
       next;
     }
     FNR%4==1 {
       read=substr($1,2);
       bin_tmp=bin[read]
       if ( bin_tmp != "" ){
-        binfile=out"/"foldergrp[bin_tmp]"/"bin_tmp"bins.fastq";
-        print > binfile;
-        getline; print > binfile;
-        getline; print > binfile;
-        getline; print > binfile;
+        binfile=out"/"bin_tmp"bins.fastq";
+        READ_RECORD=$0
+        getline; READ_RECORD=READ_RECORD"\n"$0
+        getline; READ_RECORD=READ_RECORD"\n"$0
+        getline; print READ_RECORD"\n"$0 > binfile;
       }
     }
-  ' $UMIMAP -
+  ' - $READS
 }
 
 export -f umi_binning
 
-cat $TRIM_DIR/reads_tf.fq |\
+cut -d " " -f1 $BINNING_DIR/umi_bin_map.txt |\
+  sort -u |\
   $GNUPARALLEL \
     --env umi_binning \
-    -L4 \
+    -N 4000 \
 	-j $THREADS \
-	--block 300M \
 	--pipe \
-  "mkdir $BINNING_DIR/bins/job{#};\
-  cat | umi_binning $BINNING_DIR/umi_bin_map.txt\
-  $BINNING_DIR/bins/job{#}"
-
-aggregate_bins() {
-  # Input
-  local IN=$1
-  local OUTDIR=$2
-  local OUTNAME=$3
-  local JOB=$4
-
-  # Determine output folder
-  local BIN=$(( ($JOB - 1)/4000 ))
-  mkdir -p $OUTDIR/$BIN
-
-  # Aggregate data
-  cat $IN > $OUTDIR/$BIN/$OUTNAME  
-}
-
-export -f aggregate_bins
-
-find $BINNING_DIR/bins/*/*/ -name "*bins.fastq" -printf "%f\n" |\
-  sort |\
-  uniq |\
-  $GNUPARALLEL \
-    --env aggregate_bins \
-    -j $THREADS \
-	"aggregate_bins '$BINNING_DIR/bins/*/*/'{/} \
-    $BINNING_DIR/bins {/} {#}"
-
-rm -r $BINNING_DIR/bins/job*
-
-## Testing
-exit 0
-# Filtering based on sub UMIs
-cat \
-  $UMI_DIR/reads_tf_start.fq \
-  <($SEQTK seq -r $UMI_DIR/reads_tf_end.fq) |\
-$CUTADAPT \
-  -j $THREADS \
-  -e 0.2 \
-  -O 11 \
-  -m 18 \
-  -M 18 \
-  --discard-untrimmed \
-  -g $FW1...$FW2 \
-  -g $RV1...$RV2 \
-  - 2> $UMI_DIR/sumi_trim.log |\
-  $GAWK '
-    NR%4==1{print ">" substr($1, 2)}
-    NR%4==2{print $0}
-  ' > $UMI_DIR/sumi.fa
-
-$USEARCH \
-  -fastx_uniques $UMI_DIR/sumi.fa \
-  -fastaout $UMI_DIR/sumi_u.fa \
-  -relabel sumi \
-  -strand plus \
-  -sizeout \
-  -minuniquesize 2
-
-PATTERN="[ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{3}[CT][AG][ATCG]{3}"
-grep -B1 -E "$PATTERN" $UMI_DIR/sumi_u.fa |\
-  sed '/^--$/d' > $UMI_DIR/sumi_f.fa
-
-$SEQTK seq -r $UMI_DIR/sumi_f.fa > $UMI_DIR/sumi_frc.fa
-
-$GAWK \
-  -v UF="$UMI_DIR/sumi_f.fa" \
-  -v UR="$UMI_DIR/sumi_frc.fa" \
-  -v UFR="umi12u.fa" \
-  '
-  (FILENAME == UF && FNR%2==1){
-    SIZE=$1
-    sub(".*=|;", "", SIZE)
-    getline
-    UMI_FWD[$0]=SIZE
-  }
-  (FILENAME == UR && FNR%2==1){
-    SIZE=$1
-    gsub(".*=|;", "", SIZE)
-    getline
-    UMI_RV[$0]=SIZE
-  }
-  (FILENAME == UFR && FNR%2==1){
-    NAME=$1
-    getline
-    # Extract UMI1 and UMI2 in both orientations
-    s1 = substr($1, 1, 18);
-    s2 = substr($1, 19, 36);
-    if (s1 in UMI_FWD && s2 in UMI_RV){
-      print NAME UMI_FWD[s1] ";" UMI_RV[s2] ";" s1 ";" s2 ";\n" $1 
-    }
-  }
- ' \
- $UMI_DIR/sumi_f.fa \
- $UMI_DIR/sumi_frc.fa \
- $UMI_DIR/umi12u.fa \
- > $UMI_DIR/umi12uf.fa
+  "
+    mkdir $BINNING_DIR/bins/{#}
+    cat |\
+      umi_binning \
+        $TRIM_DIR/reads_tf.fq \
+        $BINNING_DIR/umi_bin_map.txt \
+        $BINNING_DIR/bins/{#}
+  "
