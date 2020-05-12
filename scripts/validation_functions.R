@@ -1103,6 +1103,7 @@ lu_errortype_plot <- function(
 lu_errortype_plot_tbl <- function(
                               profile,
                               break_size = 5,
+                              max_size = 100,
                               digits = 3,
                               title){
   
@@ -1113,10 +1114,10 @@ lu_errortype_plot_tbl <- function(
       umi_bin_size = as.integer(gsub(".*ubs=", "", qname)),
       qname = gsub(";.*", "", qname),
       ubs_grp = {
-        breaks= c(seq(0,100,break_size)-1, Inf)
+        breaks= c(seq(0,max_size,break_size)-1, Inf)
         lab = paste(
-          c("2",seq(break_size,100 - break_size, break_size), ""),
-          c(paste("-", seq(break_size,100,break_size)-1, sep = ""),"100+"),
+          c("2",seq(break_size,max_size - break_size, break_size), ""),
+          c(paste("-", seq(break_size,max_size,break_size)-1, sep = ""),paste(max_size, "+", sep ="")),
           sep = ""
         )
         cut(umi_bin_size, breaks, lab)
