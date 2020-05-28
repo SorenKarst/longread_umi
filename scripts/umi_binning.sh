@@ -555,7 +555,6 @@ $GAWK \
       umi_me_sq[UMI] += (match_err[r])^2
       # Create list of UMIs
       umi_n[UMI]++ 
-	  print "check", r, match_umi[r]
     }
 
     # Check UMI match error
