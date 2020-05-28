@@ -160,7 +160,6 @@ if [ -z ${UMI_DIR+x} ]; then
     -R $RV2              `# Reverse primer sequence` \
     -u 3                 `# UMI match error filter` \
     -U 30                `# UMI match error SD filter` \
-    -O 0.05              `# Min read orientation fraction` \
     -N 10000             `# Maximum number of reads +/-` \
     -S 10                `# UMI bin/cluster ratio cutoff` \
     -t $THREADS          `# Number of threads` \
