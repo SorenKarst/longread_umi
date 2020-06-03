@@ -79,10 +79,12 @@ git clone \
   https://github.com/SorenKarst/longread-UMI-pipeline.git \
   $CONDA_PREFIX/longread_umi
 
-# Modify adapters.py
-cp \
-  $CONDA_PREFIX/longread_umi/scripts/adapters.py \
-  $CONDA_PREFIX/lib/python3.6/site-packages/porechop/adapters.py
+# Modify porechop to look for adapters.py in pythonpath
+rm $CONDA_PREFIX/longread_umi/scripts/adapters.py
+sed \
+  -i \
+  's|from \.adapters import ADAPTERS|from adapters import ADAPTERS|' \
+  $CONDA_PREFIX/lib/python3.6/site-packages/porechop/porechop.py
 
 # Create links to pipeline
 find \

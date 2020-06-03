@@ -15,6 +15,10 @@
 #    Add bin size limit
 #    Add mapping against adaptors to remove UMI artifacts
 
+### Source commands and subscripts -------------------------------------
+. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
+
+### info ---------------------------------------------------------------
 USAGE="
 -- longread_umi umi_binning: Longread UMI detection and read binning.
    Tool requires UMIs in both ends of the read flanked by defined
@@ -98,10 +102,6 @@ if [ -z ${BIN_CLUSTER_RATIO+x} ]; then echo "-S is missing. Defaulting to 10 .";
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 if [ -z ${BIN_THREADS+x} ]; then BIN_THREADS=$THREADS; fi;
 
-
-### Source commands and subscripts -------------------------------------
-. $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
-
 ### Primer formating
 revcom() {
   echo $1 |\
@@ -121,7 +121,40 @@ mkdir $TRIM_DIR
 
 # Trim data
 if [ -z ${TRIM_FLAG+x} ]; then
+  # Prepare porechop adapters
 
+  # Define part of adapters.py to modify
+  LEAD='^                    end_sequence=('\''SQK-NSK007_Y_Bottom'\'', '\''GCAATACGTAACTGAACGAAGT'\'')),$'
+  TAIL='^def make_full_native_barcode_adapter(barcode_num):'
+  
+  # Format adapters - 12 bp substrings
+  FW1_12=$(echo ${FW1:0:12})
+  RV1_12=$(echo ${RV1:0:12})
+  FW1R_12=$(revcom "$FW1_12")
+  RV1R_12=$(revcom "$RV1_12")
+  
+  # Generate custom adapters.py
+  ADAPTER_FMT="
+            Adapter('LU_ADP_FWRV',
+                    start_sequence=('lu_adpfwrv', '${FW1R_12}${RV1_12}'),
+                    end_sequence=('lu_adpfwrv_rv', '${RV1R_12}${FW1_12}')),
+            Adapter('LU_ADP_FWFW',
+                    start_sequence=('lu_adpfwfw', '${FW1R_12}${FW1_12}'),
+                    end_sequence=('lu_adpfwfw_rv', '${FW1R_12}${FW1_12}')),
+            Adapter('LU_ADP_RVRV',
+                    start_sequence=('lu_adprvrv', '${RV1R_12}${RV1_12}'),
+                    end_sequence=('lu_adprvrv_rv', '${RV1R_12}${RV1_12}'))]"
+
+  echo -e "$ADAPTER_FMT\n\n\n" > $TRIM_DIR/adapters.tmp
+
+  sed \
+  -e "/$LEAD/,/$TAIL/{ /$LEAD/{p; r $TRIM_DIR/adapters.tmp
+      }; /$TAIL/p; d }"  $LONGREAD_UMI_PATH/scripts/adapters.py \
+  > $TRIM_DIR/adapters.py
+  
+  # Add working folder to python path
+  export PYTHONPATH=$PYTHONPATH:$TRIM_DIR
+  
   # Perform porechop and filtlong in parallel
   FT_THREADS=$(( $THREADS/10 ))
   if (( FT_THREADS < 1 )); then
@@ -151,6 +184,7 @@ if [ -z ${TRIM_FLAG+x} ]; then
   # Concatenate temp files
   cat $TRIM_DIR/*_filt.tmp > $TRIM_DIR/reads_tf.fq
   rm $TRIM_DIR/*.tmp
+  rm -rf $TRIM_DIR/__pycache__
 else
 # Create symlink if already trimmed.
   ln -s $(readlink -f $READ_IN) $(readlink -f $TRIM_DIR)/reads_tf.fq  
@@ -496,7 +530,7 @@ $GAWK \
       # Calculate read orientation fraction
       for (u in umi_ro_plus){
         # Check read orientation fraction
-        if (umi_ro_plus[u] > 1 && umi_ro_neg[u] > 1){
+        if (umi_ro_plus[u] >= 1 && umi_ro_neg[u] >= 1){
           if (umi_ro_plus[u]/(umi_ro_neg[u]+umi_ro_plus[u]) < RO_FRAC ){
             rof_check[u]="rof_subset"
             ROF_N = umi_ro_plus[u]*(1/RO_FRAC-1)
@@ -515,7 +549,7 @@ $GAWK \
           }
         } else {
           rof_check[u]="rof_fail"
-          rof_sub_target[u] = 0
+          rof_sub_target[u] = "NA"
         }
       }
       
@@ -598,10 +632,10 @@ $GAWK \
     for (u in umi_n_raw){
       print \
         u,\
-        umi_n_raw[u],\
-        umi_ro_plus[u],\
-        umi_ro_neg[u],\
-        umi_ro_plus[u]/(umi_ro_neg[u]+umi_ro_plus[u]), \
+        umi_n_raw[u]+0,\
+        umi_ro_plus[u]+0,\
+        umi_ro_neg[u]+0,\
+        umi_ro_plus[u]/(umi_ro_neg[u]+umi_ro_plus[u])+0, \
         rof_check[u],\
         rof_sub_target[u],\
         ume_mean[u],\

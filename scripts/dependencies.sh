@@ -43,7 +43,7 @@ longread_umi_version_dump (){
   echo "medaka model - ${MEDAKA_MODEL##*/}"  >> $OUT
   echo "Gawk - $($GAWK --version | head -n 1)" >> $OUT 
   echo "Cutadapt - $($CUTADAPT --version | head -n 1)" >> $OUT 
-  echo "Porechop - $($PORECHOP_UMI --version) + add UMI adaptors to adaptors.py" >> $OUT 
+  echo "Porechop - $(export PYTHONDONTWRITEBYTECODE=1; export PYTHONPATH=$PYTHONPATH:$LONGREAD_UMI_PATH/scripts; $PORECHOP_UMI --version) + modify porechop.py" >> $OUT 
   echo "Filtlong - $($FILTLONG --version)" >> $OUT
   echo "BWA - $($BWA 2>&1 >/dev/null | grep 'Version')" >> $OUT
   echo "Samtools - $($SAMTOOLS 2>&1 >/dev/null | grep 'Version')" >> $OUT
