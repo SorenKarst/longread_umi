@@ -69,7 +69,7 @@ while getopts ':hzd:c:r:u:o:b:p:n:m:t:' OPTION; do
 	p) BARCODE_PREFIX=$OPTARG;;
 	n) BARCODE_RANGES=$OPTARG;;
 	m) MIN_BARCODE_COUNT=$OPTARG;;
-    t) THREADS==$OPTARG;;
+    t) THREADS=$OPTARG;;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
     \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
   esac
@@ -154,7 +154,7 @@ $GAWK \
         print ">" B "\n" BL[B] > OUT "/barcode_sequences.fa"
       }
     for (DB in DBL){
-      print DB, DBL[DB] > OUT "/barcode_combinations.fa"
+      print DB "\t" DBL[DB] > OUT "/barcode_combinations.fa"
     }
     }
   ' $BARCODE_FILE
@@ -321,7 +321,7 @@ $OUT_DIR/barcode_combinations.fa \
 $OUT_DIR/*fastq \
 > $OUT_DIR/demultiplex.txt
 
-rm ./$OUT_DIR/*.fastq
+rm $OUT_DIR/*.fastq
 
 # Demultiplexing consensus
 $GAWK -v OUT_DIR="$OUT_DIR" '
