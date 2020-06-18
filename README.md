@@ -256,10 +256,11 @@ Bacterial rRNA operon (~4300 bp) | ZymoBIOMICS Microbial Community DNA Standard 
 
 -- longread_umi: pipelines and tools for longread UMI processing.
 
-usage: longread_umi [-h] [ name ...]
+usage: longread_umi [-h -v] ( name ...)
 
 where:
     -h   Show this help text.
+    -v   Show git version.
     name Name of tool or pipeline.
     ...  Commands for tool or pipeline.
 
@@ -277,6 +278,7 @@ Tools:
    nanopore_settings_test   Test impact of polishing rounds on UMI consensus.
    polish_medaka            Nanopore UMI consensus polishing with Medaka
    primer_position          Locate adapter and primer positions in read data
+   split_reads              Locates custom sequence(s) in fastq reads and splits
    trim_amplicon            Trimming sequences based on primers
    umi_binning              Longread UMI detection and read binning.
    variants                 Phase and call variants from UMI consensus sequences.
@@ -284,7 +286,7 @@ Tools:
 For help with a specific tool or pipeline:
 longread_umi <name> -h
 ```
-
+  
   
 
 ```
@@ -293,19 +295,21 @@ longread_umi <name> -h
    Raw read centroid found with usearch and used as seed for
    (r) x times racon polishing.
 
-usage: consensus_racon [-h] (-d dir -o dir -r value -t value -n file) 
+usage: consensus_racon [-h] (-d dir -o dir -p string -r value -t value -n file -a string) 
 
 where:
     -h  Show this help text.
     -d  Directory containing UMI read bins in the format
         'umi*bins.fastq'. Recursive search.
     -o  Output directory.
+    -p  Minimap2 preset. 'map-ont' for Nanopore and 'asm20' for PacBio CCS.
+    -a  Additional arguments for racon.
     -r  Number of racon polishing rounds.
     -t  Number of threads to use.
     -n  Process n number of bins. If not defined all bins
         are processed.
 ```
-
+  
   
 
 ```
@@ -335,7 +339,7 @@ where:
     -n  Barcode numbers used. [Default  = '1-120'].
     -t  Number of threads used.
 ```
-
+  
   
 
 ```
@@ -370,7 +374,7 @@ where:
         sequences. Default 2.
     -t  Number of threads used.
 ```
-
+  
   
 
 ```
@@ -409,7 +413,7 @@ where:
     -T  Number of medaka jobs to start. Threads pr. job is threads/jobs.
         [Default = 1].
 ```
-
+  
   
 
 ```
@@ -457,7 +461,7 @@ longread_umi nanopore_settings_test
   -y 3 
   -n 1000
 ```
-
+  
   
 
 ```
@@ -491,7 +495,7 @@ where:
     -u  Directory with UMI binned reads.
     -t  Number of threads to use.
 ```
-
+  
   
 
 ```
@@ -514,7 +518,7 @@ where:
         are processed.
     -t  Number of Medaka jobs to run. [Default = 1].
 ```
-
+  
   
 
 ```
@@ -539,7 +543,7 @@ where:
     -e  Length of terminal end to search for primers. [Default = 500]
     -n  Subset reads before search. [Default = 100000]
 ```
-
+  
   
 
 ```
@@ -581,7 +585,29 @@ wget https://www.arb-silva.de/fileadmin/silva_databases/
 release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 ```
+  
+  
 
+```
+
+-- longread_umi split_reads: Locates custom sequence(s) in fastq reads and splits
+   reads at middle position
+   
+usage: split_seq [-h] [-e value -n value ] (-d value -o dir -t value)
+(-a file -p value -f string -k)
+
+where:
+    -h  Show this help text.
+    -d  Raw fastq reads.
+    -o  Output directory
+    -t  Number of threads to use.
+    -a  Fasta file containing adapter sequences to split reads by. 
+    -p  Shift split positions according to first base in adapter sequences.
+        E.g. Use -12 to split 12 bp before adapter sequence. Use 10 
+        to split in the middle of adapter that is 20 bp long.
+    -k  Keep temporary files for debugging.
+```
+  
   
 
 ```
@@ -605,7 +631,7 @@ where:
     -t  Number of threads to use.
     -l  Log directory
 ```
-
+  
   
 
 ```
@@ -616,7 +642,7 @@ where:
 
 usage: umi_binning [-h] (-d file -o dir -m value -M value )
 (-s value -e value -f string -F string -r string -R string -p )
-(-u value -U value -O value -S value -t value) 
+(-u value -U value -O value -S value -t value -T value) 
 
 where:
     -h  Show this help text.
@@ -636,12 +662,13 @@ where:
     -U  Discard bins with a UMI match error standard
         deviation above U.
     -O  Normalize read orientation fraction to 'O' if < 'O' reads are
-        either +/- strand orientation.
+        either +/- strand orientation. [Default = 0] which is disabled.
     -N  Max number of reads with +/- orientation. [Default = 10000]
     -S  UMI bin size/UMI cluster size cutoff. [Default = 10]
     -t  Number of threads to use.
+    -T  Number of threads to use for splitting reads into UMI bins. [Default is same as -t]
 ```
-
+  
   
 
 ```
@@ -663,7 +690,7 @@ where:
     -t  Number of threads to use. [Default = 1]
     -b  Debug flag. Keep temp files. [Default = NO]
 ```
-
+  
   
 
 
