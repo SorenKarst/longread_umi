@@ -253,7 +253,9 @@ $USEARCH \
   -sizein \
   -sizeout \
   -strand both \
-  -minsize 1
+  -sort size \
+  -maxaccepts 0 \
+  -maxrejects 0
 
 # Extract putative UMI pairs
 $CUTADAPT -j $THREADS -e 0.2 -O 11 -m 18 -l 18 \
