@@ -15,7 +15,7 @@
 USAGE="
 -- longread_umi nanopore_pipeline: Generate UMI consensus sequences from Nanopore data
    
-usage: $(basename "$0" .sh) [-h] [-w string] (-d file -v value -o dir -s value) 
+usage: $(basename "$0" .sh) [-h] [-w string -k flag] (-d file -v value -o dir -s value) 
 (-e value -m value -M value -f string -F string -r string -R string )
 ( -c value -p value -n value -u dir -t value -T value ) 
 
@@ -35,11 +35,12 @@ where:
     -R  Reverse primer sequence.
     -c  Number of iterative rounds of consensus calling with Racon.
     -p  Number of iterative rounds of consensus calling with Medaka.
-    -q  Medaka model used for polishing. r941_min_high, r10_min_high etc.
+    -q  Medaka model used for polishing. r941_min_high_g360, r10_min_high_g340 etc.
     -w  Use predefined workflow with settings for s, e, m, M, f, F, r, R.
-        rrna_operon [70, 80, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
+        rrna_operon [100, 100, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
         AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC]
         Overwrites other input.
+    -k  Flag for keeping failed bins in output.
     -n  Process n number of bins. If not defined all bins are processed.
         Pratical for testing large datasets.
     -u  Directory with UMI binned reads.
@@ -51,7 +52,7 @@ where:
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:v:o:s:e:m:M:f:F:r:R:c:p:q:w:n:u:t:T:' OPTION; do
+while getopts ':hzd:v:o:s:e:m:M:f:F:r:R:c:p:q:w:kn:u:t:T:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) INPUT_READS=$OPTARG;;
@@ -69,6 +70,7 @@ while getopts ':hzd:v:o:s:e:m:M:f:F:r:R:c:p:q:w:n:u:t:T:' OPTION; do
     p) POL_N=$OPTARG;;
     q) MEDAKA_MODEL=$OPTARG;;
     w) WORKFLOW=$OPTARG;;
+    k) KEEP="YES";;
     n) UMI_SUBSET_N=$OPTARG;;
     u) UMI_DIR=$OPTARG;;
     t) THREADS=$OPTARG;;
@@ -81,8 +83,8 @@ done
 # Check missing arguments
 MISSING="is missing but required. Exiting."
 if [ "$WORKFLOW" == rrna_operon ]; then
-  START_READ_CHECK=90
-  END_READ_CHECK=90
+  START_READ_CHECK=100
+  END_READ_CHECK=100
   MIN_LENGTH=3500
   MAX_LENGTH=6000
   FW1=CAAGCAGAAGACGGCATACGAGAT
@@ -108,6 +110,7 @@ if [ -z ${RV2+x} ]; then echo "-R $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${CON_N+x} ]; then echo "-c $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${POL_N+x} ]; then echo "-p $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${MEDAKA_MODEL+x} ]; then echo "-q $MISSING"; echo "$USAGE"; exit 1; fi;
+if [ -z ${KEEP+x} ]; then KEEP="NO"; fi;
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 if [ -z ${MEDAKA_JOBS+x} ]; then echo "-T is missing. Medaka jobs set to 1."; MEDAKA_JOBS=1; fi;
 
@@ -151,6 +154,7 @@ echo "Racon consensus rounds: $CON_N"
 echo "Medaka consensus rounds: $POL_N"
 echo "Medaka model: $MEDAKA_MODEL"
 echo "Preset workflow: $WORKFLOW"
+echo "Keep failed bins: $KEEP"
 echo "Bin size cutoff: $UMI_COVERAGE_MIN"
 echo "UMI binning dir: $UMI_DIR"
 echo "Threads: $THREADS"
@@ -179,11 +183,50 @@ if [ -z ${UMI_DIR+x} ]; then
 fi
 
 # Sample UMI bins for testing
-if [ ! -z ${UMI_SUBSET_N+x} ]; then
-  find  $UMI_DIR/read_binning/bins \
-    -name 'umi*bins.fastq' | sed -e 's|^.*/||' -e 's|\..*||' |\
-    head -n $UMI_SUBSET_N > $OUT_DIR/sample$UMI_SUBSET_N.txt
-fi
+$GAWK \
+  -v SEED="$RANDOM"  \
+  -v SUB_N="$UMI_SUBSET_N" \
+  -v KEEP="$KEEP" \
+  '
+  # Handle failed UMI bins
+  $0 !~ /fail/ && KEEP == "NO" && NR>1{
+    umi[NR]=$1
+  }
+  KEEP == "YES"  && NR>1 {
+    umi[NR]=$1
+  }
+  END {
+    # Handle UMI bin subsetting
+    if (UMI_SUBSET_N+0 > 0){
+      # Determine bins to subset
+      UMI_N = length(umi)
+      if (SUB_N > UMI_N){
+        SUB_N = UMI_N
+      }
+      # Sample bins
+      srand(SEED)
+      while (SAMPLED <= SUB_N){
+        # Sample line
+        SAMPLED++
+        LINE=int((length(umi)+1) * rand())
+        UMI_NAME=umi[LINE]
+        sub(";.*", "bins.fastq", UMI_NAME)
+        print UMI_NAME
+        # Remove sampled UMI
+        delete umi[LINE]
+      }
+    } else {
+      for (i in umi){
+        UMI_NAME=umi[i]
+        sub(";.*", "bins", UMI_NAME)
+        print UMI_NAME
+      }
+    }
+  }
+  ' \
+  $UMI_DIR/read_binning/umi_binning_stats.txt \
+  > $OUT_DIR/processed_bins.txt
+  
 
 # Consensus
 CON_NAME=raconx${CON_N}
@@ -195,7 +238,7 @@ longread_umi consensus_racon \
   -a "--no-trimming"                      `# Extra args for racon`\
   -r $CON_N                               `# Number of racon polishing times`\
   -t $THREADS                             `# Number of threads`\
-  -n $OUT_DIR/sample$UMI_SUBSET_N.txt     `# List of bins to process`
+  -n $OUT_DIR/processed_bins.txt    `# List of bins to process`
 
 # Polishing
 CON=${CON_DIR}/consensus_${CON_NAME}.fa
@@ -209,7 +252,7 @@ for j in `seq 1 $POL_N`; do
     -d $UMI_DIR                          `# Path to UMI bins`\
     -o $POLISH_DIR                       `# Output folder`\
     -t $THREADS                          `# Number of threads`\
-    -n $OUT_DIR/sample$UMI_SUBSET_N.txt  `# List of bins to process` \
+    -n $OUT_DIR/processed_bins.txt  `# List of bins to process` \
     -T $MEDAKA_JOBS                      `# Uses ALL threads with medaka`
   CON=$POLISH_DIR/consensus_${CON_NAME}_${POLISH_NAME}.fa
 done

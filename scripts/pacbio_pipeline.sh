@@ -17,7 +17,7 @@ USAGE="
    
 usage: $(basename "$0" .sh) [-h] (-d file -v value -o dir -s value -e value) 
 (-m value -M value -f string -F string -r string -R string -c value -w string)
-(-n value -u dir -t value) 
+(-n value -u dir -t value -k flag) 
 
 where:
     -h  Show this help text.
@@ -34,6 +34,7 @@ where:
     -r  Reverse adaptor sequence.
     -R  Reverse primer sequence.
     -c  Number of iterative rounds of consensus calling with Racon.
+    -k  Flag for keeping failed bins in output.
     -w  Use predefined workflow with settings for s, e, m, M, f, F, r, R, c.
         rrna_operon [70, 80, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
         AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC, 2]
@@ -46,7 +47,7 @@ where:
 ### Terminal Arguments ---------------------------------------------------------
 
 # Import user arguments
-while getopts ':hzd:v:o:s:e:m:M:f:F:r:R:c:w:n:u:t:' OPTION; do
+while getopts ':hzd:v:o:s:e:m:M:f:F:r:R:c:w:kn:u:t:' OPTION; do
   case $OPTION in
     h) echo "$USAGE"; exit 1;;
     d) INPUT_READS=$OPTARG;;
@@ -62,6 +63,7 @@ while getopts ':hzd:v:o:s:e:m:M:f:F:r:R:c:w:n:u:t:' OPTION; do
     R) RV2=$OPTARG;;  
     c) CON_N=$OPTARG;;
     w) WORKFLOW=$OPTARG;;
+    k) KEEP="YES";;
     n) UMI_SUBSET_N=$OPTARG;;
     u) UMI_DIR=$OPTARG;;
     t) THREADS=$OPTARG;;
@@ -100,6 +102,7 @@ if [ -z ${RV1+x} ]; then echo "-r $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${RV2+x} ]; then echo "-R $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${CON_N+x} ]; then echo "-c $MISSING"; echo "$USAGE"; exit 1; fi;
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
+if [ -z ${KEEP+x} ]; then KEEP="NO"; fi;
 
 ### Source commands and subscripts -------------------------------------
 . $LONGREAD_UMI_PATH/scripts/dependencies.sh # Path to dependencies script
@@ -142,6 +145,7 @@ echo "Preset workflow: $WORKFLOW"
 echo "Bin size cutoff: $UMI_COVERAGE_MIN"
 echo "UMI binning dir: $UMI_DIR"
 echo "Threads: $THREADS"
+echo "Keep failed bins: $KEEP"
 echo ""
 
 # Read filtering and UMI binning
@@ -167,11 +171,49 @@ if [ -z ${UMI_DIR+x} ]; then
 fi
 
 # Sample UMI bins for testing
-if [ ! -z ${UMI_SUBSET_N+x} ]; then
-  find  $UMI_DIR/read_binning/bins \
-    -name 'umi*bins.fastq' | sed -e 's|^.*/||' -e 's|\..*||' |\
-    head -n $UMI_SUBSET_N > $OUT_DIR/sample$UMI_SUBSET_N.txt
-fi
+$GAWK \
+  -v SEED="$RANDOM"  \
+  -v SUB_N="$UMI_SUBSET_N" \
+  -v KEEP="$KEEP" \
+  '
+  # Handle failed UMI bins
+  $0 !~ /fail/ && KEEP == "NO" && NR>1{
+    umi[NR]=$1
+  }
+  KEEP == "YES"  && NR>1 {
+    umi[NR]=$1
+  }
+  END {
+    # Handle UMI bin subsetting
+    if (UMI_SUBSET_N+0 > 0){
+      # Determine bins to subset
+      UMI_N = length(umi)
+      if (SUB_N > UMI_N){
+        SUB_N = UMI_N
+      }
+      # Sample bins
+      srand(SEED)
+      while (SAMPLED <= SUB_N){
+        # Sample line
+        SAMPLED++
+        LINE=int((length(umi)+1) * rand())
+        UMI_NAME=umi[LINE]
+        sub(";.*", "bins.fastq", UMI_NAME)
+        print UMI_NAME
+        # Remove sampled UMI
+        delete umi[LINE]
+      }
+    } else {
+      for (i in umi){
+        UMI_NAME=umi[i]
+        sub(";.*", "bins", UMI_NAME)
+        print UMI_NAME
+      }
+    }
+  }
+  ' \
+  $UMI_DIR/read_binning/umi_binning_stats.txt \
+  > $OUT_DIR/processed_bins.txt
 
 # Consensus
 CON_NAME=raconx${CON_N}
@@ -182,7 +224,7 @@ longread_umi consensus_racon \
   -p asm20                                `# Minimap preset`\
   -r $CON_N                               `# Number of racon polishing times`\
   -t $THREADS                             `# Number of threads`\
-  -n $OUT_DIR/sample$UMI_SUBSET_N.txt     `# List of bins to process`
+  -n $OUT_DIR/processed_bins.txt     `# List of bins to process`
 
 # Trim UMI consensus data
 longread_umi trim_amplicon \
