@@ -72,7 +72,7 @@ lu_compile_qc <- function(
   read_data = "reads.fa",
   read_tax = "read_classification.txt",
   umi_bin_map = "umi_bin_map.txt",
-  read_orientation = NULL,
+  umi_bin_stats = "umi_binning_stats.txt",
   read_sam = lu_name_format(read_data,".sam"),
   ref_sam = lu_name_format(umi_consensus,".sam"),
   ref_ssu_sam = paste(lu_name_format(umi_consensus),
@@ -102,7 +102,7 @@ lu_compile_qc <- function(
     paste(data_dir, "/", read_data, sep ="")
     )
   
-  # Read taxonomy
+  # Contamination
   read_tax <- readr::read_delim(
     paste(data_dir, "/", read_tax, sep =""),
     delim = " ",
@@ -110,30 +110,76 @@ lu_compile_qc <- function(
     dplyr::transmute(read = X1,
               tax = gsub("_.*", "", X2)
               )
-  
-  # UMI read binning stats
-  umi_bin_stats <- readr::read_delim(
+  umi_bin_mapf <- readr::read_delim(
     paste(data_dir, "/", umi_bin_map, sep =""),
     delim = " ",
     col_names = F) %>%
     dplyr::transmute(
       umi = gsub(";.*", "bins", X1),
       read = X2,
-      umi_cluster_size = gsub(".*;", "", X1),
-      umi_match_error = as.integer(X3)
-      )
+    )
   
-  umi_stats <- dplyr::left_join(umi_bin_stats, read_tax, by ="read") %>%
+  umi_cont <- dplyr::left_join(umi_bin_mapf, read_tax, by ="read") %>%
     group_by(umi, tax) %>%
-    summarise(n = n(),
-              umi_cluster_size = umi_cluster_size[1],
-              umi_match_error = sum(umi_match_error)
-              ) %>%
+    summarise(n = n()) %>%
     group_by(umi) %>%
-    summarise(umi_bin_size = sum(n),
-              umi_cluster_size = as.integer(umi_cluster_size[1]),
-              contamination = (sum(n) - max(n))/sum(n)*100,
-              umi_match_error = sum(umi_match_error)/umi_bin_size)
+    summarise(
+      contamination = (sum(n) - max(n))/sum(n)*100
+    )
+  
+  # UMI read binning stats
+  umi_stats <- readr::read_delim(
+    paste(data_dir, "/", umi_bin_stats, sep =""),
+    delim = " ",
+    col_names = T,
+    col_types = cols(
+      umi_name = "c",
+      read_n = "i",
+      read_plus_n = "i",
+      read_neg_n = "i",
+      read_or_ratio = "d",
+      read_or_filter = "c",
+      read_or_sub_n = "i",
+      umi_match_err_mean = "d",
+      umi_match_err_sd = "d",
+      umi_match_err_filter = "c", 
+      bin_cluster_ratio = "d", 
+      bin_cluster_ratio_filter = "c",
+      chimera_match = "c",
+      chimera_filter = "c",
+      derivate_match = "c",
+      derivate_filter = "c"
+      )
+    ) %>%
+    dplyr::transmute(
+      umi = gsub(";.*", "bins", umi_name),
+      umi_cluster_size = gsub(".*;size=|;", "", umi_name) %>% as.integer(),
+      umi_bin_size = if_else(is.na(read_or_sub_n), read_n, read_or_sub_n),
+      read_n,
+      read_plus_n,
+      read_neg_n,
+      read_or_ratio,
+      read_or_filter,
+      read_or_sub_n,
+      umi_match_err_mean,
+      umi_match_err_sd,
+      umi_match_err_filter,
+      bin_cluster_ratio,
+      bin_cluster_ratio_filter,
+      chimera_match,
+      chimera_filter,
+      derivate_match,
+      derivate_filter,
+      filter_result = if_else(
+        grepl("fail", read_or_filter) |
+          grepl("fail", umi_match_err_filter) |
+          grepl("fail", bin_cluster_ratio_filter) |
+          grepl("fail", chimera_filter) |
+          grepl("fail", derivate_filter),
+        "fail",
+        "ok"
+        )
+      )
 
   # UMI consensus length
   con_length <- Biostrings::fasta.seqlengths(
@@ -194,16 +240,6 @@ lu_compile_qc <- function(
       left_join(silva_tax, by = "silva_ssu_id") 
   }
   
-  # Raw read orientation ratio (+/-)
-  if(!is.null(read_orientation)){  
-    ror <- readr::read_delim(
-      file = paste(data_dir, "/", read_orientation, sep = ""),
-      delim = " ",
-      col_names = c("umi", "+", "-", "?")) %>%
-      dplyr::transmute(umi,
-                       ror = `+`/`-`
-                       )
-  }
   
   # Chimera test
   chimera <- readr::read_delim(
@@ -244,12 +280,12 @@ lu_compile_qc <- function(
   
   # Combine data
   qc <-  umi_stats %>%
+    left_join(umi_cont, by = "umi") %>%
     left_join(con_length, by = "umi") %>%
     left_join(ref_error, by = "umi") %>%
     {if(!is.null(silva))left_join(., ref_ssu_error, by = "umi") else .} %>%
     left_join(chimera, by = "umi") %>%
-    {if(!is.null(silva))left_join(., silva, by = "umi") else .} %>%
-    {if(!is.null(read_orientation))left_join(., ror, by = "umi") else .}
+    {if(!is.null(silva))left_join(., silva, by = "umi") else .}
     
   
   # Prepare output

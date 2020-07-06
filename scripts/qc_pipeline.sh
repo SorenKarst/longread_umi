@@ -101,7 +101,7 @@ CON1_NAME=${CON1_NAME##*/}
 # Prepare binning statistics
 if [ ! -z ${UMI_DIR+x} ]; then
  cp $UMI_DIR/umi_binning/read_binning/umi_bin_map.txt $OUT/
- cp $UMI_DIR/umi_binning/umi_ref/umi_ref.txt $OUT/
+ cp $UMI_DIR/umi_binning/read_binning/umi_binning_stats.txt $OUT/
 fi
 
 # Determine forward/reverse read counts for each bin
@@ -153,7 +153,7 @@ if [ ! -z ${READ_LIST+x} ]; then
   
     # Read stats
     fastq_stats(){
-      awk -v sample="$2" '
+      $GAWK -v sample="$2" '
         NR%4==2{
           rc++
           bp+=length
