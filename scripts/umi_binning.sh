@@ -256,8 +256,7 @@ $USEARCH \
   -sort size \
   -maxaccepts 0 \
   -maxrejects 0 \
-  -mincols 34 \
-  -maxsizeratio 0.5
+  -mincols 34
 
 $GAWK \
   '
