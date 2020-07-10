@@ -93,10 +93,19 @@ seed_racon () {
   local BINSIZE=$($GAWK 'NR%4==1 {N++} END {print N}' $RB)
 
   # Find seed read
-  $USEARCH -cluster_fast $RB -id 0.75 -strand both\
-    -sizeout -centroids $OUT/${UMINO}_centroids.fa
-  $USEARCH -sortbysize $OUT/${UMINO}_centroids.fa -topn 1 \
-    -fastaout $OUT/${UMINO}_sr.fa -relabel seed
+  $USEARCH \
+    -cluster_fast \
+    $RB \
+    -id 0.75 \
+    -strand both\
+    -sizeout \
+    -centroids $OUT/${UMINO}_centroids.fa
+
+  $USEARCH \
+    -sortbysize $OUT/${UMINO}_centroids.fa \
+    -topn 1 \
+    -fastaout $OUT/${UMINO}_sr.fa \
+    -relabel seed
 
   # Racon polishing
   for i in `seq 1 $ROUNDS`; do
@@ -111,7 +120,7 @@ seed_racon () {
       -m 8 \
       -x -6 \
       -g -8 \
-      -w 500 \
+      -w 25000 \
       $RACON_ARG \
       $RB \
       $OUT/ovlp.paf \
