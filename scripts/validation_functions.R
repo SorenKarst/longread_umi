@@ -419,6 +419,8 @@ lu_error_plot <- function(qc,
                           y = "ref_error",
                           min_bin_size = 0,
                           point_size = 1,
+                          jitter = position_jitter(height = 0.005, width = 0.4),
+                          alpha = 0.1,
                           flags = F){
   # Filter sequences
   qcf <- filter(qc,
@@ -430,7 +432,7 @@ lu_error_plot <- function(qc,
                aes_string(x = x,
                           y = y)
   ) +
-    geom_point(size = point_size, color = alpha("black", 0.1)) +
+    geom_point(size = point_size, color = alpha("black", alpha), position =  jitter) +
     theme_classic() +
     theme(legend.position = "none",
           text = element_text(size = 8),
