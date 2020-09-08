@@ -45,10 +45,10 @@ where:
     -u  Discard bins with a mean UMI match error above u.
     -U  Discard bins with a UMI match error standard
         deviation above U.
-    -O  Normalize read orientation fraction to 'O' if < 'O' reads are
-        either +/- strand orientation. [Default = 0] which is disabled.
+    -O  Normalize read orientation fraction to 'O' if n(-/+ strand)/n(total)
+        is less than 'O'. Disable filter by setting -O to 0.
     -N  Max number of reads with +/- orientation. [Default = 10000]
-    -S  UMI bin size/UMI cluster size cutoff. [Default = 10]
+    -S  UMI bin size/UMI cluster size cutoff.
     -t  Number of threads to use.
     -T  Number of threads to use for splitting reads into UMI bins. [Default is same as -t]
 "
@@ -96,9 +96,9 @@ if [ -z ${RV1+x} ]; then echo "-r $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
 if [ -z ${RV2+x} ]; then echo "-R $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
 if [ -z ${UMI_MATCH_ERROR+x} ]; then echo "-u $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
 if [ -z ${UMI_MATCH_ERROR_SD+x} ]; then echo "-U $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
-if [ -z ${RO_FRAC+x} ]; then echo "-O is missing. Read orientation filter disabled."; RO_FRAC=0; fi;
+if [ -z ${RO_FRAC+x} ]; then echo "-O $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
 if [ -z ${MAX_BIN_SIZE+x} ]; then echo "-N is missing. Defaulting to 10000 +/- reads ."; MAX_BIN_SIZE=10000; fi;
-if [ -z ${BIN_CLUSTER_RATIO+x} ]; then echo "-S is missing. Defaulting to 10 ."; BIN_CLUSTER_RATIO=10; fi;
+if [ -z ${BIN_CLUSTER_RATIO+x} ]; then echo "-S $MISSING"; echo ""; echo "$USAGE"; exit 1; fi;
 if [ -z ${THREADS+x} ]; then echo "-t is missing. Defaulting to 1 thread."; THREADS=1; fi;
 if [ -z ${BIN_THREADS+x} ]; then BIN_THREADS=$THREADS; fi;
 
@@ -256,7 +256,7 @@ $USEARCH \
   -sort size \
   -maxaccepts 0 \
   -maxrejects 0 \
-  -mincols 34
+  -mincols 34 # Doesn't work...
 
 $GAWK \
   '
