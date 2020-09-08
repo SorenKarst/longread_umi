@@ -23,7 +23,9 @@ if [[ -z $(which conda) ]]; then
     # Install conda
     [ -f Miniconda3-latest-Linux-x86_64.sh ] ||\
       wget "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
-    bash ./Miniconda3-latest-Linux-x86_64.sh   
+    bash ./Miniconda3-latest-Linux-x86_64.sh
+    conda init
+    source ~/.bashrc
   else
     echo ""
 	echo "Installation aborted..."
@@ -80,7 +82,6 @@ git clone \
   $CONDA_PREFIX/longread_umi
 
 # Modify porechop to look for adapters.py in pythonpath
-rm $CONDA_PREFIX/longread_umi/scripts/adapters.py
 sed \
   -i \
   's|from \.adapters import ADAPTERS|from adapters import ADAPTERS|' \
