@@ -21,11 +21,16 @@ if [[ -z $(which conda) ]]; then
   
   if [ "$ASK_CONDA_INSTALL" == "y" ]; then
     # Install conda
-    [ -f Miniconda3-latest-Linux-x86_64.sh ] ||\
-      wget "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
-    bash ./Miniconda3-latest-Linux-x86_64.sh
-    conda init
-    source ~/.bashrc
+    [ -f Miniconda3-py38_4.8.3-Linux-x86_64.sh ] ||\
+      wget "https://repo.anaconda.com/miniconda/Miniconda3-py38_4.8.3-Linux-x86_64.sh"
+    bash ./Miniconda3-py38_4.8.3-Linux-x86_64.sh
+    echo ""
+    echo "#-----------------------------------------------------------"
+    echo "Miniconda installed"
+    echo ""
+    echo "Re-run install_conda.sh to continue longread_umi installation."
+    echo ""
+    exec bash
   else
     echo ""
 	echo "Installation aborted..."
@@ -143,8 +148,6 @@ else
   echo "Path to conda environment: $CONDA_PREFIX"
   echo "Path to pipeline files: $CONDA_PREFIX/longread_umi"
   echo ""
-  echo "Initiate conda and refresh terminal:"
-  echo "conda init; source ~/.bashrc"
   echo ""
 fi
 
