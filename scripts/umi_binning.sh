@@ -645,11 +645,17 @@ $GAWK \
       "bin_cluster_ratio",\
       "bin_cluster_ratio_filter",\
       "chimera_match",\
-      "chimera_filter", \
-      "derivate_match", \
-      "derivate_filter" \
+      "chimera_filter",\
+      "derivate_match",\
+      "derivate_filter",\
+      "filter_result" \
       > BD"/umi_binning_stats.txt"
     for (u in umi_n_raw){
+      if (rof_check[u] ume_check[u] bcr_check[u] chimera_check[u] derivate_check[u] ~ /fail/){
+        filter_result[u] = "fail"
+      } else {
+        filter_result[u] = "ok"
+      }
       print \
         u,\
         umi_n_raw[u]+0,\
@@ -666,7 +672,8 @@ $GAWK \
         chimera_match[u],\
         chimera_check[u],\
         derivate_match[u],\
-        derivate_check[u] \
+        derivate_check[u],\
+        filter_result[u] \
         > BD"/umi_binning_stats.txt"
     }
 
