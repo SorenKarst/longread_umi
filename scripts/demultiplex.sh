@@ -61,7 +61,7 @@ while getopts ':hzd:c:r:u:o:b:p:n:t:' OPTION; do
 	b) BARCODE_FILE=$OPTARG;;
 	p) BARCODE_PREFIX=$OPTARG;;
 	n) BARCODE_RANGES=$OPTARG;;
-    t) THREADS==$OPTARG;;
+    t) THREADS=$OPTARG;;
     :) printf "missing argument for -$OPTARG\n" >&2; exit 1;;
     \?) printf "invalid option for -$OPTARG\n" >&2; exit 1;;
   esac
@@ -161,7 +161,7 @@ demultiplex_cutadapt(){
     -e 0.15 \
     -O 17 \
     -g file:<(echo "$BC") \
-    -o $OUTDIR/${JOBNR}_{name}.fastq \
+    -o $OUTDIR/${JOBNR}tmp_{name}.fastq \
     -
 }
 
@@ -172,8 +172,8 @@ $GNUPARALLEL \
   --env demultiplex_cutadapt \
   --progress \
   -j $THREADS \
-  -L4 \
-  -N100 \
+  -L 4 \
+  -N 100 \
   --roundrobin \
   --pipe \
   "demultiplex_cutadapt \
@@ -195,7 +195,7 @@ $GAWK '
   FNR%4==1{
     READ=substr($1,2)
 	  SAMPLE=FILENAME
-	  sub(".*_", "", SAMPLE)
+	  sub(".*tmp_", "", SAMPLE)
 	  sub(".fastq", "", SAMPLE)
     u2s[u2r[READ]][SAMPLE]++
 	  utr[u2r[READ]]++
@@ -219,7 +219,7 @@ $GAWK '
 	}
   }
 ' $UMI_BIN_RESULTS $OUT_DIR/*${BARCODE_PREFIX}*fastq > $OUT_DIR/demultiplex.txt
-rm ./$OUT_DIR/*.fastq
+rm $OUT_DIR/*tmp_*fastq
 
 # Demultiplexing consensus
 $GAWK -v OUT_DIR="$OUT_DIR" '
