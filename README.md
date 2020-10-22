@@ -272,16 +272,16 @@ Pipelines:
 
 Tools:
 
-   consensus_racon          Generate UMI consensus sequence with racon
-   demultiplex              Dual barcode demultiplexing
-   demultiplex_3end         3'-end dual barcode demultiplexing
-   nanopore_settings_test   Test impact of polishing rounds on UMI consensus.
-   polish_medaka            Nanopore UMI consensus polishing with Medaka
-   primer_position          Locate adapter and primer positions in read data
-   split_reads              Locates custom sequence(s) in fastq reads and splits
-   trim_amplicon            Trimming sequences based on primers
-   umi_binning              Longread UMI detection and read binning.
-   variants                 Phase and call variants from UMI consensus sequences.
+   consensus_racon         Generate UMI consensus sequence with racon
+   demultiplex             Dual barcode demultiplexing
+   demultiplex_3end        3'-end dual barcode demultiplexing
+   polish_medaka           Nanopore UMI consensus polishing with Medaka
+   primer_position         Locate adapter and primer positions in read data
+   read_orientation_skew   Script for simulating UMI bins with 
+   split_reads             Locates custom sequence(s) in fastq reads and splits
+   trim_amplicon           Trimming sequences based on primers
+   umi_binning             Longread UMI detection and read binning.
+   variants                Phase and call variants from UMI consensus sequences.
 
 For help with a specific tool or pipeline:
 longread_umi <name> -h
@@ -381,9 +381,9 @@ where:
 
 -- longread_umi nanopore_pipeline: Generate UMI consensus sequences from Nanopore data
    
-usage: nanopore_pipeline [-h] [-w string] (-d file -v value -o dir -s value) 
+usage: nanopore_pipeline [-h] [ -k flag] (-d file -v value -o dir -s value) 
 (-e value -m value -M value -f string -F string -r string -R string )
-( -c value -p value -n value -u dir -t value -T value ) 
+( -c value -p value -n value -u dir -U string -t value -T value ) 
 
 where:
     -h  Show this help text.
@@ -401,65 +401,26 @@ where:
     -R  Reverse primer sequence.
     -c  Number of iterative rounds of consensus calling with Racon.
     -p  Number of iterative rounds of consensus calling with Medaka.
-    -q  Medaka model used for polishing. r941_min_high, r10_min_high etc.
-    -w  Use predefined workflow with settings for s, e, m, M, f, F, r, R.
-        rrna_operon [70, 80, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
-        AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC]
-        Overwrites other input.
+    -q  Medaka model used for polishing. r941_min_high_g360, r103_min_high_g360 etc.
+    -k  Flag for keeping failed bins in output.
     -n  Process n number of bins. If not defined all bins are processed.
         Pratical for testing large datasets.
     -u  Directory with UMI binned reads.
+    -U  UMI filter settings. Define settings for:
+        - UMI match error mean (UMEM): Mean match error between reads in a bin
+          and the UMI reference.
+        - UMI match error SD (UMESD): Standard deviation for match error between
+          reads in a bin and the UMI reference.
+        - Bin cluster ratio (BCR): Ratio between UMI bin size and UMI cluster size.
+        - Read orientation ratio (ROR): n(+ strand reads)/n(all reads). '0' is the
+          means disabled.
+        Settings can be provided as a string: 'UMEM/UMESD/BCR/ROR'
+        Or as a preset:
+        - 'r941_min_high_g360' == '3;2;6;0.3'
+        - 'r103_min_high_g360' == '3;2.5;12;0.3'
     -t  Number of threads to use.
     -T  Number of medaka jobs to start. Threads pr. job is threads/jobs.
         [Default = 1].
-```
-  
-  
-
-```
-
--- longread_umi nanopore_settings_test: Test impact of polishing rounds on UMI consensus.
-
-usage: nanopore_settings_test [-h] (-d file -n value -c value -o dir -s value -e value) 
-(-m value -M value -f string -F string -r string -R string -t value -T value) 
-(-x value -y value -q string -p -u dir ) 
-
-where:
-    -h  Show this help text.
-    -d  Single file containing raw Nanopore data in fastq format.
-    -o  Output directory.
-    -s  Check start of read up to s bp for UMIs.
-    -e  Check end of read up to f bp for UMIs.
-    -m  Minimum read length.
-    -M  Maximum read length.
-    -f  Forward adaptor sequence. 
-    -F  Forward primer sequence.
-    -r  Reverse adaptor sequence.
-    -R  Reverse primer sequence.
-    -n  Process n number of bins. If not defined all bins are processed.
-        Pratical for testing large datasets.
-    -w  Use predefined workflow with settings for s, e, m, M, f, F, r, R.
-        rrna_operon [70, 80, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
-        AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC]
-    -t  Number of threads to use.
-    -T  Number of medaka jobs to start. Threads pr. job is threads/jobs.
-        [Default = 1].
-    -x  Test Racon consensus rounds from 1 to <value>.
-    -y  Test Medaka polishing rounds from 1 to <value>.
-    -q  Medaka model used for polishing. r941_min_high, r10_min_high etc.
-    -p  Flag to disable Nanopore trimming and filtering.
-    -u  Directory with UMI binned reads.
-
-Test run:
-longread_umi nanopore_settings_test 
-  -d test_reads.fq 
-  -o settings_test 
-  -w rrna_operon 
-  -t 100 
-  -T 20 
-  -x 4 
-  -y 3 
-  -n 1000
 ```
   
   
@@ -469,8 +430,8 @@ longread_umi nanopore_settings_test
 -- longread_umi pacbio_pipeline: Generates UMI consensus sequences from PacBio CCS data.
    
 usage: pacbio_pipeline [-h] (-d file -v value -o dir -s value -e value) 
-(-m value -M value -f string -F string -r string -R string -c value -w string)
-(-n value -u dir -t value) 
+(-m value -M value -f string -F string -r string -R string -c value)
+(-n value -u dir -U string -t value -k flag) 
 
 where:
     -h  Show this help text.
@@ -487,12 +448,20 @@ where:
     -r  Reverse adaptor sequence.
     -R  Reverse primer sequence.
     -c  Number of iterative rounds of consensus calling with Racon.
-    -w  Use predefined workflow with settings for s, e, m, M, f, F, r, R, c.
-        rrna_operon [70, 80, 3500, 6000, CAAGCAGAAGACGGCATACGAGAT,
-        AGRGTTYGATYMTGGCTCAG, AATGATACGGCGACCACCGAGATC, CGACATCGAGGTGCCAAAC, 2]
+    -k  Flag for keeping failed bins in output.
     -n  Process n number of bins. If not defined all bins are processed.
         Pratical for testing large datasets.
     -u  Directory with UMI binned reads.
+    -U  UMI filter settings. Define settings for:
+        - UMI match error mean (UMEM): Mean match error between reads in a bin
+          and the UMI reference.
+        - UMI match error SD (UMESD): Standard deviation for match error between
+          reads in a bin and the UMI reference.
+        - Bin cluster ratio (BCR): Ratio between UMI bin size and UMI cluster size.
+        - Read orientation ratio (ROR): n(+ strand reads)/n(all reads). '0' is the
+          means disabled.
+        Settings can be provided as a string: 'UMEM/UMESD/BCR/ROR'
+        Or as a preset:                       'pb_ccs' == '0.75;1.5;2;0'
     -t  Number of threads to use.
 ```
   
@@ -590,6 +559,42 @@ gunzip SILVA_132_SSURef_Nr99_tax_silva.fasta.gz
 
 ```
 
+-- longread_umi read_orientation_skew: Script for simulating UMI bins with 
+   skewed +/- read orientation ratios.
+
+usage: read_orientation_skew [-h] (-b dir -d file -o dir -r integer range -R double range )
+(-u value -U value -O value -S value -t value -T value -s value) 
+
+where:
+    -h  Show this help text.
+    -b  UMI binning directory [Default: umi_binning] containing output from longread_umi umi_binning.
+    -d  Reads in fastq format.
+    -o  Output directory.
+    -r  Bin size range to simulate +/- skew in. Only bins with 
+        that contain n(negative strand reads) >= range_max and 
+        n(positive strand reads) >= range_max will be used for
+        simulation. This ensures the same bins are used for all
+        simulated bin sizes. The range should be provided as a string
+        of integers separated by ';' eg. '10;20;30'
+    -R  Range of fractions of simulated bins that are made up by 
+        positive strand reads. The range should be provided as a string
+        of fractions separated by ';' eg. '0.0;0.1;0.2;0.3;0.4;0.5;0.6;0.7;0.8;0.9;1.0'
+    -u  Discard bins with a mean UMI match error above u.
+    -U  Discard bins with a UMI match error standard
+        deviation above U.
+    -O  Normalize read orientation fraction to 'O' if < 'O' reads are
+        either +/- strand orientation. [Default = 0] which is disabled.
+    -N  Max number of reads with +/- orientation. [Default = 10000]
+    -S  UMI bin size/UMI cluster size cutoff. [Default = 10]
+    -t  Number of threads to use.
+    -T  Number of threads to use for splitting reads into UMI bins. [Default is same as -t]
+    -s  Subsample number of UMI bins. [Default = 1000]
+```
+  
+  
+
+```
+
 -- longread_umi split_reads: Locates custom sequence(s) in fastq reads and splits
    reads at middle position
    
@@ -661,10 +666,10 @@ where:
     -u  Discard bins with a mean UMI match error above u.
     -U  Discard bins with a UMI match error standard
         deviation above U.
-    -O  Normalize read orientation fraction to 'O' if < 'O' reads are
-        either +/- strand orientation. [Default = 0] which is disabled.
+    -O  Normalize read orientation fraction to 'O' if n(-/+ strand)/n(total)
+        is less than 'O'. Disable filter by setting -O to 0.
     -N  Max number of reads with +/- orientation. [Default = 10000]
-    -S  UMI bin size/UMI cluster size cutoff. [Default = 10]
+    -S  UMI bin size/UMI cluster size cutoff.
     -t  Number of threads to use.
     -T  Number of threads to use for splitting reads into UMI bins. [Default is same as -t]
 ```
