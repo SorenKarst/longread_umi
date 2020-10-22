@@ -18,13 +18,15 @@ export LONGREAD_UMI_PATH="$(dirname "$(readlink -f "$0")")"
 SCRIPT_LIST=$(
   find \
     $LONGREAD_UMI_PATH/scripts/ \
-	-name '*.sh' \
-	-print |\
+    -name '*.sh' \
+    -print |\
   sed \
-  -e '/install/d' \
-	-e '/dependen/d' \
-	-e 's|^.*/||' \
-	-e 's/.sh$//' |\
+    -e '/install_conda.sh/d' \
+    -e '/install_dependencies.sh/d' \
+    -e '/install_conda.sh/d' \
+    -e '/dependencies.sh/d' \
+    -e 's|^.*/||' \
+    -e 's/.sh$//' |\
   sort
   )
 
