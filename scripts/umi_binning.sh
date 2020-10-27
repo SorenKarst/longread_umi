@@ -270,6 +270,17 @@ $GAWK \
   $UMI_DIR/umi12c.fa \
   > $UMI_DIR/umi12cf.fa 
 
+# Check that there were umi_ref sequences with which to bin putative UMIs
+if [ $(grep -c '^>' $UMI_DIR/umi12cf.fa) = 0 ]; then
+  echo
+  echo "Pipeline stopped!"
+  echo "The pipeline has not produced any umi_ref sequences for the umi mapping.\
+  none of the perfect UMIs detected have a coverage > 3."
+  echo "Cluster sizes of perfect UMIs in $UMI_DIR/umi12c.fa";
+  echo "This result is usually due to the molecule/data ratio in the library being too low";
+  exit 1;
+fi
+
 # Remove potential chimeras
 paste <(cat $UMI_DIR/umi12cf.fa | paste - - ) \
   <($GAWK '!/^>/{print}' $UMI_DIR/umi12cf.fa | rev | tr ATCG TAGC) |\
